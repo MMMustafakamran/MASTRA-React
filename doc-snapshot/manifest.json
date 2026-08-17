@@ -1,0 +1,372 @@
+{
+  "schema": 1,
+  "docsRoot": "https://docs.copilotkit.ai/mastra",
+  "syncedAt": "2026-08-17T13:45:14.622Z",
+  "pages": {
+    "/mastra": {
+      "file": "mastra.md",
+      "sha256": "3f993e51db7cda07c4daa7e174ed66df43656cd181678ea134f9c93f5c43cf0c",
+      "bytes": 3070,
+      "lines": 53,
+      "routes": [
+        "/",
+        "/doc-sync"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/ag-ui": {
+      "file": "mastra__ag-ui.md",
+      "sha256": "9c8f469f548ced938c0ba775467717120dddbe45e319f9eb8efef11cc3f3d554",
+      "bytes": 3931,
+      "lines": 124,
+      "routes": [
+        "/ag-ui"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/agent-app-context": {
+      "file": "mastra__agent-app-context.md",
+      "sha256": "7283323b9072f18b562839a9874c0fa358021e8f826b2b2b407175c8a9beaf7f",
+      "bytes": 3351,
+      "lines": 85,
+      "routes": [
+        "/agent-app-context"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/background-tasks": {
+      "file": "mastra__background-tasks.md",
+      "sha256": "a1ae3826faa7fc3158dc4a5e5af71126ad6b0393827303aefec5ca9889ac3e28",
+      "bytes": 9886,
+      "lines": 267,
+      "routes": [
+        "/background-tasks"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/copilot-runtime": {
+      "file": "mastra__copilot-runtime.md",
+      "sha256": "ea46c164d61c93827e0bde4cbfdffd8e1c90f5965ee4b930239ff594e89234af",
+      "bytes": 7578,
+      "lines": 209,
+      "routes": [
+        "/copilot-runtime"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/custom-look-and-feel/headless-ui": {
+      "file": "mastra__custom-look-and-feel__headless-ui.md",
+      "sha256": "16e83023e7c73841f0ac77450c02287be3bdd31b2be81d670dcb601f2e52ada5",
+      "bytes": 4507,
+      "lines": 167,
+      "routes": [
+        "/custom-look-and-feel/headless-ui"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/custom-look-and-feel/slots": {
+      "file": "mastra__custom-look-and-feel__slots.md",
+      "sha256": "b03880eee02e91ff61fa3a8e6531a5ad5cae7faad6e67187fec0d464cf5d374a",
+      "bytes": 10397,
+      "lines": 315,
+      "routes": [
+        "/custom-look-and-feel/slots"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/frontend-tools": {
+      "file": "mastra__frontend-tools.md",
+      "sha256": "37285b7e2f53d4d84037647e0c35f63297fb38f125ddec8231f3f6cefe483592",
+      "bytes": 3565,
+      "lines": 91,
+      "routes": [
+        "/frontend-tools"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/generative-ui/state-rendering": {
+      "file": "mastra__generative-ui__state-rendering.md",
+      "sha256": "26773cf5dbc51943f84e6b8bac875e013de699cc9c2aff0f83cb7330ea84e42d",
+      "bytes": 6285,
+      "lines": 210,
+      "routes": [
+        "/generative-ui/state-rendering"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/generative-ui/tool-rendering": {
+      "file": "mastra__generative-ui__tool-rendering.md",
+      "sha256": "985ff3e4f8b44e2f9009d11becb641da2dda097f5d7b77008adb13553f726380",
+      "bytes": 3719,
+      "lines": 122,
+      "routes": [
+        "/generative-ui/tool-rendering"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/generative-ui/your-components/display-only": {
+      "file": "mastra__generative-ui__your-components__display-only.md",
+      "sha256": "880fe95dbf752b2d60a87769957d91ab4e77a06a115161029175df3dd3618487",
+      "bytes": 2475,
+      "lines": 90,
+      "routes": [
+        "/generative-ui/your-components/display-only"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/generative-ui/your-components/interactive": {
+      "file": "mastra__generative-ui__your-components__interactive.md",
+      "sha256": "381ebd957bcca50abbebe912ed5f715d716fe1c756c2a91cde7375cae92a0e53",
+      "bytes": 152,
+      "lines": 6,
+      "routes": [
+        "/generative-ui/your-components/interactive"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/human-in-the-loop/tool-based": {
+      "file": "mastra__human-in-the-loop__tool-based.md",
+      "sha256": "c7af96de339c30beefe0c3446fcc0c677389e96276ebbbe8e746e0806f052328",
+      "bytes": 3373,
+      "lines": 93,
+      "routes": [
+        "/human-in-the-loop/tool-based"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/inspector": {
+      "file": "mastra__inspector.md",
+      "sha256": "6a3455d6ded7d51bc22e24cd0f0feec86bc0dced9391a9acfc6411c6333b4cf6",
+      "bytes": 5149,
+      "lines": 112,
+      "routes": [
+        "/inspector"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/prebuilt-components": {
+      "file": "mastra__prebuilt-components.md",
+      "sha256": "f98d0b1cca75478ceae64c3ead0ab28d1399b80090329f94d2ed4221e9653ae8",
+      "bytes": 145,
+      "lines": 6,
+      "routes": [
+        "/prebuilt-components"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/programmatic-control": {
+      "file": "mastra__programmatic-control.md",
+      "sha256": "72bda00a749f215f30de4271e7cffe699105955cc187707641c6d2a5c5b2d689",
+      "bytes": 13316,
+      "lines": 475,
+      "routes": [
+        "/programmatic-control"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/quickstart": {
+      "file": "mastra__quickstart.md",
+      "sha256": "0418b90543a828020da543752d855b548030c2a09a020a2d31e01852a27cab78",
+      "bytes": 11375,
+      "lines": 348,
+      "routes": [
+        "/quickstart"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:15 GMT"
+    },
+    "/mastra/shared-state/in-app-agent-read": {
+      "file": "mastra__shared-state__in-app-agent-read.md",
+      "sha256": "299e2a9851045844a6aa6e1e62f9eeec1dab30b7c200ee43dabbb4d454b17820",
+      "bytes": 5567,
+      "lines": 162,
+      "routes": [
+        "/shared-state/in-app-agent-read"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:16 GMT"
+    },
+    "/mastra/shared-state/in-app-agent-write": {
+      "file": "mastra__shared-state__in-app-agent-write.md",
+      "sha256": "86c456e563cf8ecc75d9231280aef9a56eea1488539df9121a3b329bb3067935",
+      "bytes": 5174,
+      "lines": 138,
+      "routes": [
+        "/shared-state/in-app-agent-write"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:16 GMT"
+    },
+    "/mastra/shared-state/predictive-state-updates": {
+      "file": "mastra__shared-state__predictive-state-updates.md",
+      "sha256": "864d52398e0304f4a0186a4000401843c287dbaef8c2e1a256e4b910700210a4",
+      "bytes": 5481,
+      "lines": 124,
+      "routes": [
+        "/shared-state/predictive-state-updates"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Mon, 17 Aug 2026 13:45:16 GMT"
+    }
+  },
+  "sitemap": {
+    "fetchedAt": "2026-08-17T13:45:14.622Z",
+    "urlsUnderRoot": 137,
+    "knownUnmapped": [
+      "https://docs.copilotkit.ai/mastra/agent-config",
+      "https://docs.copilotkit.ai/mastra/agent-spec",
+      "https://docs.copilotkit.ai/mastra/agent-spec/human-in-the-loop",
+      "https://docs.copilotkit.ai/mastra/agent-spec/langgraph",
+      "https://docs.copilotkit.ai/mastra/agent-spec/quickstart",
+      "https://docs.copilotkit.ai/mastra/agent-spec/wayflow",
+      "https://docs.copilotkit.ai/mastra/agentic-chat-ui",
+      "https://docs.copilotkit.ai/mastra/agentic-protocols",
+      "https://docs.copilotkit.ai/mastra/agentic-protocols/a2a",
+      "https://docs.copilotkit.ai/mastra/agentic-protocols/ag-ui",
+      "https://docs.copilotkit.ai/mastra/agentic-protocols/ag-ui-middleware",
+      "https://docs.copilotkit.ai/mastra/agentic-protocols/mcp",
+      "https://docs.copilotkit.ai/mastra/auth",
+      "https://docs.copilotkit.ai/mastra/backend/ag-ui",
+      "https://docs.copilotkit.ai/mastra/backend/agent-runner",
+      "https://docs.copilotkit.ai/mastra/backend/copilot-runtime",
+      "https://docs.copilotkit.ai/mastra/backend/custom-agent",
+      "https://docs.copilotkit.ai/mastra/backend/runtime-endpoints",
+      "https://docs.copilotkit.ai/mastra/backend/self-managed-agents",
+      "https://docs.copilotkit.ai/mastra/build-with-agents",
+      "https://docs.copilotkit.ai/mastra/built-in-agent",
+      "https://docs.copilotkit.ai/mastra/cli",
+      "https://docs.copilotkit.ai/mastra/concepts/architecture",
+      "https://docs.copilotkit.ai/mastra/concepts/generative-ui-overview",
+      "https://docs.copilotkit.ai/mastra/concepts/oss-vs-enterprise",
+      "https://docs.copilotkit.ai/mastra/concepts/which-hook",
+      "https://docs.copilotkit.ai/mastra/contributing/code-contributions",
+      "https://docs.copilotkit.ai/mastra/contributing/code-contributions/package-linking",
+      "https://docs.copilotkit.ai/mastra/contributing/docs-contributions",
+      "https://docs.copilotkit.ai/mastra/cookbook",
+      "https://docs.copilotkit.ai/mastra/cookbook/angular-adk-agentic-app",
+      "https://docs.copilotkit.ai/mastra/cookbook/arcade",
+      "https://docs.copilotkit.ai/mastra/cookbook/daytona",
+      "https://docs.copilotkit.ai/mastra/cookbook/openbox-governed-copilotkit",
+      "https://docs.copilotkit.ai/mastra/cookbook/oracle-agent-spec-memory",
+      "https://docs.copilotkit.ai/mastra/custom-look-and-feel/css",
+      "https://docs.copilotkit.ai/mastra/custom-look-and-feel/reasoning-messages",
+      "https://docs.copilotkit.ai/mastra/deepagents",
+      "https://docs.copilotkit.ai/mastra/deploy/agentcore",
+      "https://docs.copilotkit.ai/mastra/examples",
+      "https://docs.copilotkit.ai/mastra/faq",
+      "https://docs.copilotkit.ai/mastra/generative-ui",
+      "https://docs.copilotkit.ai/mastra/generative-ui/a2ui",
+      "https://docs.copilotkit.ai/mastra/generative-ui/a2ui/dynamic-schema",
+      "https://docs.copilotkit.ai/mastra/generative-ui/a2ui/fixed-schema",
+      "https://docs.copilotkit.ai/mastra/generative-ui/display",
+      "https://docs.copilotkit.ai/mastra/generative-ui/hashbrown",
+      "https://docs.copilotkit.ai/mastra/generative-ui/interactive",
+      "https://docs.copilotkit.ai/mastra/generative-ui/json-render",
+      "https://docs.copilotkit.ai/mastra/generative-ui/mcp-apps",
+      "https://docs.copilotkit.ai/mastra/generative-ui/open-generative-ui",
+      "https://docs.copilotkit.ai/mastra/generative-ui/open-json-ui",
+      "https://docs.copilotkit.ai/mastra/generative-ui/reasoning",
+      "https://docs.copilotkit.ai/mastra/generative-ui/tool-based",
+      "https://docs.copilotkit.ai/mastra/headless",
+      "https://docs.copilotkit.ai/mastra/headless-threads",
+      "https://docs.copilotkit.ai/mastra/human-in-the-loop",
+      "https://docs.copilotkit.ai/mastra/human-in-the-loop/headless",
+      "https://docs.copilotkit.ai/mastra/human-in-the-loop/interrupt-flow",
+      "https://docs.copilotkit.ai/mastra/human-in-the-loop/useInterrupt",
+      "https://docs.copilotkit.ai/mastra/migrate/1.10.X",
+      "https://docs.copilotkit.ai/mastra/migrate/1.8.2",
+      "https://docs.copilotkit.ai/mastra/migrate/v2",
+      "https://docs.copilotkit.ai/mastra/multi-agent/subagents",
+      "https://docs.copilotkit.ai/mastra/multimodal-attachments",
+      "https://docs.copilotkit.ai/mastra/prebuilt-components/chat",
+      "https://docs.copilotkit.ai/mastra/prebuilt-components/chat-controls",
+      "https://docs.copilotkit.ai/mastra/prebuilt-components/copilot-threads-drawer",
+      "https://docs.copilotkit.ai/mastra/prebuilt-components/popup",
+      "https://docs.copilotkit.ai/mastra/prebuilt-components/sidebar",
+      "https://docs.copilotkit.ai/mastra/premium/headless-ui",
+      "https://docs.copilotkit.ai/mastra/premium/intelligence-platform",
+      "https://docs.copilotkit.ai/mastra/premium/managed-intelligence-platform",
+      "https://docs.copilotkit.ai/mastra/premium/overview",
+      "https://docs.copilotkit.ai/mastra/premium/self-hosting",
+      "https://docs.copilotkit.ai/mastra/premium/threads-explained",
+      "https://docs.copilotkit.ai/mastra/reference/v2/hooks/useCapabilities",
+      "https://docs.copilotkit.ai/mastra/runtime-server-adapter",
+      "https://docs.copilotkit.ai/mastra/shared-state",
+      "https://docs.copilotkit.ai/mastra/shared-state/agent-readonly",
+      "https://docs.copilotkit.ai/mastra/shared-state/rendering-in-app",
+      "https://docs.copilotkit.ai/mastra/shared-state/streaming",
+      "https://docs.copilotkit.ai/mastra/telemetry",
+      "https://docs.copilotkit.ai/mastra/threads",
+      "https://docs.copilotkit.ai/mastra/threads-import",
+      "https://docs.copilotkit.ai/mastra/threads-lifecycle",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/common-issues",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/debug-mode",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/error-debugging",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/error-reference",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/event-inspector",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/hook-explorer",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/inspector-dev-console",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/migrate-to-1.10.X",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/migrate-to-1.8.2",
+      "https://docs.copilotkit.ai/mastra/troubleshooting/migrate-to-v2",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-powered-textarea/next-steps",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-powered-textarea/overview",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-powered-textarea/step-1-checkout-repo",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-powered-textarea/step-2-setup-copilotkit",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-powered-textarea/step-3-copilot-textarea",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-powered-textarea/step-4-copilot-readable-state",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-todo-app/next-steps",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-todo-app/overview",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-todo-app/step-1-checkout-repo",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-todo-app/step-2-setup-copilotkit",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-todo-app/step-3-copilot-readable-state",
+      "https://docs.copilotkit.ai/mastra/tutorials/ai-todo-app/step-4-frontend-tools",
+      "https://docs.copilotkit.ai/mastra/tutorials/multi-conversation-chat",
+      "https://docs.copilotkit.ai/mastra/voice",
+      "https://docs.copilotkit.ai/mastra/vs-code-extension",
+      "https://docs.copilotkit.ai/mastra/whats-new",
+      "https://docs.copilotkit.ai/mastra/whats-new/a2a-mcp-handshake",
+      "https://docs.copilotkit.ai/mastra/whats-new/a2ui-launch",
+      "https://docs.copilotkit.ai/mastra/whats-new/generative-ui-spec-support",
+      "https://docs.copilotkit.ai/mastra/whats-new/langgraph-deep-agents",
+      "https://docs.copilotkit.ai/mastra/whats-new/mcp-apps-support",
+      "https://docs.copilotkit.ai/mastra/whats-new/v1-50"
+    ]
+  }
+}
