@@ -2,7 +2,11 @@ import Link from "next/link";
 
 import { StatusBadge } from "@/components/route-header";
 import { Panel } from "@/components/ui";
-import { DOCS_ROOT, DOC_SYNC_DATE, NAV, demoPath, docUrl } from "@/lib/nav-config";
+import { DOCS_ROOT, NAV, demoPath, docUrl } from "@/lib/nav-config";
+import { DocSyncedAt } from "@/components/doc-synced-at";
+
+/** Dynamic: the doc-sync readouts below read the snapshot off disk. */
+export const dynamic = "force-dynamic";
 
 export default function Page() {
   return (
@@ -25,7 +29,7 @@ export default function Page() {
           >
             the live docs
           </a>{" "}
-          on {DOC_SYNC_DATE}.
+          on <DocSyncedAt />.
         </p>
       </header>
 

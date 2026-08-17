@@ -18,7 +18,7 @@ import path from "node:path";
 
 /** `process.cwd()` is `frontend/` under both `next dev` and `next build`. */
 const FRONTEND_ROOT = process.cwd();
-const REPO_ROOT = path.resolve(FRONTEND_ROOT, "..");
+export const REPO_ROOT = path.resolve(FRONTEND_ROOT, "..");
 
 export interface SourceFile {
   /** Repo-relative path, shown as the caption. */
@@ -43,7 +43,13 @@ function escapeRe(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function resolveRepoPath(repoRelative: string): string {
+/**
+ * Shared by the doc-sync store, which writes rather than reads — so the repo
+ * root and the traversal guard are defined once. If the `process.cwd()`
+ * assumption above ever breaks, both subsystems break together and are fixed
+ * together, instead of one quietly resolving somewhere else.
+ */
+export function resolveInRepo(repoRelative: string): string {
   const resolved = path.resolve(REPO_ROOT, repoRelative);
   // Never let a path escape the repo — these strings are authored, but a typo
   // walking upward should fail loudly rather than read something unexpected.
@@ -67,7 +73,7 @@ export async function readSource(
 
   let raw: string;
   try {
-    raw = await readFile(resolveRepoPath(repoRelative), "utf8");
+    raw = await readFile(resolveInRepo(repoRelative), "utf8");
   } catch (error) {
     return {
       path: repoRelative,

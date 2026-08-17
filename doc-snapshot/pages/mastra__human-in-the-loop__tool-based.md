@@ -1,0 +1,92 @@
+# Tool-based
+
+> Implement HITL with Mastra using frontend tools that render UI and collect user input.
+
+
+<IframeSwitcher
+  id="human-in-the-loop-tool-based-example"
+  exampleUrl="https://feature-viewer.copilotkit.ai/mastra/feature/human_in_the_loop?sidebar=false&chatDefaultOpen=false"
+  codeUrl="https://feature-viewer.copilotkit.ai/mastra/feature/human_in_the_loop?view=code&sidebar=false&codeLayout=tabs"
+  exampleLabel="Demo"
+  codeLabel="Code"
+  height="700px"
+/>
+
+## What is this?
+
+CopilotKit lets you add custom UI to take user input and then pass it back to the agent upon completion.
+This approach uses `useHumanInTheLoop` to register a frontend tool that renders a UI component and waits for the user's response.
+
+<Callout type="info">
+  Looking for an approach where tools can pause mid-execution and wait for user input? See the [interrupt-based approach](/mastra/human-in-the-loop/interrupt-flow).
+</Callout>
+
+## Why should I use this?
+
+Human-in-the-loop is a powerful way to implement complex workflows that are production ready. By having a human in the loop,
+you can ensure that the agent is always making the right decisions and ultimately is being steered in the right direction.
+
+## Implementation
+
+<Steps>
+  <Step>
+    ### Run and connect your agent
+    You'll need to run your agent and connect it to CopilotKit before proceeding. If you haven't done so already,
+you can follow the instructions in the [Getting Started](/langgraph/quickstart) guide.
+
+If you don't already have an agent, you can use the [coagent starter](https://github.com/copilotkit/copilotkit/tree/main/examples/coagents-starter) as a starting point
+as this guide uses it as a starting point.
+
+  </Step>
+
+  <Step>
+    ### Add a human-in-the-loop tool to your Frontend
+    First, we'll create a component that offers the user options and waits for their selection.
+
+    ```tsx title="ui/app/page.tsx"
+    import { useHumanInTheLoop } from "@copilotkit/react-core/v2" // [!code highlight]
+    import { z } from "zod"
+
+    function YourMainContent() {
+      // ...
+
+      useHumanInTheLoop({
+        name: "offerOptions",
+        description: "Give the user a choice between two options and have them select one.",
+        parameters: z.object({
+          option_1: z.string().describe("The first option"),
+          option_2: z.string().describe("The second option"),
+        }),
+        render: ({ args, respond }) => {
+          if (!respond) return <></>;
+          return (
+            <div>
+              {/* [!code highlight:2] */}
+              <button onClick={() => respond(`${args.option_1} was selected`)}>{args.option_1}</button>
+              <button onClick={() => respond(`${args.option_2} was selected`)}>{args.option_2}</button>
+            </div>
+          );
+        },
+      });
+
+      // ...
+    }
+    ```
+  </Step>
+
+  <Step>
+    ### Setup the Mastra Agent
+    On the agent side, we are already done! Mastra natively supports the AG-UI protocol and will automatically
+    pass control back to the frontend when the `offerOptions` tool is called by the agent.
+  </Step>
+  <Step>
+    ### Give it a try!
+    Try asking your agent something that requires a choice.
+
+    ```
+    Can you show me two good options for a restaurant name?"
+    ```
+
+    You'll see that the agent will present two options and wait for you to select one before continuing.
+  </Step>
+</Steps>
