@@ -28,6 +28,7 @@ const contentSchema = z
   })
   .passthrough();
 
+// Doc step "Render the activity card in your frontend" (ui/app/activity-card.tsx)
 export const backgroundTaskActivityRenderer: ReactActivityMessageRenderer<
   z.infer<typeof contentSchema>
 > = {

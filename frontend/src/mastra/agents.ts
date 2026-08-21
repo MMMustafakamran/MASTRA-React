@@ -172,6 +172,7 @@ export const colleaguesContactAgent = new Agent({
 
 // #region background-agent
 // Background Tasks — docs.copilotkit.ai/mastra/background-tasks
+// Doc step "Add the tool to your agent" (src/mastra/agents/index.ts)
 export const backgroundAgentsAgent = new Agent({
   id: "background-agents",
   name: "Background Agents Agent",

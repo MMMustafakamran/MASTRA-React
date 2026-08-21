@@ -27,6 +27,7 @@ const runtime = new CopilotRuntime({
   agents: MastraAgent.getLocalAgents({
     mastra,
     resourceId: "copilotkit-harness",
+    // Doc section "Completion is out of band"
     untilIdle: true,
   }),
 });

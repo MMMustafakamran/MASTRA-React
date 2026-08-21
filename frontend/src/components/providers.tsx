@@ -20,15 +20,19 @@ const RUNTIME_URL = "/api/copilotkit";
 
 const LICENSE_KEY = process.env.NEXT_PUBLIC_COPILOTKIT_LICENSE_KEY;
 
+// Activity renderers are provider-level, not page-level — this is what makes
+// the Background Tasks route show progress cards.
+// Doc step "Render the activity card", provider half (ui/app/page.tsx).
+// Hoisted: the provider requires a referentially stable array.
+const ACTIVITY_RENDERERS = [backgroundTaskActivityRenderer];
+
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <CopilotKitProvider
       runtimeUrl={RUNTIME_URL}
       {...(LICENSE_KEY ? { publicLicenseKey: LICENSE_KEY } : {})}
       showDevConsole="auto"
-      // Activity renderers are provider-level, not page-level — this is what
-      // makes the Background Tasks route show progress cards.
-      renderActivityMessages={[backgroundTaskActivityRenderer]}
+      renderActivityMessages={ACTIVITY_RENDERERS}
       onError={(event) => {
         console.error(`[CopilotKit ${event.code}]`, event.error);
       }}
