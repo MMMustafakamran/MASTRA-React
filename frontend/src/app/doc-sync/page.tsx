@@ -187,13 +187,13 @@ export default async function Page() {
       </Panel>
 
       {report &&
-        (report.sitemap.newUnmapped.length > 0 ||
-          report.sitemap.confirmedRemoved.length > 0) && (
+        ((report.sitemap?.newUnmapped?.length ?? 0) > 0 ||
+          (report.sitemap?.confirmedRemoved?.length ?? 0) > 0) && (
           <Panel
             title="Nav drift"
             description="Compared against the site's sitemap, which is the only way to notice pages that were added or removed rather than edited."
           >
-            {report.sitemap.confirmedRemoved.length > 0 && (
+            {(report.sitemap?.confirmedRemoved?.length ?? 0) > 0 && (
               <div className="mb-4">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-400">
                   Removed upstream
@@ -204,7 +204,7 @@ export default async function Page() {
                   than a deletion, so both signals are required.
                 </p>
                 <ul className="mt-2 space-y-1">
-                  {report.sitemap.confirmedRemoved.map((url) => (
+                  {report.sitemap?.confirmedRemoved?.map((url) => (
                     <li
                       key={url}
                       className="font-mono text-xs text-slate-600 dark:text-slate-400"
@@ -216,10 +216,10 @@ export default async function Page() {
               </div>
             )}
 
-            {report.sitemap.newUnmapped.length > 0 && (
+            {(report.sitemap?.newUnmapped?.length ?? 0) > 0 && (
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  New upstream, no route here ({report.sitemap.newUnmapped.length})
+                  New upstream, no route here ({report.sitemap?.newUnmapped?.length})
                 </h3>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Listed once, then folded into the manifest&apos;s{" "}
@@ -227,7 +227,7 @@ export default async function Page() {
                   that list by hand as you add routes.
                 </p>
                 <ul className="mt-2 space-y-1">
-                  {report.sitemap.newUnmapped.map((url) => (
+                  {report.sitemap?.newUnmapped?.map((url) => (
                     <li
                       key={url}
                       className="font-mono text-xs text-slate-600 dark:text-slate-400"
