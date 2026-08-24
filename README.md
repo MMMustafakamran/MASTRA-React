@@ -82,6 +82,14 @@ cd frontend && npm install
 cp ../.env.example .env.local
 ```
 
+### Upgrading Packages Safely
+To upgrade packages to their latest versions without breaking peer dependencies:
+```bash
+cd frontend
+npx npm-check-updates --peer -u
+npm install
+```
+
 Then edit `frontend/.env.local`:
 
 | Variable | What it does |
