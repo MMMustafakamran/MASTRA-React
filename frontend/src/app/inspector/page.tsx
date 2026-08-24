@@ -10,11 +10,15 @@ const CONTROL_SNIPPET = `// <CopilotKit> — takes enableInspector, defaults to 
 <CopilotKitProvider runtimeUrl="/api/copilotkit" showDevConsole="auto">`;
 
 const ROWS: [string, string][] = [
-  ["AG-UI Events", "The raw event stream between this page and the agent."],
-  ["Available Agents", "Which agent ids the runtime reported."],
-  ["Agent State", "The current shared state object, updating live."],
-  ["Frontend Tools", "Every browser-executed tool and its parameter schema."],
-  ["Context", "Readables and document context handed to the agent."],
+  ["Home", "Project, runtime, services, and CopilotKit news."],
+  ["Threads", "Inspect real Threads and their messages, AG-UI events, and state."],
+  ["Memory", "Inspect long-term memory when Intelligence exposes it."],
+  ["AG-UI Events", "View the raw AG-UI event stream between your frontend and agent in real time."],
+  ["Available Agents", "See which agents are connected and available to your app."],
+  ["Agent State", "Inspect your agent's current state as it updates."],
+  ["Frontend Tools", "See what tools you've defined on the frontend and their parameter schemas."],
+  ["Context", "View the context you've provided to the agent, including readables and document context."],
+  ["Project Context", "See trusted organization, project, plan, Thread usage, expiry, and license-aware actions when the Runtime supplies them."],
 ];
 
 export default function Page() {

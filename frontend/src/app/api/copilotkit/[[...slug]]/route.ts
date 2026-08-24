@@ -1,14 +1,11 @@
 import {
   CopilotRuntime,
-  ExperimentalEmptyAdapter,
-  copilotRuntimeNextJSAppRouterEndpoint,
-} from "@copilotkit/runtime";
+  createCopilotRuntimeHandler,
+  InMemoryAgentRunner,
+} from "@copilotkit/runtime/v2";
 import { MastraAgent } from "@ag-ui/mastra";
-import { NextRequest } from "next/server";
 
 import { mastra } from "@/mastra";
-
-const serviceAdapter = new ExperimentalEmptyAdapter();
 
 // `getLocalAgents` registers every agent on the Mastra instance, keyed by the
 // name it was given in `agents: { … }`. That is why routes address agents as
@@ -30,14 +27,13 @@ const runtime = new CopilotRuntime({
     // Doc section "Completion is out of band"
     untilIdle: true,
   }),
+  runner: new InMemoryAgentRunner(),
 });
 
-export const POST = async (req: NextRequest) => {
-  const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
-    runtime,
-    serviceAdapter,
-    endpoint: "/api/copilotkit",
-  });
+const handler = createCopilotRuntimeHandler({
+  runtime,
+  basePath: "/api/copilotkit",
+});
 
-  return handleRequest(req);
-};
+export const GET = handler;
+export const POST = handler;

@@ -323,7 +323,7 @@ mastra/
         │   ├── layout.tsx
         │   ├── page.tsx               # / — orientation + agent roster
         │   ├── status/page.tsx
-        │   ├── api/copilotkit/route.ts   # ★ CopilotRuntime + getLocalAgents
+        │   ├── api/copilotkit/[[...slug]]/route.ts   # ★ CopilotRuntime + getLocalAgents
         │   └── <doc route>/
         │       ├── page.tsx           # notes + exact source (server component)
         │       └── demo-chat/page.tsx # ★ the running feature, chrome-free

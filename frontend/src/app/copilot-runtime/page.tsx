@@ -35,7 +35,7 @@ export default function Page() {
         title="This repo's runtime"
         description="Read from disk — diff it against the doc's sample."
       >
-        <SourceCode file="frontend/src/app/api/copilotkit/route.ts" />
+        <SourceCode file="frontend/src/app/api/copilotkit/[[...slug]]/route.ts" />
       </Panel>
 
       <Panel title="The Mastra instance">
