@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "docsRoot": "https://docs.copilotkit.ai/mastra",
-  "syncedAt": "2026-08-21T18:38:58.567Z",
+  "syncedAt": "2026-08-24T13:19:33.930Z",
   "pages": {
     "/mastra": {
       "file": "mastra.md",
@@ -14,7 +14,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:38:59 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
     },
     "/mastra/ag-ui": {
       "file": "mastra__ag-ui.md",
@@ -26,7 +26,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:38:59 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
     },
     "/mastra/agent-app-context": {
       "file": "mastra__agent-app-context.md",
@@ -38,7 +38,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:00 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
     },
     "/mastra/background-tasks": {
       "file": "mastra__background-tasks.md",
@@ -50,19 +50,19 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:00 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
     },
     "/mastra/copilot-runtime": {
       "file": "mastra__copilot-runtime.md",
-      "sha256": "ea46c164d61c93827e0bde4cbfdffd8e1c90f5965ee4b930239ff594e89234af",
-      "bytes": 7578,
-      "lines": 209,
+      "sha256": "87116d196c71a5c5b354ae885eaf2aa87d978f771c5a87227a5e1a5bc7d26522",
+      "bytes": 9015,
+      "lines": 238,
       "routes": [
         "/copilot-runtime"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:00 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
     },
     "/mastra/custom-look-and-feel/headless-ui": {
       "file": "mastra__custom-look-and-feel__headless-ui.md",
@@ -74,7 +74,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:01 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
     },
     "/mastra/custom-look-and-feel/slots": {
       "file": "mastra__custom-look-and-feel__slots.md",
@@ -86,7 +86,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:01 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/frontend-tools": {
       "file": "mastra__frontend-tools.md",
@@ -98,7 +98,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:02 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/generative-ui/state-rendering": {
       "file": "mastra__generative-ui__state-rendering.md",
@@ -110,7 +110,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:02 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/generative-ui/tool-rendering": {
       "file": "mastra__generative-ui__tool-rendering.md",
@@ -122,7 +122,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:02 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/generative-ui/your-components/display-only": {
       "file": "mastra__generative-ui__your-components__display-only.md",
@@ -134,7 +134,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:03 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/generative-ui/your-components/interactive": {
       "file": "mastra__generative-ui__your-components__interactive.md",
@@ -146,7 +146,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:03 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/human-in-the-loop/tool-based": {
       "file": "mastra__human-in-the-loop__tool-based.md",
@@ -158,19 +158,19 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:03 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/inspector": {
       "file": "mastra__inspector.md",
-      "sha256": "b4444326ee01833d19530ee28a23c1e51f815add86fbb3a2bb4f7eb5ef2dfd7a",
-      "bytes": 5590,
-      "lines": 119,
+      "sha256": "3b99ce2f1fc1eec2514252624b9499938629afb950c933509275b96664e414c4",
+      "bytes": 5959,
+      "lines": 127,
       "routes": [
         "/inspector"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:04 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/prebuilt-components": {
       "file": "mastra__prebuilt-components.md",
@@ -182,7 +182,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:04 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/programmatic-control": {
       "file": "mastra__programmatic-control.md",
@@ -194,19 +194,19 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:05 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/quickstart": {
       "file": "mastra__quickstart.md",
-      "sha256": "633f350b63f8febf648e1ba1de7f0e52205255193f8e14b57b8721ddd27f42a5",
-      "bytes": 11825,
-      "lines": 363,
+      "sha256": "96b3eebf8846a823ebc849e6c6b5f91060f41b13c3cbd151f7323ecf55902f8c",
+      "bytes": 11668,
+      "lines": 359,
       "routes": [
         "/quickstart"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:05 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/shared-state/in-app-agent-read": {
       "file": "mastra__shared-state__in-app-agent-read.md",
@@ -218,7 +218,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:05 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/shared-state/in-app-agent-write": {
       "file": "mastra__shared-state__in-app-agent-write.md",
@@ -230,7 +230,7 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:06 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     },
     "/mastra/shared-state/predictive-state-updates": {
       "file": "mastra__shared-state__predictive-state-updates.md",
@@ -242,12 +242,12 @@
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 21 Aug 2026 18:39:06 GMT"
+      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
     }
   },
   "sitemap": {
-    "fetchedAt": "2026-08-17T13:45:14.622Z",
-    "urlsUnderRoot": 137,
+    "fetchedAt": "2026-08-24T13:19:33.930Z",
+    "urlsUnderRoot": 142,
     "knownUnmapped": [
       "https://docs.copilotkit.ai/mastra/agent-config",
       "https://docs.copilotkit.ai/mastra/agent-spec",
@@ -281,6 +281,7 @@
       "https://docs.copilotkit.ai/mastra/cookbook",
       "https://docs.copilotkit.ai/mastra/cookbook/angular-adk-agentic-app",
       "https://docs.copilotkit.ai/mastra/cookbook/arcade",
+      "https://docs.copilotkit.ai/mastra/cookbook/claude-managed-agents",
       "https://docs.copilotkit.ai/mastra/cookbook/daytona",
       "https://docs.copilotkit.ai/mastra/cookbook/openbox-governed-copilotkit",
       "https://docs.copilotkit.ai/mastra/cookbook/oracle-agent-spec-memory",
@@ -288,6 +289,8 @@
       "https://docs.copilotkit.ai/mastra/custom-look-and-feel/reasoning-messages",
       "https://docs.copilotkit.ai/mastra/deepagents",
       "https://docs.copilotkit.ai/mastra/deploy/agentcore",
+      "https://docs.copilotkit.ai/mastra/deploy/aws-lambda",
+      "https://docs.copilotkit.ai/mastra/deploy/langsmith",
       "https://docs.copilotkit.ai/mastra/examples",
       "https://docs.copilotkit.ai/mastra/faq",
       "https://docs.copilotkit.ai/mastra/generative-ui",
@@ -319,6 +322,7 @@
       "https://docs.copilotkit.ai/mastra/prebuilt-components/copilot-threads-drawer",
       "https://docs.copilotkit.ai/mastra/prebuilt-components/popup",
       "https://docs.copilotkit.ai/mastra/prebuilt-components/sidebar",
+      "https://docs.copilotkit.ai/mastra/premium/connect-your-runtime",
       "https://docs.copilotkit.ai/mastra/premium/headless-ui",
       "https://docs.copilotkit.ai/mastra/premium/intelligence-platform",
       "https://docs.copilotkit.ai/mastra/premium/managed-intelligence-platform",
@@ -335,6 +339,7 @@
       "https://docs.copilotkit.ai/mastra/threads",
       "https://docs.copilotkit.ai/mastra/threads-import",
       "https://docs.copilotkit.ai/mastra/threads-lifecycle",
+      "https://docs.copilotkit.ai/mastra/threads-self-managed",
       "https://docs.copilotkit.ai/mastra/troubleshooting/common-issues",
       "https://docs.copilotkit.ai/mastra/troubleshooting/debug-mode",
       "https://docs.copilotkit.ai/mastra/troubleshooting/error-debugging",
