@@ -41,6 +41,7 @@ export const addSearch = createTool({
 
 // #region deep-research
 // Background Tasks — docs.copilotkit.ai/mastra/background-tasks
+// Doc step "Define a backgroundable tool" (src/mastra/tools/background-research.ts)
 export const runDeepResearchTool = createTool({
   id: "run_deep_research",
   description:

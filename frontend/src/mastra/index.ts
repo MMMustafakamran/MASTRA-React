@@ -22,6 +22,7 @@ import {
  * background worker needs somewhere to persist queued work, so both are
  * required for that route and harmless for every other one.
  */
+// Doc step "Enable the BackgroundTaskManager on the Mastra instance" (src/mastra/index.ts)
 export const mastra = new Mastra({
   agents: {
     myAgent,

@@ -25,9 +25,9 @@ const LEVELS: { id: Level; label: string; blurb: string }[] = [
   },
 ];
 
-const CustomMessageView = ({ messages, isRunning}) => (
+const CustomMessageView = ({ messages, isRunning }: { messages?: any[]; isRunning?: boolean }) => (
   <div className="space-y-4 p-6">
-    {messages?.map((msg) => (
+    {messages?.map((msg: any) => (
       <div
         key={msg.id}
         className={msg.role === "user" ? "text-right" : "text-left"}
@@ -99,7 +99,7 @@ export default function Page() {
             <CopilotChat
               agentId="myAgent"
               key="component"
-              messageView={CustomMessageView}
+              messageView={CustomMessageView as any}
               labels={{
                 welcomeMessageText:
                   "Slot level 3 — the streaming cursor and the whole layout are ours.",

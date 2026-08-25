@@ -3,6 +3,7 @@
 > Turn your Mastra Agents into an agent-native application in 10 minutes.
 
 
+
 <OpsPlatformCTA
   variant="card"
   title="Ship Mastra to production"
@@ -181,31 +182,27 @@ Before you begin, you'll need the following:
 
                 Create an API route to connect CopilotKit to your Mastra agent:
 
-                ```ts title="app/api/copilotkit/route.ts"
+                ```ts title="app/api/copilotkit/[[...slug]]/route.ts"
                 import {
                   CopilotRuntime,
-                  ExperimentalEmptyAdapter,
-                  copilotRuntimeNextJSAppRouterEndpoint,
-                } from "@copilotkit/runtime";
-                import { NextRequest } from "next/server";
+                  createCopilotRuntimeHandler,
+                  InMemoryAgentRunner,
+                } from "@copilotkit/runtime/v2";
                 import { MastraAgent } from "@ag-ui/mastra"
                 import { mastra } from "@/mastra"; // the path to your Mastra instance
 
-                const serviceAdapter = new ExperimentalEmptyAdapter();
-
                 const runtime = new CopilotRuntime({
                   agents: MastraAgent.getLocalAgents({ mastra }),
+                  runner: new InMemoryAgentRunner(),
                 });
 
-                export const POST = async (req: NextRequest) => {
-                  const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
-                    runtime,
-                    serviceAdapter,
-                    endpoint: "/api/copilotkit",
-                  });
+                const handler = createCopilotRuntimeHandler({
+                  runtime,
+                  basePath: "/api/copilotkit",
+                });
 
-                  return handleRequest(req);
-                };
+                export const GET = handler;
+                export const POST = handler;
                 ```
             </Step>
             <Step>
@@ -225,7 +222,7 @@ Before you begin, you'll need the following:
                     <html lang="en">
                       <body>
                         {/* [!code highlight:3] */}
-                        <CopilotKit runtimeUrl="/api/copilotkit" agent="myAgent">
+                        <CopilotKit runtimeUrl="/api/copilotkit" agent="myAgent" useSingleEndpoint={false}>
                           {children}
                         </CopilotKit>
                       </body>
@@ -309,6 +306,20 @@ Before you begin, you'll need the following:
             </Accordion>
         </Accordions>
     </Step>
+
+    <Step>
+        ### Open Inspector and confirm setup
+
+On localhost, click the Inspector button in the corner of the app.
+
+1. Open **Agents**, then **Agent**. Your agent is listed.
+2. Send a chat message. Open **Agents**, then **AG-UI Events**. Events are moving.
+3. Open **Threads**. The list is unlocked (Intelligence is on), or locked with Enable Intelligence (Intelligence is off).
+
+More detail: [Inspector](/mastra/inspector).
+
+    </Step>
+
 </Steps>
 
 ## What's next?

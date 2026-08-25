@@ -27,7 +27,8 @@ export default function Page() {
       parentPath="/custom-look-and-feel/headless-ui"
       subtitle="hand-built chat over useAgent + useCopilotKit"
     >
-      <div className="mx-auto flex h-full max-w-3xl flex-col">
+      <div className="flex h-full items-center justify-center p-4 md:p-8">
+        <div className="flex h-full max-h-[38rem] w-full max-w-2xl flex-col rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {agent.messages.length === 0 && (
             <p className="text-sm text-slate-500">
@@ -89,6 +90,7 @@ export default function Page() {
             </button>
           )}
         </form>
+        </div>
       </div>
     </DemoFrame>
   );

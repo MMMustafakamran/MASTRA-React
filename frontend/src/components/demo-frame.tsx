@@ -22,7 +22,7 @@ export function DemoFrame({
   const route = findRoute(parentPath);
 
   return (
-    <div className="flex h-dvh flex-col bg-white dark:bg-slate-950">
+    <div className="flex h-dvh flex-col bg-white pb-12 dark:bg-slate-950">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-slate-200 px-4 py-2 dark:border-slate-800">
         <div className="flex min-w-0 items-baseline gap-2">
           <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
