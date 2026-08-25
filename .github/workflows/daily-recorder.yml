@@ -6,11 +6,6 @@ on:
     - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
-      run_all_pages:
-        description: 'Record ALL 22 pages (default / uncheck to choose specific pages below)'
-        required: false
-        type: boolean
-        default: true
       upgrade_packages:
         description: 'Upgrade packages (ncu -u --peer)'
         required: false
@@ -22,12 +17,12 @@ on:
         type: boolean
         default: false
       custom_args:
-        description: 'Or type custom CLI args (e.g. --limit=5)'
+        description: 'Custom CLI args (e.g. --pages=quickstart,threads or --limit=5)'
         required: false
         type: string
         default: ''
 
-      # Individual Page Selection Checkboxes
+      # Individual Page Selection Checkboxes (leave all unchecked to record ALL 22 pages)
       page_quickstart:
         description: 'Page 01: Quickstart'
         type: boolean
