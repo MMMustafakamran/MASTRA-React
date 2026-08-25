@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const VIDEOS_DIR = path.join(ROOT_DIR, 'autorecorder', 'videos');
+const FRONTEND_LOG_PATH = path.join(ROOT_DIR, 'frontend.log');
 
 const isWindows = process.platform === 'win32';
 
@@ -26,6 +27,14 @@ console.log('  🚀 CopilotKit Mastra Automation Pipeline');
 console.log('═══════════════════════════════════════════════════════════════');
 
 let frontendProc = null;
+let frontendLogFd = null;
+
+// Check for required API credentials
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('\n⚠️  [CREDENTIAL WARNING]: OPENAI_API_KEY is not set in process environment or repository secrets.');
+  console.warn('👉  Mastra agent responses will fail unless OPENAI_API_KEY is added to GitHub Repository Secrets:');
+  console.warn('    https://github.com/MMMustafakamran/mastra/settings/secrets/actions\n');
+}
 
 // Helper to kill a process and its child tree
 function killTree(proc, signal = 'SIGTERM') {
@@ -55,6 +64,12 @@ function cleanup() {
   if (frontendProc) {
     killTree(frontendProc);
     frontendProc = null;
+  }
+  if (frontendLogFd !== null) {
+    try {
+      fs.closeSync(frontendLogFd);
+    } catch {}
+    frontendLogFd = null;
   }
 }
 
@@ -138,6 +153,17 @@ function getPackageVersions() {
   return versions;
 }
 
+function getRecentServerLogs(linesCount = 30) {
+  if (!fs.existsSync(FRONTEND_LOG_PATH)) return null;
+  try {
+    const content = fs.readFileSync(FRONTEND_LOG_PATH, 'utf8');
+    const lines = content.split('\n');
+    return lines.slice(-linesCount).join('\n').trim();
+  } catch {
+    return null;
+  }
+}
+
 function generateReport(data) {
   if (!fs.existsSync(VIDEOS_DIR)) {
     fs.mkdirSync(VIDEOS_DIR, { recursive: true });
@@ -163,6 +189,7 @@ function generateReport(data) {
     status: data.success ? 'SUCCESS' : 'FAILED',
     args: forwardArgs.length > 0 ? forwardArgs.join(' ') : 'all',
     upgradedPackages: shouldUpgrade,
+    hasApiKey: !!process.env.OPENAI_API_KEY,
     docDrift: {
       checkedPages: data.driftResult?.total || 0,
       driftDetected: data.driftResult?.drifted || false,
@@ -183,6 +210,7 @@ function generateReport(data) {
   lines.push(`- **Status:** ${report.status === 'SUCCESS' ? '✅ **SUCCESS**' : '❌ **FAILED**'}`);
   lines.push(`- **Generated At:** \`${report.timestamp}\``);
   lines.push(`- **Execution Mode:** \`${report.args}\``);
+  lines.push(`- **OpenAI API Key Configured:** \`${report.hasApiKey ? 'Yes (Detected)' : '❌ NO (Missing OPENAI_API_KEY secret)'}\``);
   lines.push(`- **Upgraded Packages:** \`${report.upgradedPackages ? 'Yes (--upgrade)' : 'No'}\`\n`);
 
   lines.push('## 1. 🔍 Doc Drift Check');
@@ -221,6 +249,12 @@ function generateReport(data) {
   if (report.error) {
     lines.push('## ⚠️ Failure Details');
     lines.push(`\`\`\`\n${report.error}\n\`\`\`\n`);
+
+    const serverLogs = getRecentServerLogs();
+    if (serverLogs) {
+      lines.push('### 📋 Recent Next.js & Mastra Server Logs (`frontend.log`):');
+      lines.push(`\`\`\`\n${serverLogs}\n\`\`\`\n`);
+    }
   }
 
   fs.writeFileSync(path.join(VIDEOS_DIR, 'RUN_REPORT.md'), lines.join('\n'), 'utf8');
@@ -320,13 +354,21 @@ async function main() {
       runSync('npm install', path.join(ROOT_DIR, 'autorecorder'), 'Installing Autorecorder Dependencies');
     }
 
-    // 3. Start Next.js (Mastra Agent + Frontend)
+    // 3. Start Next.js (Mastra Agent + Frontend) with file logging
     console.log('\n▶ [Step] Starting Frontend & Mastra Agent Server (:3000)...');
+    try {
+      if (fs.existsSync(FRONTEND_LOG_PATH)) fs.unlinkSync(FRONTEND_LOG_PATH);
+      frontendLogFd = fs.openSync(FRONTEND_LOG_PATH, 'a');
+    } catch {
+      frontendLogFd = 'ignore';
+    }
+
     frontendProc = spawn('npm run dev', {
       cwd: path.join(ROOT_DIR, 'frontend'),
-      stdio: 'ignore',
+      stdio: [ 'ignore', frontendLogFd, frontendLogFd ],
       shell: true,
       detached: !isWindows,
+      env: { ...process.env },
     });
 
     // 4. Health Checks
@@ -352,6 +394,11 @@ async function main() {
   } catch (err) {
     reportData.error = err.message || String(err);
     console.error('\n❌ Automation failed:', err.message || err);
+
+    const recentLogs = getRecentServerLogs(25);
+    if (recentLogs) {
+      console.error('\n📋 [Server Logs Tail]:\n' + recentLogs + '\n');
+    }
     process.exitCode = 1;
   } finally {
     muxAudioFiles();
