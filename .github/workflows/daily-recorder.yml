@@ -1,0 +1,248 @@
+name: Daily Auto-Update and Demo Recording
+
+on:
+  schedule:
+    # Runs every day at 06:00 UTC (11:00 AM PKT / adjust as desired)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      run_all_pages:
+        description: 'Record ALL 22 pages (default / uncheck to choose specific pages below)'
+        required: false
+        type: boolean
+        default: true
+      upgrade_packages:
+        description: 'Upgrade packages (ncu -u --peer)'
+        required: false
+        type: boolean
+        default: false
+      fail_on_doc_drift:
+        description: 'Fail immediately if doc drift is detected'
+        required: false
+        type: boolean
+        default: false
+      custom_args:
+        description: 'Or type custom CLI args (e.g. --limit=5)'
+        required: false
+        type: string
+        default: ''
+
+      # Individual Page Selection Checkboxes
+      page_quickstart:
+        description: 'Page 01: Quickstart'
+        type: boolean
+        default: false
+      page_prebuilt_components:
+        description: 'Page 02: Prebuilt Components'
+        type: boolean
+        default: false
+      page_prebuilt_components_copilot_threads_drawer:
+        description: 'Page 03: CopilotThreadsDrawer'
+        type: boolean
+        default: false
+      page_threads:
+        description: 'Page 04: Threads'
+        type: boolean
+        default: false
+      page_headless_threads:
+        description: 'Page 05: Headless Threads'
+        type: boolean
+        default: false
+      page_custom_look_and_feel_slots:
+        description: 'Page 06: Custom Slots'
+        type: boolean
+        default: false
+      page_custom_look_and_feel_headless_ui:
+        description: 'Page 07: Headless UI'
+        type: boolean
+        default: false
+      page_programmatic_control:
+        description: 'Page 08: Programmatic Control'
+        type: boolean
+        default: false
+      page_inspector:
+        description: 'Page 09: Dev Console / Inspector'
+        type: boolean
+        default: false
+      page_generative_ui_your_components_display_only:
+        description: 'Page 10: Generative UI Display-Only'
+        type: boolean
+        default: false
+      page_generative_ui_your_components_interactive:
+        description: 'Page 11: Generative UI Interactive'
+        type: boolean
+        default: false
+      page_generative_ui_tool_rendering:
+        description: 'Page 12: Generative UI Tool Rendering'
+        type: boolean
+        default: false
+      page_generative_ui_state_rendering:
+        description: 'Page 13: Generative UI State Rendering'
+        type: boolean
+        default: false
+      page_frontend_tools:
+        description: 'Page 14: Frontend Tools'
+        type: boolean
+        default: false
+      page_human_in_the_loop_tool_based:
+        description: 'Page 15: Human In The Loop'
+        type: boolean
+        default: false
+      page_background_tasks:
+        description: 'Page 16: Background Tasks'
+        type: boolean
+        default: false
+      page_shared_state_in_app_agent_read:
+        description: 'Page 17: Shared State - Read'
+        type: boolean
+        default: false
+      page_shared_state_in_app_agent_write:
+        description: 'Page 18: Shared State - Write'
+        type: boolean
+        default: false
+      page_shared_state_predictive_state_updates:
+        description: 'Page 19: Shared State - Predictive'
+        type: boolean
+        default: false
+      page_agent_app_context:
+        description: 'Page 20: Agent App Context'
+        type: boolean
+        default: false
+      page_copilot_runtime:
+        description: 'Page 21: Copilot Runtime'
+        type: boolean
+        default: false
+      page_ag_ui:
+        description: 'Page 22: AG-UI'
+        type: boolean
+        default: false
+
+jobs:
+  record-workers:
+    name: Worker ${{ matrix.shard }}/3
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o' }}
+      NEXT_PUBLIC_COPILOTKIT_LICENSE_KEY: ${{ secrets.NEXT_PUBLIC_COPILOTKIT_LICENSE_KEY }}
+      COPILOTKIT_LICENSE_TOKEN: ${{ secrets.COPILOTKIT_LICENSE_TOKEN }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            autorecorder/package-lock.json
+
+      - name: Install Playwright & System Chromium Dependencies
+        run: |
+          cd autorecorder
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Run Automation Pipeline & Record Demos (Shard ${{ matrix.shard }}/3)
+        run: |
+          # 1. Custom CLI args override everything if provided
+          if [ -n "${{ inputs.custom_args }}" ]; then
+            RECORD_ARGS="${{ inputs.custom_args }}"
+          else
+            # 2. Check if individual page checkboxes were selected
+            PAGES=()
+            [ "${{ inputs.page_quickstart }}" = "true" ] && PAGES+=("quickstart")
+            [ "${{ inputs.page_prebuilt_components }}" = "true" ] && PAGES+=("prebuilt-components")
+            [ "${{ inputs.page_prebuilt_components_copilot_threads_drawer }}" = "true" ] && PAGES+=("prebuilt-components-copilot-threads-drawer")
+            [ "${{ inputs.page_threads }}" = "true" ] && PAGES+=("threads")
+            [ "${{ inputs.page_headless_threads }}" = "true" ] && PAGES+=("headless-threads")
+            [ "${{ inputs.page_custom_look_and_feel_slots }}" = "true" ] && PAGES+=("custom-look-and-feel-slots")
+            [ "${{ inputs.page_custom_look_and_feel_headless_ui }}" = "true" ] && PAGES+=("custom-look-and-feel-headless-ui")
+            [ "${{ inputs.page_programmatic_control }}" = "true" ] && PAGES+=("programmatic-control")
+            [ "${{ inputs.page_inspector }}" = "true" ] && PAGES+=("inspector")
+            [ "${{ inputs.page_generative_ui_your_components_display_only }}" = "true" ] && PAGES+=("generative-ui-your-components-display-only")
+            [ "${{ inputs.page_generative_ui_your_components_interactive }}" = "true" ] && PAGES+=("generative-ui-your-components-interactive")
+            [ "${{ inputs.page_generative_ui_tool_rendering }}" = "true" ] && PAGES+=("generative-ui-tool-rendering")
+            [ "${{ inputs.page_generative_ui_state_rendering }}" = "true" ] && PAGES+=("generative-ui-state-rendering")
+            [ "${{ inputs.page_frontend_tools }}" = "true" ] && PAGES+=("frontend-tools")
+            [ "${{ inputs.page_human_in_the_loop_tool_based }}" = "true" ] && PAGES+=("human-in-the-loop-tool-based")
+            [ "${{ inputs.page_background_tasks }}" = "true" ] && PAGES+=("background-tasks")
+            [ "${{ inputs.page_shared_state_in_app_agent_read }}" = "true" ] && PAGES+=("shared-state-in-app-agent-read")
+            [ "${{ inputs.page_shared_state_in_app_agent_write }}" = "true" ] && PAGES+=("shared-state-in-app-agent-write")
+            [ "${{ inputs.page_shared_state_predictive_state_updates }}" = "true" ] && PAGES+=("shared-state-predictive-state-updates")
+            [ "${{ inputs.page_agent_app_context }}" = "true" ] && PAGES+=("agent-app-context")
+            [ "${{ inputs.page_copilot_runtime }}" = "true" ] && PAGES+=("copilot-runtime")
+            [ "${{ inputs.page_ag_ui }}" = "true" ] && PAGES+=("ag-ui")
+
+            if [ ${#PAGES[@]} -gt 0 ]; then
+              JOINED=$(IFS=,; echo "${PAGES[*]}")
+              RECORD_ARGS="--pages=$JOINED --shard=${{ matrix.shard }}/3"
+            else
+              # Default: split all 22 pages across 3 shards
+              RECORD_ARGS="--shard=${{ matrix.shard }}/3"
+            fi
+          fi
+
+          EXTRA_FLAGS=""
+          if [ "${{ inputs.upgrade_packages }}" = "true" ]; then
+            EXTRA_FLAGS="$EXTRA_FLAGS --upgrade"
+          fi
+          if [ "${{ inputs.fail_on_doc_drift }}" != "true" ]; then
+            EXTRA_FLAGS="$EXTRA_FLAGS --ignore-doc-drift"
+          fi
+
+          echo "Running worker shard ${{ matrix.shard }}/3 with flags: $EXTRA_FLAGS $RECORD_ARGS"
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node scripts/automate.mjs $EXTRA_FLAGS $RECORD_ARGS
+
+      - name: Publish Shard Report to GitHub Summary
+        if: always()
+        run: |
+          if [ -f "autorecorder/videos/RUN_REPORT.md" ]; then
+            echo "### 🧩 Worker Shard ${{ matrix.shard }}/3 Summary" >> $GITHUB_STEP_SUMMARY
+            cat autorecorder/videos/RUN_REPORT.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Shard Recorded Video Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-recordings-shard-${{ matrix.shard }}
+          path: |
+            autorecorder/videos/*.webm
+            autorecorder/videos/RUN_REPORT.md
+            autorecorder/videos/RUN_REPORT.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  consolidate-recordings:
+    name: Consolidate & Merge All Video Artifacts
+    needs: record-workers
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download all shard artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-recordings
+          pattern: demo-recordings-shard-*
+          merge-multiple: true
+
+      - name: Upload Consolidated Demo Recordings Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-recordings-all-${{ github.sha }}
+          path: all-recordings/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -66,13 +66,28 @@ const GLOBAL_FLAGS = new Set([
   '--doctor',
   '--verify-config',
   '--online',
+  '--limit',
+  '--first',
+  '--count',
+  '--shard',
 ]);
 
 async function main(): Promise<void> {
   const rawArgs = process.argv.slice(2);
   // Selection args only; `--force` etc. would otherwise fall through to the
   // substring filter below and match zero pages.
-  const args = rawArgs.filter((a) => !GLOBAL_FLAGS.has(a));
+  const args = rawArgs.filter((a) => {
+    if (GLOBAL_FLAGS.has(a)) return false;
+    if (
+      a.startsWith('--limit=') ||
+      a.startsWith('--first=') ||
+      a.startsWith('--count=') ||
+      a.startsWith('--shard=')
+    ) {
+      return false;
+    }
+    return true;
+  });
   const isListMode =
     rawArgs.includes('--list') ||
     rawArgs.includes('-l') ||
@@ -147,8 +162,17 @@ async function main(): Promise<void> {
     }
   }
 
+  // 5. Determine target pages
+  const multiPagesArg = rawArgs.find((a) => a.startsWith('--pages=') || a.startsWith('--only='));
   let targetPages = PAGES;
-  if (pageArg) {
+
+  if (multiPagesArg) {
+    const ids = multiPagesArg
+      .split('=')[1]
+      .split(',')
+      .map((s) => s.trim().toLowerCase());
+    targetPages = PAGES.filter((p) => ids.includes(p.id.toLowerCase()));
+  } else if (pageArg) {
     targetPages = PAGES.filter(
       (p) => p.id.toLowerCase() === pageArg!.toLowerCase(),
     );
@@ -158,13 +182,61 @@ async function main(): Promise<void> {
       (p) => p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q),
     );
   } else if (args.length > 0) {
-    const query = args[0].replace(/^-+/, '').toLowerCase();
-    targetPages = PAGES.filter(
-      (p) => p.id.toLowerCase().includes(query) || p.name.toLowerCase().includes(query),
+    const queries = args.map((a) => a.replace(/^-+/, '').toLowerCase());
+    targetPages = PAGES.filter((p) =>
+      queries.some(
+        (q) => p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q),
+      ),
     );
   }
 
+  // 6. Check for limit flag: --limit=N or --first=N
+  let limitArg: number | undefined;
+  const limitMatch = rawArgs.find(
+    (a) => a.startsWith('--limit=') || a.startsWith('--first=') || a.startsWith('--count='),
+  );
+  if (limitMatch) {
+    const num = parseInt(limitMatch.split('=')[1], 10);
+    if (!isNaN(num) && num > 0) limitArg = num;
+  } else {
+    const limitIndex = rawArgs.findIndex(
+      (a) => a === '--limit' || a === '--first' || a === '--count',
+    );
+    if (limitIndex !== -1 && rawArgs[limitIndex + 1]) {
+      const num = parseInt(rawArgs[limitIndex + 1], 10);
+      if (!isNaN(num) && num > 0) limitArg = num;
+    }
+  }
+
+  if (limitArg && limitArg > 0) {
+    targetPages = targetPages.slice(0, limitArg);
+  }
+
+  // 7. Check for shard flag: --shard=K/N (e.g. --shard=1/3, --shard=2/3)
+  const shardMatch = rawArgs.find((a) => a.startsWith('--shard='));
+  if (shardMatch) {
+    const val = shardMatch.split('=')[1] || '';
+    const parts = val.split('/');
+    if (parts.length === 2) {
+      const curr = parseInt(parts[0], 10);
+      const total = parseInt(parts[1], 10);
+      if (!isNaN(curr) && !isNaN(total) && total > 0 && curr > 0 && curr <= total) {
+        const chunkSize = Math.ceil(targetPages.length / total);
+        const start = (curr - 1) * chunkSize;
+        const end = Math.min(start + chunkSize, targetPages.length);
+        targetPages = targetPages.slice(start, end);
+        console.log(`\n🧩 [Matrix Sharding]: Worker Shard ${curr}/${total} -> Recording ${targetPages.length} pages (index ${start + 1} to ${end})`);
+      }
+    }
+  }
+
   if (targetPages.length === 0) {
+    if (shardMatch) {
+      console.log(
+        `\nℹ️ [Matrix Sharding]: No pages assigned to this worker shard. Exiting cleanly.`,
+      );
+      process.exit(0);
+    }
     console.error(`❌ No matching page found for query: ${args.join(' ')}`);
     console.log(`Available page IDs: ${PAGES.map((p) => p.id).join(', ')}`);
     console.log(`Tip: run \`npm run record -- --list\` to view all routes.`);

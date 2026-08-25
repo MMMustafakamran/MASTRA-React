@@ -75,6 +75,24 @@ export const NAV: NavGroup[] = [
           "CopilotChat, CopilotPopup, and CopilotSidebar side by side, each driving the same agent.",
         status: "working",
       },
+      {
+        path: "/prebuilt-components/copilot-threads-drawer",
+        hasDemo: true,
+        title: "CopilotThreadsDrawer",
+        docPath: "/mastra/prebuilt-components/copilot-threads-drawer",
+        summary:
+          "Prebuilt persistent sidebar drawer for managing threads, conversation switching, and auto-naming.",
+        status: "working",
+      },
+      {
+        path: "/threads",
+        hasDemo: true,
+        title: "Persistent Threads",
+        docPath: "/mastra/threads",
+        summary:
+          "Durable conversations across browser reloads, partitioned by user and agent.",
+        status: "working",
+      },
     ],
   },
   {
@@ -99,6 +117,15 @@ export const NAV: NavGroup[] = [
           "A chat interface built from scratch on the headless hooks, with no CopilotKit chrome.",
         status: "working",
         offNav: true,
+      },
+      {
+        path: "/headless-threads",
+        hasDemo: true,
+        title: "Headless Threads",
+        docPath: "/mastra/headless-threads",
+        summary:
+          "Headless conversation management with the useThreads hook for custom thread UI.",
+        status: "working",
       },
       {
         path: "/programmatic-control",

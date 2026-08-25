@@ -1,0 +1,267 @@
+{
+  "generatedAt": "2026-08-24T14:40:16.796Z",
+  "framework": "Mastra (TypeScript)",
+  "videoPrefix": "MASTRA-react",
+  "clips": {
+    "quickstart": {
+      "order": 1,
+      "id": "quickstart",
+      "name": "Getting Started - Quickstart",
+      "file": "MASTRA-react-01-Quickstart.webm",
+      "sources": [
+        "frontend/package.json",
+        "frontend/src/app/quickstart/demo-chat/page.tsx",
+        "frontend/src/app/api/copilotkit/[[...slug]]/route.ts",
+        "frontend/src/mastra/index.ts"
+      ],
+      "sourceSha": "eb907814cbf3",
+      "recordedAt": "2026-08-24T13:33:58.484Z",
+      "bytes": 5010846,
+      "sha256": "4c579ae75ea7",
+      "status": "new"
+    },
+    "prebuilt-components": {
+      "order": 2,
+      "id": "prebuilt-components",
+      "name": "Basics - Prebuilt Components",
+      "file": "MASTRA-react-02-PrebuiltComponents.webm",
+      "sources": [
+        "frontend/src/app/prebuilt-components/demo-chat/page.tsx"
+      ],
+      "sourceSha": "a91c56c76939",
+      "recordedAt": "2026-08-24T13:35:15.559Z",
+      "bytes": 4582570,
+      "sha256": "c9b513f3a482",
+      "status": "new"
+    },
+    "prebuilt-components-copilot-threads-drawer": {
+      "order": 3,
+      "id": "prebuilt-components-copilot-threads-drawer",
+      "name": "Basics - CopilotThreadsDrawer",
+      "file": "MASTRA-react-03-CopilotThreadsDrawer.webm",
+      "sources": [
+        "frontend/src/app/prebuilt-components/copilot-threads-drawer/demo-chat/page.tsx"
+      ],
+      "sourceSha": "5479b6a9e8de",
+      "recordedAt": "2026-08-24T14:39:56.660Z",
+      "bytes": 3456425,
+      "sha256": "f94144b4f911",
+      "status": "new"
+    },
+    "threads": {
+      "order": 4,
+      "id": "threads",
+      "name": "Basics - Persistent Threads",
+      "file": "MASTRA-react-04-Threads.webm",
+      "sources": [
+        "frontend/src/app/threads/demo-chat/page.tsx"
+      ],
+      "sourceSha": "e32a323fa15e",
+      "recordedAt": "2026-08-24T14:35:18.309Z",
+      "bytes": 6293322,
+      "sha256": "f79cb07408b1",
+      "status": "new"
+    },
+    "headless-threads": {
+      "order": 5,
+      "id": "headless-threads",
+      "name": "Custom Look and Feel - Headless Threads",
+      "file": "MASTRA-react-05-HeadlessThreads.webm",
+      "sources": [
+        "frontend/src/app/headless-threads/demo-chat/page.tsx"
+      ],
+      "sourceSha": "33e9d2c1fd36",
+      "recordedAt": "2026-08-24T14:38:53.656Z",
+      "bytes": 3351049,
+      "sha256": "25aa5cbc2788",
+      "status": "new"
+    },
+    "custom-look-and-feel-slots": {
+      "order": 6,
+      "id": "custom-look-and-feel-slots",
+      "name": "Custom Look and Feel - Slots",
+      "file": "MASTRA-react-06-Slots.webm",
+      "sources": [
+        "frontend/src/app/custom-look-and-feel/slots/demo-chat/page.tsx"
+      ],
+      "sourceSha": "ef733682e616",
+      "status": "missing"
+    },
+    "custom-look-and-feel-headless-ui": {
+      "order": 7,
+      "id": "custom-look-and-feel-headless-ui",
+      "name": "Custom Look and Feel - Headless UI",
+      "file": "MASTRA-react-07-HeadlessUI.webm",
+      "sources": [
+        "frontend/src/app/custom-look-and-feel/headless-ui/demo-chat/page.tsx"
+      ],
+      "sourceSha": "a5aa1dc4329d",
+      "status": "missing"
+    },
+    "programmatic-control": {
+      "order": 8,
+      "id": "programmatic-control",
+      "name": "Custom Look and Feel - Programmatic Control",
+      "file": "MASTRA-react-08-ProgrammaticControl.webm",
+      "sources": [
+        "frontend/src/app/programmatic-control/demo-chat/page.tsx"
+      ],
+      "sourceSha": "3f7e3cd6804f",
+      "status": "missing"
+    },
+    "inspector": {
+      "order": 9,
+      "id": "inspector",
+      "name": "Custom Look and Feel - Inspector",
+      "file": "MASTRA-react-09-Inspector.webm",
+      "sources": [
+        "frontend/src/app/inspector/demo-chat/page.tsx"
+      ],
+      "sourceSha": "ca4f269953bd",
+      "status": "missing"
+    },
+    "generative-ui-your-components-display-only": {
+      "order": 10,
+      "id": "generative-ui-your-components-display-only",
+      "name": "Generative UI - Your Components · Display-only",
+      "file": "MASTRA-react-10-YourComponentsDisplayonly.webm",
+      "sources": [
+        "frontend/src/app/generative-ui/your-components/display-only/demo-chat/page.tsx"
+      ],
+      "sourceSha": "39595ca09550",
+      "status": "missing"
+    },
+    "generative-ui-your-components-interactive": {
+      "order": 11,
+      "id": "generative-ui-your-components-interactive",
+      "name": "Generative UI - Your Components · Interactive",
+      "file": "MASTRA-react-11-YourComponentsInteractive.webm",
+      "sources": [
+        "frontend/src/app/generative-ui/your-components/interactive/demo-chat/page.tsx"
+      ],
+      "sourceSha": "31aa07f3295f",
+      "status": "missing"
+    },
+    "generative-ui-tool-rendering": {
+      "order": 12,
+      "id": "generative-ui-tool-rendering",
+      "name": "Generative UI - Tool Rendering",
+      "file": "MASTRA-react-12-ToolRendering.webm",
+      "sources": [
+        "frontend/src/app/generative-ui/tool-rendering/demo-chat/page.tsx"
+      ],
+      "sourceSha": "cf3b83ffc2cd",
+      "status": "missing"
+    },
+    "generative-ui-state-rendering": {
+      "order": 13,
+      "id": "generative-ui-state-rendering",
+      "name": "Generative UI - State Rendering",
+      "file": "MASTRA-react-13-StateRendering.webm",
+      "sources": [
+        "frontend/src/app/generative-ui/state-rendering/demo-chat/page.tsx"
+      ],
+      "sourceSha": "bc6cadc9ae29",
+      "status": "missing"
+    },
+    "frontend-tools": {
+      "order": 14,
+      "id": "frontend-tools",
+      "name": "App Control - Frontend Tools",
+      "file": "MASTRA-react-14-FrontendTools.webm",
+      "sources": [
+        "frontend/src/app/frontend-tools/demo-chat/page.tsx"
+      ],
+      "sourceSha": "27836c12574f",
+      "status": "missing"
+    },
+    "human-in-the-loop-tool-based": {
+      "order": 15,
+      "id": "human-in-the-loop-tool-based",
+      "name": "App Control - Human in the Loop",
+      "file": "MASTRA-react-15-HumanInTheLoop.webm",
+      "sources": [
+        "frontend/src/app/human-in-the-loop/tool-based/demo-chat/page.tsx"
+      ],
+      "sourceSha": "a4edc50448c6",
+      "status": "missing"
+    },
+    "background-tasks": {
+      "order": 16,
+      "id": "background-tasks",
+      "name": "App Control - Background Tasks",
+      "file": "MASTRA-react-16-BackgroundTasks.webm",
+      "sources": [
+        "frontend/src/app/background-tasks/demo-chat/page.tsx"
+      ],
+      "sourceSha": "96c3471ec693",
+      "status": "missing"
+    },
+    "shared-state-in-app-agent-read": {
+      "order": 17,
+      "id": "shared-state-in-app-agent-read",
+      "name": "Shared State - Reading agent state",
+      "file": "MASTRA-react-17-ReadingAgentState.webm",
+      "sources": [
+        "frontend/src/app/shared-state/in-app-agent-read/demo-chat/page.tsx"
+      ],
+      "sourceSha": "378741cdf298",
+      "status": "missing"
+    },
+    "shared-state-in-app-agent-write": {
+      "order": 18,
+      "id": "shared-state-in-app-agent-write",
+      "name": "Shared State - Writing agent state",
+      "file": "MASTRA-react-18-WritingAgentState.webm",
+      "sources": [
+        "frontend/src/app/shared-state/in-app-agent-write/demo-chat/page.tsx"
+      ],
+      "sourceSha": "1f1d10fa76ec",
+      "status": "missing"
+    },
+    "shared-state-predictive-state-updates": {
+      "order": 19,
+      "id": "shared-state-predictive-state-updates",
+      "name": "Shared State - Predictive State Updates",
+      "file": "MASTRA-react-19-PredictiveStateUpdates.webm",
+      "sources": [
+        "frontend/src/app/shared-state/predictive-state-updates/demo-chat/page.tsx"
+      ],
+      "sourceSha": "07b48ce4ce09",
+      "status": "missing"
+    },
+    "agent-app-context": {
+      "order": 20,
+      "id": "agent-app-context",
+      "name": "Shared State - Agent App Context",
+      "file": "MASTRA-react-20-AgentAppContext.webm",
+      "sources": [
+        "frontend/src/app/agent-app-context/demo-chat/page.tsx"
+      ],
+      "sourceSha": "62907b75553c",
+      "status": "missing"
+    },
+    "copilot-runtime": {
+      "order": 21,
+      "id": "copilot-runtime",
+      "name": "Backend - Copilot Runtime",
+      "file": "MASTRA-react-21-CopilotRuntime.webm",
+      "sources": [
+        "frontend/src/app/copilot-runtime/demo-chat/page.tsx"
+      ],
+      "sourceSha": "8c188ed22984",
+      "status": "missing"
+    },
+    "ag-ui": {
+      "order": 22,
+      "id": "ag-ui",
+      "name": "Backend - AG-UI",
+      "file": "MASTRA-react-22-AGUI.webm",
+      "sources": [
+        "frontend/src/app/ag-ui/demo-chat/page.tsx"
+      ],
+      "sourceSha": "06202a5687f2",
+      "status": "missing"
+    }
+  }
+}

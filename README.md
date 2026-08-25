@@ -199,8 +199,11 @@ Code on a page is never a re-typed approximation: each page reads real files via
 | `/mastra` | `/` | 📖 Reference | Orientation + agent roster. |
 | `/mastra/quickstart?agent=bring-your-own` | `/quickstart` | ✅ Working | |
 | `/mastra/prebuilt-components` | `/prebuilt-components` | ✅ Working | Doc page is a 145-byte component stub. |
+| `/mastra/prebuilt-components/copilot-threads-drawer` | `/prebuilt-components/copilot-threads-drawer` | ✅ Working | Persistent thread drawer sidebar. |
 | `/mastra/custom-look-and-feel/slots` | `/custom-look-and-feel/slots` | ✅ Working | **Not in the doc sidebar**; resolves. |
 | `/mastra/custom-look-and-feel/headless-ui` | `/custom-look-and-feel/headless-ui` | ✅ Working | **Not in the doc sidebar**; resolves. |
+| `/mastra/headless-threads` | `/headless-threads` | ✅ Working | Headless thread management with useThreads. |
+| `/mastra/threads` | `/threads` | ✅ Working | Durable persistence and conversation lifecycle. |
 | `/mastra/programmatic-control` | `/programmatic-control` | ✅ Working | |
 | `/mastra/inspector` | `/inspector` | ✅ Working | Dev-only by design. |
 | `/mastra/generative-ui/your-components/display-only` | `/generative-ui/your-components/display-only` | ✅ Working | Needs no Mastra-side declaration. |
