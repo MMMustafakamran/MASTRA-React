@@ -4,14 +4,11 @@ Quick guide to scaffold, install, and run Mastra starters across package manager
 
 ---
 
-## 1. Scaffold Projects
 ## 1. Scaffold Project
 
-Run from this directory to create the project:
 Run the create command:
 
 ```bash
-# npm
 npx copilotkit@latest create
 ```
 
@@ -35,14 +32,12 @@ yarn install
 bun install
 ```
 
-> **Automate all 4:** Run `.\install-all.ps1` (or `install-all.bat`)
 > **Automate all (separate terminals):** Double-click or run `install-all.bat`
 
 ---
 
 ## 3. Run Dev Server
 
-Start the local development server in each folder:
 Start the development server in each project folder:
 
 ```bash
@@ -59,16 +54,12 @@ yarn run dev
 bun run dev
 ```
 
-> **Automate all 4:** Run `.\run-all.ps1` (or `run-all.bat`)
 > **Automate all (separate terminals):** Double-click or run `run-all.bat`
 
 ---
 
-## Notes
 ## Cleanup
 
-- **Environment**: Ensure `OPENAI_API_KEY` is set in `.env` (scripts automatically copy it to each app).
-- **Cleanup**: Run `.\delete-projects.ps1` (or `delete-projects.bat`) to delete generated apps and reset the workspace.
 - Run `delete-projects.bat` to clean up all generated project folders.
 
 
