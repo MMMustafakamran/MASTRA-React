@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -119,6 +120,33 @@ async function checkPage(docPath, pageMeta) {
   }
 }
 
+export async function applyDocUpdates(driftedPages) {
+  const manifestRaw = await fs.readFile(MANIFEST_PATH, 'utf8');
+  const manifest = JSON.parse(manifestRaw);
+  let updatedCount = 0;
+
+  for (const p of driftedPages) {
+    if (p.fetchedText && p.file) {
+      const filePath = path.join(PAGES_DIR, p.file);
+      await fs.writeFile(filePath, p.fetchedText, 'utf8');
+
+      if (manifest.pages[p.docPath]) {
+        manifest.pages[p.docPath].sha256 = p.fullHash;
+        manifest.pages[p.docPath].bytes = p.bytes;
+        manifest.pages[p.docPath].lines = p.lines;
+        manifest.pages[p.docPath].date = new Date().toUTCString();
+      }
+      updatedCount++;
+      console.log(` ✅ Updated ${p.file} (${p.docPath})`);
+    }
+  }
+
+  manifest.syncedAt = new Date().toISOString();
+  await fs.writeFile(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+  console.log(`\n💾 Successfully updated ${updatedCount} markdown file(s) and saved doc-snapshot/manifest.json.`);
+  return updatedCount;
+}
+
 export async function checkAllDocDrift() {
   const manifestRaw = await fs.readFile(MANIFEST_PATH, 'utf8');
   const manifest = JSON.parse(manifestRaw);
@@ -158,18 +186,44 @@ export async function checkAllDocDrift() {
 
 // Standalone execution
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2);
+  const autoUpdate = args.includes('--update') || args.includes('--sync') || args.includes('-u');
+
   const result = await checkAllDocDrift();
   if (result.drifted) {
     console.log('🚨 [DOC DRIFT DETECTED] The following live documentation pages have changed:');
-    console.log('───────────────────────────────────────────────────────────────────────────');
+    console.log('─'.repeat(75));
     for (const p of result.driftedPages) {
       console.log(` • [${p.severity}] ${p.docPath}`);
       if (p.oldHash && p.newHash) {
         console.log(`   Hash: ${p.oldHash} ➔ ${p.newHash} (${p.file})`);
       }
     }
-    console.log('───────────────────────────────────────────────────────────────────────────');
-    console.log('👉 Review changes on http://localhost:3000/doc-sync or update doc-snapshot.');
+    console.log('─'.repeat(75));
+
+    if (autoUpdate) {
+      console.log('\n🔄 Applying changes to local markdown snapshot files (--update flag)...');
+      await applyDocUpdates(result.driftedPages);
+      console.log('✨ Local markdown files are now in sync with live docs.');
+      process.exit(0);
+    }
+
+    // A developer at a terminal gets the offer; CI (no TTY) falls straight
+    // through to the non-zero exit, so a run can never block on stdin.
+    if (process.stdin.isTTY) {
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await rl.question('\n❓ Would you like to update and overwrite the local markdown files now? (y/N): ');
+      rl.close();
+
+      if (answer.trim().toLowerCase() === 'y' || answer.trim().toLowerCase() === 'yes') {
+        console.log('\n🔄 Applying changes to local markdown files...');
+        await applyDocUpdates(result.driftedPages);
+        console.log('✨ Local markdown files are now in sync with live docs.');
+        process.exit(0);
+      }
+    }
+
+    console.log('\n👉 Local markdown files NOT modified. Pass `--update` or visit http://localhost:3000/doc-sync to sync.');
     process.exit(2);
   } else {
     console.log(`✅ [NO DOC DRIFT] All ${result.total} documentation pages match the local snapshot.`);

@@ -27,8 +27,8 @@
 
 ## 2. Porting Checklist (Files Implemented)
 
-1. **`scripts/check-doc-drift.mjs`**: Standalone live doc hash verifier against `doc-snapshot/manifest.json`.
-2. **`scripts/automate.mjs`**: Single-process Node orchestrator (starts Next.js server, pre-warms `/api/copilotkit`, polls health, drives recorder, cleans up processes, outputs `RUN_REPORT.md`/`json`).
+1. **`ci/check-doc-drift.mjs`**: Standalone live doc hash verifier against `doc-snapshot/manifest.json`.
+2. **`ci/automate.mjs`**: Single-process Node orchestrator (starts Next.js server, pre-warms `/api/copilotkit`, polls health, drives recorder, cleans up processes, outputs `RUN_REPORT.md`/`json`).
 3. **`autorecorder/cli.ts`**: Supports `--shard=K/N`, `--only=...`, `--pages=...`, and `--limit=...` CLI flags with empty shard guards.
 4. **`.github/workflows/daily-recorder.yml`**: Matrix workflow (3 workers) with `xvfb-run`, interactive 22-page selection checkboxes, and artifact consolidation.
 5. **`package.json`**: Root workspace scripts (`npm run automate`, `npm run record`, `npm run dev`, etc.).
@@ -38,7 +38,7 @@
 
 ## 3. Core Implementation Blueprints
 
-### Blueprint A: Single-Process Orchestrator (`scripts/automate.mjs`)
+### Blueprint A: Single-Process Orchestrator (`ci/automate.mjs`)
 * **Why:** In GitHub Actions, each YAML `run:` step runs in a distinct subshell. Running `next dev &` in Step 1 causes background processes to be killed by the runner's process reaper when the subshell terminates.
 * **Solution:** Spawn Next.js (which hosts Mastra agents via `getLocalAgents`) within a single persistent Node process:
 ```javascript
@@ -106,7 +106,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: cd autorecorder && npm install && npx playwright install --with-deps chromium
-      - run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node scripts/automate.mjs --shard=${{ matrix.shard }}/3
+      - run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node ci/automate.mjs --shard=${{ matrix.shard }}/3
       - uses: actions/upload-artifact@v4
         if: always()
         with:
