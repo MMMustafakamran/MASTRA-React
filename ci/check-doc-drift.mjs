@@ -100,6 +100,8 @@ async function checkPage(docPath, pageMeta) {
     }
 
     const severity = categorizeSeverity(oldContent, fetchedText);
+    // fetchedText/fullHash/bytes/lines are what applyDocUpdates writes back.
+    // Without them `--update` reported success while updating nothing.
     return {
       docPath,
       file: pageMeta.file,
@@ -107,6 +109,10 @@ async function checkPage(docPath, pageMeta) {
       severity,
       oldHash: pageMeta.sha256.slice(0, 8),
       newHash: fetchedHash.slice(0, 8),
+      fullHash: fetchedHash,
+      fetchedText,
+      bytes: Buffer.byteLength(fetchedText, 'utf8'),
+      lines: fetchedText.split('\n').length,
       status: 'drifted',
     };
   } catch (err) {
@@ -139,6 +145,15 @@ export async function applyDocUpdates(driftedPages) {
       updatedCount++;
       console.log(` ✅ Updated ${p.file} (${p.docPath})`);
     }
+  }
+
+  // Bumping syncedAt after writing nothing would claim the snapshot matches
+  // the live docs when it does not, and the drift would look resolved.
+  if (updatedCount === 0 && driftedPages.length > 0) {
+    throw new Error(
+      `Refusing to update: ${driftedPages.length} page(s) drifted but none carried fetched ` +
+        'content to write. The manifest was left untouched.',
+    );
   }
 
   manifest.syncedAt = new Date().toISOString();

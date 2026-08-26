@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "docsRoot": "https://docs.copilotkit.ai/mastra",
-  "syncedAt": "2026-08-24T13:19:33.930Z",
+  "syncedAt": "2026-08-26T15:05:57.100Z",
   "pages": {
     "/mastra": {
       "file": "mastra.md",
@@ -18,15 +18,15 @@
     },
     "/mastra/ag-ui": {
       "file": "mastra__ag-ui.md",
-      "sha256": "9c8f469f548ced938c0ba775467717120dddbe45e319f9eb8efef11cc3f3d554",
-      "bytes": 3931,
+      "sha256": "7a2cb987baf2819e6694b90f67ca298ce401fbf37e56d5787ab6ed5310e802c7",
+      "bytes": 3920,
       "lines": 124,
       "routes": [
         "/ag-ui"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
+      "date": "Wed, 26 Aug 2026 15:05:57 GMT"
     },
     "/mastra/agent-app-context": {
       "file": "mastra__agent-app-context.md",
@@ -54,15 +54,15 @@
     },
     "/mastra/copilot-runtime": {
       "file": "mastra__copilot-runtime.md",
-      "sha256": "87116d196c71a5c5b354ae885eaf2aa87d978f771c5a87227a5e1a5bc7d26522",
-      "bytes": 9015,
-      "lines": 238,
+      "sha256": "b4ea1cec05793606869209f79358695ea4c6040aebe113e1ec52e334e6a90e44",
+      "bytes": 13265,
+      "lines": 342,
       "routes": [
         "/copilot-runtime"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Mon, 24 Aug 2026 13:19:34 GMT"
+      "date": "Wed, 26 Aug 2026 15:05:57 GMT"
     },
     "/mastra/custom-look-and-feel/headless-ui": {
       "file": "mastra__custom-look-and-feel__headless-ui.md",
@@ -198,15 +198,15 @@
     },
     "/mastra/quickstart": {
       "file": "mastra__quickstart.md",
-      "sha256": "96b3eebf8846a823ebc849e6c6b5f91060f41b13c3cbd151f7323ecf55902f8c",
-      "bytes": 11668,
-      "lines": 359,
+      "sha256": "dd86208020c56c3815dde399358ae09fcd81bb707e21258d3e77e73b8b6cf028",
+      "bytes": 17088,
+      "lines": 457,
       "routes": [
         "/quickstart"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Mon, 24 Aug 2026 13:19:35 GMT"
+      "date": "Wed, 26 Aug 2026 15:05:57 GMT"
     },
     "/mastra/shared-state/in-app-agent-read": {
       "file": "mastra__shared-state__in-app-agent-read.md",

@@ -5,7 +5,7 @@
 You have a CopilotKit test harness that was hand-built rather than scaffolded by
 the CLI — `agno`, `mastra`, `ms-agent-python`, an Angular variant, whatever. Its
 Rich Threads pages cannot work, because threads are not stored by your agent or
-your runtime: they live in CopilotKit's managed Enterprise Intelligence platform,
+your runtime: they live in CopilotKit Intelligence, the managed platform,
 and reaching it needs credentials your repo does not have.
 
 `copilotkit init` is not the answer — it *scaffolds a new app*, and pointing it

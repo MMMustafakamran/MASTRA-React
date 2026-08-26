@@ -8,6 +8,74 @@ Holds the 3 most recent dated entries. When a change lands on a fourth
 date, the oldest entry is dropped. Entries are counted, not aged, so a gap of
 weeks between changes does not expire anything.
 
+## 2026-08-26
+
+### 15:05 UTC — 3 pages, highest severity high
+
+**High — Quickstart**
+
+`/mastra/quickstart` · route `/quickstart` · under “Setup Copilot Runtime” · in a `ts` block
+
+63 code lines, 34 prose lines changed. The number of fenced code blocks changed.
+
+The guide now runs Mastra as its own process and reaches it over HTTP, instead
+of importing the instance into the runtime route. `getLocalAgents` is kept as a
+documented alternative for an embedded instance — which is the shape this repo
+uses.
+
+````diff
+- import { MastraAgent } from "@ag-ui/mastra"
+- import { mastra } from "@/mastra"; // the path to your Mastra instance
++ import { MastraAgent } from "@ag-ui/mastra";
++ import { MastraClient } from "@mastra/client-js";
+- agents: MastraAgent.getLocalAgents({ mastra }),
++ agents: ({ request }) =>
++ MastraAgent.getRemoteAgents({
++ mastraClient,
++ resourceId: request.headers.get("x-user-id") ?? "anonymous",
++ }),
++ intelligence: new CopilotKitIntelligence({
++ apiKey: process.env.INTELLIGENCE_API_KEY!,
++ }),
+````
+
+**High — Copilot Runtime**
+
+`/mastra/copilot-runtime` · route `/copilot-runtime` · under “Local vs remote agents”
+
+103 code lines, 7 prose lines changed. The number of fenced code blocks changed.
+
+A new section decides local vs remote by where the agent already runs, documents
+`getRemoteAgents` as async (pass a factory, not the promise), and records that
+`untilIdle` and `requestContext` have no remote equivalent.
+
+````diff
++ ## Local vs remote agents
++ - **Remote** — your Mastra instance already runs as its own process (`mastra dev`,
++ a container, a deployed service). **Choose this for any project that
++ already runs a Mastra service.**
++ - **Local** — your Mastra instance lives inside the same process as the runtime
++ route, and you import it directly.
++ `getLocalAgents` is synchronous and takes the `Mastra` instance itself instead of
++ a client. It also accepts `requestContext` and `untilIdle`, neither of which has a
++ remote equivalent
+- ### Enterprise Intelligence Platform
++ ### CopilotKit Intelligence
+````
+
+**Low — AG-UI**
+
+`/mastra/ag-ui` · route `/ag-ui` · under “Why the runtime sits in front”
+
+1 prose line changed.
+
+````diff
+- routing, and CopilotKit Enterprise Intelligence without changing how the
++ routing, and CopilotKit Intelligence without changing how the
+````
+
+---
+
 ## 2026-08-24
 
 ### 13:19 UTC — 3 pages, highest severity high
@@ -105,34 +173,3 @@ weeks between changes does not expire anything.
 ---
 
 ---
-
-## 2026-08-17
-
-### 13:44 UTC — 2 pages, highest severity high
-
-**High — Copilot Runtime** · _local snapshot edit, not an upstream change_
-
-`/mastra/copilot-runtime` · route `/copilot-runtime` · under “Setting Up the Runtime” · in a `ts` block
-
-6 code lines changed.
-
-````diff
-- 
-+ const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
-+ runtime,
-+ serviceAdapter,
-+ endpoint: "/api/copilotkit",
-+ });
-````
-
-**Low — Inspector** · _local snapshot edit, not an upstream change_
-
-`/mastra/inspector` · route `/inspector` · under “Navigation and Threads”
-
-3 prose lines changed.
-
-````diff
-+ When Threads has no real rows, or when Threads is locked, the Inspector keeps
-+ the overview video, three local example threads, their detail tabs, and the
-+ guided tour. The examples do not send real Thread requests. With reduced motion
-````

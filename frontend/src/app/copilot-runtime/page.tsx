@@ -5,7 +5,9 @@ import { Callout, Panel, TryIt } from "@/components/ui";
 const COMPARISON: [string, string, string][] = [
   ["Where agents run", "In this Next process", "A separate Mastra server"],
   ["Working memory / shared state", "Supported", "Not supported"],
-  ["Wiring", "getLocalAgents({ mastra, resourceId })", "getRemoteAgents({ … })"],
+  ["Wiring", "getLocalAgents({ mastra, resourceId })", "getRemoteAgents({ mastraClient, resourceId })"],
+  ["Resolution", "Synchronous", "Async — pass a factory, not the promise"],
+  ["untilIdle / requestContext", "Supported", "No remote equivalent"],
   ["Deployment", "One app to deploy", "Two services to run"],
 ];
 
@@ -73,13 +75,37 @@ export default function Page() {
           </table>
         </div>
 
+        <p className="mt-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          The doc decides between them by where the agent already runs, not by
+          preference: remote if a Mastra service exists today, local for a
+          single-process app with no separate agent to preserve. It also warns
+          that adopting the local shape in a repo that already runs a Mastra
+          service means moving that service into the frontend.
+        </p>
+
         <div className="mt-4">
           <Callout tone="warn" title="Local is not optional for this harness">
             The Shared State pages state plainly that reading working memory
             will <strong>not</strong> work with a remote Mastra agent. Four
-            routes here depend on working memory, so switching to{" "}
-            <code>getRemoteAgents</code> would break them — which is why this
-            repo has no separate agent server at all.
+            routes here depend on working memory, and Background Tasks depends
+            on <code>untilIdle</code>, which the doc lists as having no remote
+            equivalent. Switching to <code>getRemoteAgents</code> would break
+            both — which is why this repo has no separate agent server at all.
+          </Callout>
+        </div>
+
+        <div className="mt-4">
+          <Callout tone="info" title="If you do go remote">
+            <code>getRemoteAgents</code> is async. Pass it as a factory —{" "}
+            <code>{"agents: ({ request }) => MastraAgent.getRemoteAgents({ … })"}</code>{" "}
+            — rather than the promise itself: at module scope the HTTP call
+            starts with nothing awaiting it, and an agent server that is not up
+            yet becomes an unhandled rejection that terminates Node. The factory
+            fails as a 500 and recovers on the next request. Point{" "}
+            <code>MastraClient</code> at{" "}
+            <code>{"process.env.MASTRA_BASE_URL ?? \"http://127.0.0.1:4111\""}</code>
+            , preferring <code>127.0.0.1</code> over <code>localhost</code>,
+            which can resolve to IPv6 and miss an IPv4-only agent.
           </Callout>
         </div>
       </Panel>

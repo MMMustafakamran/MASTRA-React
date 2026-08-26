@@ -43,7 +43,7 @@ export default function Page() {
         />
       </Panel>
 
-      <Callout tone="warn" title="Two departures from the doc's samples">
+      <Callout tone="warn" title="One departure from the doc's samples">
         <p>
           <strong>Agents need an <code>id</code>.</strong> The doc creates{" "}
           <code>new Agent({"{ name, instructions, model }"})</code>, but{" "}
@@ -51,14 +51,23 @@ export default function Page() {
           <code>id</code> — omitting it is a type error. Every agent here has
           one.
         </p>
+      </Callout>
+
+      <Callout tone="info" title="The doc's main path is now a separate agent server">
+        <p>
+          The quickstart now starts Mastra with <code>npx mastra dev</code> and
+          reaches it over HTTP via <code>MastraAgent.getRemoteAgents</code> and a{" "}
+          <code>MastraClient</code>. This repo keeps the embedded shape the same
+          page documents as the alternative: &ldquo;If your Mastra instance lives
+          inside this Next.js app rather than in its own process, swap{" "}
+          <code>getRemoteAgents</code> for{" "}
+          <code>{"getLocalAgents({ mastra, resourceId })"}</code> and drop the
+          client.&rdquo;
+        </p>
         <p className="mt-2">
-          <strong>
-            <code>getLocalAgents</code> needs a <code>resourceId</code>.
-          </strong>{" "}
-          The doc passes only <code>{"{ mastra }"}</code>;{" "}
-          <code>GetLocalAgentsOptions</code> in @ag-ui/mastra 1.1.1 requires a{" "}
-          <code>resourceId</code>, which scopes working memory. A real app would
-          pass the signed-in user&apos;s id.
+          That is not a preference here. Shared State and Background Tasks need
+          working memory and <code>untilIdle</code>, and neither survives the
+          remote path — see <a href="/copilot-runtime">Copilot Runtime</a>.
         </p>
       </Callout>
     </>

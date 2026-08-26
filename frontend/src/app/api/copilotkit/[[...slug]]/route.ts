@@ -13,10 +13,14 @@ import { mastra } from "@/mastra";
 // from each agent's `name` field.
 //
 // Local rather than remote is deliberate: the Shared State pages state that
-// reading working memory does not work with a remote Mastra agent.
-// `resourceId` scopes working memory. The docs omit it, but `GetLocalAgentsOptions`
-// requires it in @ag-ui/mastra 1.1.1 — a real app would pass the signed-in user's
-// id so shared state is per-user. This harness is single-user, so it is constant.
+// reading working memory does not work with a remote Mastra agent. The
+// Copilot Runtime page's "Local vs remote agents" section frames the same
+// choice by where the agent runs — this repo has no separate Mastra service to
+// preserve, and `untilIdle` below has no remote equivalent.
+//
+// `resourceId` scopes working memory. A real app would pass the signed-in
+// user's id so shared state is per-user; this harness is single-user, so it is
+// constant.
 //
 // `untilIdle` pipes Mastra's background-task lifecycle into the run's stream,
 // which is what makes the Background Tasks route report progress.
