@@ -5,7 +5,7 @@
   "scripts": {
     "automate": "node ci/automate.mjs",
     "automate:pull": "node ci/automate.mjs --pull",
-    "automate:upgrade": "node ci/automate.mjs --upgrade",
+    "automate:locked": "node ci/automate.mjs --use-lockfile",
     "drift": "node ci/check-doc-drift.mjs",
     "drift:sync": "node ci/check-doc-drift.mjs --update",
     "ci:pages": "node ci/list-pages.mjs",

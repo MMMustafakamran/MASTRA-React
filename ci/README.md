@@ -37,7 +37,7 @@ stack, and `/api/copilotkit` is where Mastra actually lives.
 |---|---|
 | `npm run automate` | Full pipeline: drift → preflight → deps → server → record |
 | `npm run automate:pull` | Same, after `git pull` |
-| `npm run automate:upgrade` | Same, upgrading dependencies first |
+| `npm run automate:locked` | Same, but installing the committed lockfiles |
 | `npm run drift` | Doc drift check on its own |
 | `npm run drift:sync` | Update `doc-snapshot/` to match live docs |
 | `npm run ci:pages` | List valid page ids |
@@ -55,7 +55,7 @@ node ci/automate.mjs --limit=3 --ignore-doc-drift
 | Flag | Effect |
 |---|---|
 | `--pull` | `git pull` first |
-| `--upgrade` | Upgrade deps instead of installing the lockfile |
+| `--use-lockfile` | Install the committed lockfiles instead of re-resolving (see below) |
 | `--skip-install` | Skip dependency installation |
 | `--ignore-doc-drift` / `--force` | Record even if the live docs moved |
 | `--allow-port-reuse` | Record against a server that is already running |
@@ -125,6 +125,30 @@ page belongs to no section, so nothing can quietly become unreachable.
 
 Skipping step 2 fails the run with the page named, rather than silently dropping
 it from the form.
+
+## Which versions get recorded
+
+A run re-resolves its dependencies by default: the lockfiles are dropped and
+`npm install` (plus `uv sync --upgrade` where there is a Python agent) pick the
+newest versions the ranges in `package.json` and `pyproject.toml` already allow.
+`@copilotkit/*` is a caret range, so a release is recorded the night it ships,
+and a major version still cannot arrive without someone editing the manifest.
+
+This is the same thing as deleting `node_modules` and `package-lock.json` by
+hand, which is how these demos have always been checked before a release. On CI
+there is nothing to delete beside the lockfile: every run starts on a clean
+runner.
+
+`--use-lockfile` (dispatch checkbox **Install the committed lockfiles**) opts
+back into the committed versions. Reach for it to reproduce an older run, or to
+find out whether a break came from the demo or from the tree beneath it.
+
+What no run does is rewrite the ranges. `ncu -u --peer` used to run here and was
+the largest single source of CI failures across these repos: it bumped every
+`@angular/*` package past a lockfile that still pinned the old ones, and the
+exact inter-package peer requirements made the result unsatisfiable. Raising a
+range is a reviewed edit to `package.json`, not something a nightly recording
+run should do to itself.
 
 ## CI shape
 

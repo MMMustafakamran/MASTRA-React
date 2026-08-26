@@ -11,7 +11,7 @@
  *
  * Flags:
  *   --pull               git pull before running
- *   --upgrade            upgrade dependencies rather than installing the lockfile
+ *   --use-lockfile       install the committed lockfiles instead of re-resolving
  *   --skip-install       skip dependency installation entirely
  *   --ignore-doc-drift   record even if the live docs have moved (alias: --force)
  *   --allow-port-reuse   record against a server that is already running
@@ -31,7 +31,7 @@ import {
   ROOT_DIR,
   isWindows,
 } from './lib/config.mjs';
-import { loadEnvFiles } from './lib/env.mjs';
+import { loadEnvFiles, trimInheritedCredentials } from './lib/env.mjs';
 import {
   assertModelCredentials,
   assertPortsFree,
@@ -43,7 +43,7 @@ import { generateReport } from './lib/report.mjs';
 
 const OWN_FLAGS = [
   '--pull',
-  '--upgrade',
+  '--use-lockfile',
   '--skip-install',
   '--ignore-doc-drift',
   '--force',
@@ -51,9 +51,43 @@ const OWN_FLAGS = [
   '--skip-credential-check',
 ];
 
+/**
+ * How the frontend, agent and recorder are installed.
+ *
+ * By default the lockfile is dropped first, so npm resolves the newest versions
+ * the ranges in package.json already allow. That is the point of these
+ * recordings: they document CopilotKit, so they should be made against the
+ * CopilotKit that shipped, not one pinned months ago. It is also exactly what
+ * `rm -rf node_modules package-lock.json && npm install` does by hand, which is
+ * how these demos have always been checked. Nothing needs deleting alongside
+ * it — CI starts on a clean runner, so the lockfile is the only thing pinning
+ * anything, and a caret range still cannot cross a major boundary.
+ *
+ * `--use-lockfile` opts back into the committed versions, for reproducing an
+ * older run or bisecting a break to the dependency tree rather than the demo.
+ *
+ * What no run does is rewrite the ranges. `ncu -u --peer` used to run here and
+ * caused most of the sibling Angular pipelines' failures: it bumped every
+ * @angular/* package past a lockfile that still pinned the old ones, and the
+ * exact inter-package peers made that unsatisfiable. Bumping the manifest is a
+ * reviewed change to package.json, not something a nightly run does to itself.
+ */
+const NPM_INSTALL = 'npm install';
+
+function installNodeDeps(dir, description) {
+  if (shouldRefresh) {
+    const lockPath = path.join(dir, 'package-lock.json');
+    if (fs.existsSync(lockPath)) {
+      fs.rmSync(lockPath);
+      console.log(`   ↻ ${description}: dropped package-lock.json to resolve the ranges afresh (--use-lockfile keeps it)`);
+    }
+  }
+  runSync(NPM_INSTALL, dir, description);
+}
+
 const args = process.argv.slice(2);
 const shouldPull = args.includes('--pull');
-const shouldUpgrade = args.includes('--upgrade');
+const shouldRefresh = !args.includes('--use-lockfile');
 const skipInstall = args.includes('--skip-install');
 const ignoreDocDrift = args.includes('--ignore-doc-drift') || args.includes('--force');
 const allowPortReuse = args.includes('--allow-port-reuse');
@@ -188,7 +222,7 @@ async function main() {
     health: {},
     error: null,
     args: forwardArgs,
-    upgraded: shouldUpgrade,
+    refreshed: shouldRefresh,
   };
 
   try {
@@ -226,6 +260,13 @@ async function main() {
     const envFiles = loadEnvFiles();
     if (envFiles.length > 0) {
       console.log(`🔑 [Preflight] Loaded environment from: ${envFiles.join(', ')}`);
+    const trimmedVars = trimInheritedCredentials();
+    if (trimmedVars.length > 0) {
+      console.log(
+        `🔑 [Preflight] Trimmed surrounding whitespace from: ${trimmedVars.join(', ')}` +
+          ' — worth fixing at the source, a stored secret is keeping a stray newline.',
+      );
+    }
     }
     // `busy` records whether the port was already served. With
     // --allow-port-reuse that server is reused as-is; starting a second one on
@@ -242,16 +283,9 @@ async function main() {
 
     // 3. Dependencies
     if (!skipInstall) {
-      if (shouldUpgrade) {
-        runSync(
-          'npx npm-check-updates -u --peer',
-          FRONTEND_DIR,
-          'Upgrading frontend dependencies (ncu -u --peer)',
-        );
-      }
 
-      runSync('npm install', FRONTEND_DIR, 'Installing Frontend Dependencies');
-      runSync('npm install', RECORDER_DIR, 'Installing Autorecorder Dependencies');
+      installNodeDeps(FRONTEND_DIR, 'Installing Frontend Dependencies');
+      installNodeDeps(RECORDER_DIR, 'Installing Autorecorder Dependencies');
     }
 
     // 4. Server — skipped when the port is already being served.
