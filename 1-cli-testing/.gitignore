@@ -1,0 +1,22 @@
+# Ignore all content generated inside package manager test folders
+/bun/*
+/npm/*
+/pnpm/*
+/yarn/*
+
+# Preserve README.md in test directories
+!/bun/README.md
+!/npm/README.md
+!/pnpm/README.md
+!/yarn/README.md
+
+# Node / Next.js / Python artifacts
+node_modules/
+.next/
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.copilotkit/
