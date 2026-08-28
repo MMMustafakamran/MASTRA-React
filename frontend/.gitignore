@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated after install by ci/write-versions.mjs and shown in the Quickstart
+# clip. Describes one run's resolved versions, so committing it would mean a
+# diff every morning for something that is derived data.
+VERSIONS.md

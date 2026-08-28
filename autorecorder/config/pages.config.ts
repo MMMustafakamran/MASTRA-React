@@ -37,10 +37,21 @@ export const PAGES = definePages([
     videoName: "Quickstart",
     docPath: "quickstart?agent=bring-your-own",
     route: "quickstart",
-    ideFile: "frontend/package.json",
-    startLine: 11,
-    endLine: 27,
+    // Leads with the versions, not the manifest. package.json declares
+    // RANGES, so this clip used to show a floor while the run it
+    // documented had installed something newer. VERSIONS.md is generated
+    // after install (ci/write-versions.mjs) and names what resolved.
+    // package.json stays as the first tab: the range is still what a
+    // reader would write in their own project.
+    ideFile: "frontend/VERSIONS.md",
+    startLine: 6,
+    endLine: 15,
     extraTabs: [
+      {
+        filePath: "frontend/package.json",
+        startLine: 11,
+        endLine: 27,
+      },
       { filePath: "frontend/src/app/quickstart/demo-chat/page.tsx", startLine: 15, endLine: 32 },
       { filePath: "frontend/src/app/api/copilotkit/[[...slug]]/route.ts", startLine: 1, endLine: 35 },
       { filePath: "frontend/src/mastra/index.ts", startLine: 1, endLine: 35 },
