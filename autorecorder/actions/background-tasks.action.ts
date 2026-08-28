@@ -135,6 +135,35 @@ async function readCardStatus(page: Page): Promise<string | null> {
     .catch(() => null);
 }
 
+/** Separates collected rows; chosen so no page content can contain it. */
+const ROW_SEP = '<<<ROW>>>';
+
+/**
+ * Collects text from every open shadow root under the Inspector.
+ *
+ * Playwright's locators pierce shadow DOM, but `innerHTML`/`textContent` on a
+ * matched element do not: a row whose content lives in a nested shadow root
+ * reads as empty even while a locator can click a button inside it. That
+ * combination -- a toggle that clicks fine, a payload that reads empty -- cost
+ * two CI runs to diagnose, so the assertion no longer goes through locators at
+ * all. The cursor work above still does, because that is what the video needs.
+ */
+async function deepText(page: Page, rootSelector: string): Promise<string> {
+  return page
+    .evaluate(({ sel, SEP }) => {
+      const out: string[] = [];
+      const walk = (node: Document | ShadowRoot | Element) => {
+        for (const el of Array.from(node.querySelectorAll('*'))) {
+          if (el.matches(sel)) out.push((el as HTMLElement).innerText || el.textContent || '');
+          if (el.shadowRoot) walk(el.shadowRoot);
+        }
+      };
+      walk(document);
+      return out.join(SEP);
+    }, { sel: rootSelector, SEP: ROW_SEP })
+    .catch(() => '');
+}
+
 /** Which thread tab the Inspector is actually showing, by its label. */
 async function activeTabLabel(page: Page): Promise<string | null> {
   return page
@@ -358,12 +387,16 @@ export const runBackgroundTasksAction: PageActionHandler = async (
         );
       }
 
+      // Read the expanded rows through a shadow-root walk rather than a
+      // locator -- see deepText. Every `.cpk-td__event` is collected and the
+      // activity one picked out by content, so a renamed payload class cannot
+      // silently produce an empty read again.
+      const allRows = await deepText(page, '.cpk-td__event');
       const payload =
-        (await activityEvent
-          .locator('.cpk-td__event-payload')
-          .first()
-          .textContent()
-          .catch(() => '')) ?? '';
+        allRows.split(ROW_SEP).find((row) => ACTIVITY_EVENT_LABEL.test(row)) ?? '';
+      console.log(
+        `   🔬 activity row text (${payload.length} chars): ${payload.slice(0, 400)}`,
+      );
       const isBackgroundTask = payload.includes(BACKGROUND_ACTIVITY_TYPE);
       evidenceShown = isBackgroundTask && /"?status"?\s*:?\s*"?(completed|failed)/i.test(payload);
 
@@ -385,12 +418,11 @@ export const runBackgroundTasksAction: PageActionHandler = async (
       } else {
         // Dump the row itself. Two runs were spent inferring why the payload
         // read came back empty; the markup answers it outright.
-        const html = (await activityEvent.innerHTML().catch(() => '')) ?? '';
         console.warn(
           `   ⚠ An activity event is listed but is not a ${BACKGROUND_ACTIVITY_TYPE}. ` +
             `Payload head: ${payload.slice(0, 200) || '(empty -- payload never expanded)'}`,
         );
-        console.warn(`   🔬 event markup head: ${html.slice(0, 600)}`);
+        console.warn(`   🔬 all event rows: ${allRows.slice(0, 1200)}`);
       }
       await sleep(4000);
     } else {
