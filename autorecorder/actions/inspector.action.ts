@@ -35,6 +35,26 @@ import { sendPrompt } from '../core/actions';
  * rectangle. `ag-ui-events` is the panel with content: the protocol events the
  * run actually produced. That swap is the point of this action.
  *
+ * ── Why the shadow walks below are LOOPS, not recursive functions ──────────
+ * Every walk is an explicit stack loop containing NO named inner function, and
+ * that is load-bearing.
+ *
+ * `page.evaluate` serialises its callback and ships the source to the browser.
+ * tsx compiles this suite through esbuild with `keepNames`, which rewrites any
+ * named function binding — `const walk = (root) => ...` included — into a call
+ * to esbuild's `__name` helper. That helper is injected into the Node module
+ * scope and does not exist in the page, so such a callback dies on arrival with
+ * `ReferenceError: __name is not defined`.
+ *
+ * A previous revision shipped the walk as a string and `eval`'d it in the page,
+ * which sidesteps the transform because esbuild never sees it as code.
+ * Replacing that with a tidier recursive arrow broke all three repos at once —
+ * and, because several call sites swallowed the error, it broke them *quietly*.
+ * Loops keep the code visible to the type checker AND out of `keepNames`' reach.
+ *
+ * If you add another `page.evaluate` in this suite: no named functions inside
+ * it, and do not wrap it in a `.catch()` that hides this class of failure.
+ *
  * ── Version floor ──────────────────────────────────────────────────────────
  * `data-inspector-menu-key` exists in @copilotkit/web-inspector 1.69.x. Older
  * installs (1.66.x still sits in some repos' node_modules) do not have it, so
@@ -54,36 +74,25 @@ export type InspectorMenuKey =
   | 'threads'
   | 'memories';
 
-/**
- * The recursive shadow-root walk below is repeated inside each `page.evaluate`
- * rather than shared: evaluate serialises its callback and cannot close over
- * anything in this module. An earlier revision worked around that by shipping
- * the helper as a string and calling `eval` on it in the page -- one CSP
- * tightening away from breaking, and invisible to the type checker. Duplicating
- * ten lines keeps both properties.
- */
-
 /** Opens the Inspector overlay. Returns false when no trigger is on screen. */
 export async function openInspector(page: Page): Promise<boolean> {
   console.log(`   Opening CopilotKit Inspector overlay...`);
   const triggerPos = await page.evaluate(() => {
+    const stack: (Document | ShadowRoot)[] = [document];
     const seen = new Set<Document | ShadowRoot>();
-    const walk = (root: Document | ShadowRoot): HTMLElement | null => {
-      if (!root || seen.has(root)) return null;
+    let btn: HTMLElement | null = null;
+    while (stack.length > 0) {
+      const root = stack.pop();
+      if (!root || seen.has(root)) continue;
       seen.add(root);
-      const hit = root.querySelector(
+      btn = root.querySelector(
         'button[aria-label*="Inspector" i], button[aria-label*="Console" i], #trigger, .trigger',
       ) as HTMLElement | null;
-      if (hit) return hit;
+      if (btn) break;
       for (const el of Array.from(root.querySelectorAll('*'))) {
-        if (el.shadowRoot) {
-          const nested = walk(el.shadowRoot);
-          if (nested) return nested;
-        }
+        if (el.shadowRoot) stack.push(el.shadowRoot);
       }
-      return null;
-    };
-    const btn = walk(document);
+    }
     if (!btn) return null;
     const r = btn.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) return null;
@@ -121,23 +130,21 @@ export async function openInspectorPanel(
 ): Promise<void> {
   const locate = async (): Promise<{ x: number; y: number } | null> =>
     page.evaluate((key) => {
+      const stack: (Document | ShadowRoot)[] = [document];
       const seen = new Set<Document | ShadowRoot>();
-      const walk = (root: Document | ShadowRoot): HTMLElement | null => {
-        if (!root || seen.has(root)) return null;
+      let tab: HTMLElement | null = null;
+      while (stack.length > 0) {
+        const root = stack.pop();
+        if (!root || seen.has(root)) continue;
         seen.add(root);
-        const hit = root.querySelector(
+        tab = root.querySelector(
           `button[data-inspector-menu-key="${key}"]`,
         ) as HTMLElement | null;
-        if (hit) return hit;
+        if (tab) break;
         for (const el of Array.from(root.querySelectorAll('*'))) {
-          if (el.shadowRoot) {
-            const nested = walk(el.shadowRoot);
-            if (nested) return nested;
-          }
+          if (el.shadowRoot) stack.push(el.shadowRoot);
         }
-        return null;
-      };
-      const tab = walk(document);
+      }
       if (!tab) return null;
       tab.scrollIntoView({ block: 'center', inline: 'center' });
       const r = tab.getBoundingClientRect();
@@ -151,44 +158,47 @@ export async function openInspectorPanel(
     // The leaf's group is collapsed. Open groups one at a time, re-checking
     // after each, so an already-open group is never toggled shut.
     const groups: string[] = await page.evaluate(() => {
+      const stack: (Document | ShadowRoot)[] = [document];
       const seen = new Set<Document | ShadowRoot>();
       const out: string[] = [];
-      const walk = (root: Document | ShadowRoot) => {
-        if (!root || seen.has(root)) return;
+      while (stack.length > 0) {
+        const root = stack.pop();
+        if (!root || seen.has(root)) continue;
         seen.add(root);
         for (const el of Array.from(
-          root.querySelectorAll('button[data-inspector-group]:not([data-inspector-menu-key])'),
+          root.querySelectorAll(
+            'button[data-inspector-group]:not([data-inspector-menu-key])',
+          ),
         )) {
           const g = el.getAttribute('data-inspector-group');
           if (g && !out.includes(g)) out.push(g);
         }
         for (const el of Array.from(root.querySelectorAll('*'))) {
-          if (el.shadowRoot) walk(el.shadowRoot);
+          if (el.shadowRoot) stack.push(el.shadowRoot);
         }
-      };
-      walk(document);
+      }
       return out;
     });
 
     for (const group of groups) {
       await page.evaluate((g) => {
+        const stack: (Document | ShadowRoot)[] = [document];
         const seen = new Set<Document | ShadowRoot>();
-        const walk = (root: Document | ShadowRoot): HTMLElement | null => {
-          if (!root || seen.has(root)) return null;
+        while (stack.length > 0) {
+          const root = stack.pop();
+          if (!root || seen.has(root)) continue;
           seen.add(root);
           const hit = root.querySelector(
             `button[data-inspector-group="${g}"]:not([data-inspector-menu-key])`,
           ) as HTMLElement | null;
-          if (hit) return hit;
-          for (const el of Array.from(root.querySelectorAll('*'))) {
-            if (el.shadowRoot) {
-              const nested = walk(el.shadowRoot);
-              if (nested) return nested;
-            }
+          if (hit) {
+            hit.click();
+            return;
           }
-          return null;
-        };
-        walk(document)?.click();
+          for (const el of Array.from(root.querySelectorAll('*'))) {
+            if (el.shadowRoot) stack.push(el.shadowRoot);
+          }
+        }
       }, group);
       await sleep(600);
       pos = await locate();
@@ -211,23 +221,21 @@ export async function openInspectorPanel(
   await sleep(1200);
 
   const active = await page.evaluate((key) => {
+    const stack: (Document | ShadowRoot)[] = [document];
     const seen = new Set<Document | ShadowRoot>();
-    const walk = (root: Document | ShadowRoot): HTMLElement | null => {
-      if (!root || seen.has(root)) return null;
+    let tab: HTMLElement | null = null;
+    while (stack.length > 0) {
+      const root = stack.pop();
+      if (!root || seen.has(root)) continue;
       seen.add(root);
-      const hit = root.querySelector(
+      tab = root.querySelector(
         `button[data-inspector-menu-key="${key}"]`,
       ) as HTMLElement | null;
-      if (hit) return hit;
+      if (tab) break;
       for (const el of Array.from(root.querySelectorAll('*'))) {
-        if (el.shadowRoot) {
-          const nested = walk(el.shadowRoot);
-          if (nested) return nested;
-        }
+        if (el.shadowRoot) stack.push(el.shadowRoot);
       }
-      return null;
-    };
-    const tab = walk(document);
+    }
     return (
       tab?.getAttribute('aria-current') === 'page' ||
       !!tab?.className.includes('inspector-nav-control-active')

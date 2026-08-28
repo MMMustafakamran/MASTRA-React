@@ -148,35 +148,6 @@ async function readCardStatus(page: Page): Promise<string | null> {
     .catch(() => null);
 }
 
-/** Separates collected rows; chosen so no page content can contain it. */
-const ROW_SEP = '<<<ROW>>>';
-
-/**
- * Collects text from every open shadow root under the Inspector.
- *
- * Playwright's locators pierce shadow DOM, but `innerHTML`/`textContent` on a
- * matched element do not: a row whose content lives in a nested shadow root
- * reads as empty even while a locator can click a button inside it. That
- * combination -- a toggle that clicks fine, a payload that reads empty -- cost
- * two CI runs to diagnose, so the assertion no longer goes through locators at
- * all. The cursor work above still does, because that is what the video needs.
- */
-async function deepText(page: Page, rootSelector: string): Promise<string> {
-  return page
-    .evaluate(({ sel, SEP }) => {
-      const out: string[] = [];
-      const walk = (node: Document | ShadowRoot | Element) => {
-        for (const el of Array.from(node.querySelectorAll('*'))) {
-          if (el.matches(sel)) out.push((el as HTMLElement).innerText || el.textContent || '');
-          if (el.shadowRoot) walk(el.shadowRoot);
-        }
-      };
-      walk(document);
-      return out.join(SEP);
-    }, { sel: rootSelector, SEP: ROW_SEP })
-    .catch(() => '');
-}
-
 /** Which thread tab the Inspector is actually showing, by its label. */
 async function activeTabLabel(page: Page): Promise<string | null> {
   return page
@@ -387,9 +358,17 @@ export const runBackgroundTasksAction: PageActionHandler = async (
       }
 
       // The expanded payload renders as a <pre>. Read every one and pick the
-      // background-task snapshot out by content: this build has no
-      // `.cpk-td__event` row class, and allTextContents() is the accessor that
-      // demonstrably works against its shadow DOM.
+      // background-task snapshot out by content.
+      //
+      // A shadow-walking `page.evaluate` was tried first and returned empty. It
+      // was NOT, as an earlier comment here claimed, because the row class was
+      // missing: tsx compiles with esbuild `keepNames`, which rewrites the
+      // walk's named inner function into a call to `__name` -- a helper that
+      // exists in Node and not in the page. The callback threw
+      // `ReferenceError: __name is not defined` on arrival, and a
+      // `.catch(() => '')` swallowed it into an innocent-looking empty string.
+      // See the note in inspector.action.ts. allTextContents() has no such
+      // problem.
       const pres = await page
         .locator('pre')
         .allTextContents()
