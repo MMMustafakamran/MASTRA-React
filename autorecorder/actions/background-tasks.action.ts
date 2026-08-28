@@ -337,14 +337,6 @@ export const runBackgroundTasksAction: PageActionHandler = async (
           ? [...tally].map(([t, n]) => `${t}×${n}`).join(', ')
           : '(none -- the panel is empty)'),
     );
-    const mentionsBackground = await page
-      .locator('.cpk-td__event')
-      .filter({ hasText: 'background' })
-      .count()
-      .catch(() => 0);
-    console.log(
-      `   🔬 Events whose payload mentions "background": ${mentionsBackground}`,
-    );
   }
 
   // Only claim the evidence is there if the tab is actually active AND an
