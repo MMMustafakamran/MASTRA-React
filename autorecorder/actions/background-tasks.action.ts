@@ -4,60 +4,68 @@ import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt } from '../core/actions';
 
 /**
- * Records the Background Tasks discrepancy, not a happy path.
+ * Records what the Background Tasks page actually does, which is not what the
+ * page promises.
  *
  * A tool marked `background: { enabled: true }` does not block the run: Mastra
- * queues it, the agent answers immediately, and progress arrives on the AG-UI
- * activity channel. `components/background-task-activity.tsx` renders those
- * events and flips its badge off "Working…" only when `content.status` becomes
- * `completed` or `failed`.
+ * queues it, the agent answers immediately, and progress is supposed to arrive
+ * on the AG-UI activity channel. `components/background-task-activity.tsx`
+ * renders those events and flips its badge off "Working…" only when
+ * `content.status` becomes `completed` or `failed`.
  *
- * What this recording documents is that the badge never flips. The run does
- * finish -- the Inspector's own view of the same stream says so -- but the
- * final activity event either never reaches the renderer or reaches it without
- * the terminal status, so the card is left claiming work is still in flight.
+ * The badge never flips. This handler was first written on the assumption that
+ * the completion event arrives and the renderer drops it -- a UI bug. The
+ * recording disproved that. What the Inspector shows is:
  *
- * The video shows both halves in one take, in this order:
+ *   - exactly ONE `ACTIVITY_SNAPSHOT`, `activityType: "mastra-background-task"`,
+ *     carrying `status: "running"`, and never superseded
+ *   - a `Run finished` event at the same timestamp
+ *
+ * So the agent RUN completes while the background TASK is still reported as
+ * running, and no later event ever corrects it. The card is not lying; it is
+ * never told. The defect is upstream of the renderer: the run's event stream
+ * closes with the task unresolved, and nothing reopens it. `_background` in the
+ * payload declares `timeoutMs: 10000`, well inside the wait below, so this is
+ * not the task simply being slow.
+ *
+ * Read "Run finished" carefully when watching: it is the RUN, not the task. It
+ * is the most natural thing in the world to read it as the task completing,
+ * which is exactly the confusion this recording exists to remove.
+ *
+ * The video shows, in one take:
  *
  *   1. the activity card on screen, badge reading "Working…"
- *   2. the Inspector's Threads -> Raw AG-UI Events tab, where the
- *      ACTIVITY_SNAPSHOT / ACTIVITY_DELTA event carrying the terminal
- *      background-task status is listed
+ *   2. the Inspector's Threads -> AG-UI Events tab, the activity snapshot
+ *      expanded so `status: "running"` is legible next to `Run finished`
  *   3. back to the card, still reading "Working…"
  *
- * Step 3 is the finding. Without returning to the card a viewer can argue the
- * badge flipped while the Inspector was open.
- *
- * ── Why "Raw AG-UI Events" ─────────────────────────────────────────────────
- * The Inspector's thread view carries three tabs (`TAB_LIST` in
- * @copilotkit/web-inspector): Timeline, Raw AG-UI Events, State. Timeline is a
- * summarised run view -- it shows "Run finished", which proves the *run* ended
- * but not what the activity channel emitted. State holds agent state, which
- * this tool never writes. Only Raw AG-UI Events shows the untransformed event
- * the renderer was supposed to receive, so it is the one section that makes the
- * bug attributable rather than merely visible.
+ * ── Why the AG-UI Events tab ───────────────────────────────────────────────
+ * The Inspector's thread view carries three tabs: Timeline, AG-UI Events,
+ * State. Timeline is a summarised run view. State holds agent state, which this
+ * tool never writes. Only AG-UI Events shows the untransformed events, which is
+ * the only place the contradiction -- run finished, task running -- is visible
+ * at all.
  *
  * ── Driving the Inspector ──────────────────────────────────────────────────
- * It is a Lit web component (`cpk-web-inspector`) with open shadow roots, so
- * Playwright's locators pierce it and no hand-rolled shadow walk is needed. The
- * selectors below are the Inspector's own class names, read off its compiled
- * bundle rather than guessed:
+ * It is a Lit web component (`cpk-web-inspector`) with open shadow roots.
+ * Playwright's locators pierce those; `innerHTML`/`textContent` on a matched
+ * element do NOT, and a locator will happily click a button inside a row whose
+ * text reads as empty. Class names also move between releases -- CI installs
+ * without a lockfile, so it runs a newer Inspector than local node_modules.
+ * Both facts cost several CI runs. Hence: match tab LABELS loosely and tab IDS
+ * exactly, verify every navigation step landed, and read content through
+ * `allTextContents()` rather than per-element accessors.
  *
- *   .cpk-tl__item              a row in the thread list (a div, not a button)
- *   button[role=tab]           Timeline / Raw AG-UI Events / State
- *   .cpk-td__tab--active       marks which of those is showing
- *   .cpk-td__event             one raw event; .cpk-td__event-type is its label
+ * Known-good handles on the build recorded here:
  *
- * Match tab LABELS loosely and tab IDS exactly. CI re-resolves dependencies
- * with no lockfile, so it routinely runs a newer Inspector than the one in
- * local node_modules -- which is exactly how "Raw AG-UI Events" became
- * "AG-UI Events" between two runs of this handler.
+ *   .cpk-tl__item          a thread row (a div, not a button)
+ *   button[role=tab]       Timeline / AG-UI Events / State
+ *   .cpk-td__tab--active   which of those is showing
+ *   .cpk-td__event-type    an event's label -- "Activity snapshot", "Run finished"
+ *   pre                    an expanded event payload
  *
- * An earlier revision guessed `cpk-thread-list li, cpk-thread-list button` and
- * matched nothing, so the tab strip was never reached and the run still claimed
- * success. Every navigation step below therefore VERIFIES it landed and the
- * handler reports honestly when it did not -- a recording that silently skips
- * the evidence half is worse than one that says it failed.
+ * A handler that silently skips the evidence half is worse than one that says
+ * it failed, so the outcomes below are reported distinctly and honestly.
  */
 
 /** Badge text the activity renderer shows while it believes work is running. */
@@ -387,42 +395,43 @@ export const runBackgroundTasksAction: PageActionHandler = async (
         );
       }
 
-      // Read the expanded rows through a shadow-root walk rather than a
-      // locator -- see deepText. Every `.cpk-td__event` is collected and the
-      // activity one picked out by content, so a renamed payload class cannot
-      // silently produce an empty read again.
-      const allRows = await deepText(page, '.cpk-td__event');
-      const payload =
-        allRows.split(ROW_SEP).find((row) => ACTIVITY_EVENT_LABEL.test(row)) ?? '';
+      // The expanded payload renders as a <pre>. Read every one and pick the
+      // background-task snapshot out by content: this build has no
+      // `.cpk-td__event` row class, and allTextContents() is the accessor that
+      // demonstrably works against its shadow DOM.
+      const pres = await page
+        .locator('pre')
+        .allTextContents()
+        .catch(() => [] as string[]);
+      const payload = pres.find((t) => t.includes(BACKGROUND_ACTIVITY_TYPE)) ?? '';
       console.log(
-        `   🔬 activity row text (${payload.length} chars): ${payload.slice(0, 400)}`,
+        `   🔬 activity payload (${payload.length} chars): ${payload.slice(0, 300).replace(/\s+/g, ' ')}`,
       );
       const isBackgroundTask = payload.includes(BACKGROUND_ACTIVITY_TYPE);
-      evidenceShown = isBackgroundTask && /"?status"?\s*:?\s*"?(completed|failed)/i.test(payload);
+      const taskStatus = /"status"\s*:\s*"([^"]+)"/.exec(payload)?.[1] ?? 'unknown';
+      const runFinished = (
+        await page.locator('.cpk-td__event-type').allTextContents().catch(() => [] as string[])
+      ).some((t) => /run finished/i.test(t));
+      evidenceShown = isBackgroundTask && runFinished;
 
       const box = await activityEvent.boundingBox();
       if (box) await glideTo(page, box);
 
       if (evidenceShown) {
         console.log(
-          `   ✓ Inspector shows a ${BACKGROUND_ACTIVITY_TYPE} activity event with a ` +
-            `terminal status.`,
+          `   ✓ Inspector: the run has FINISHED while the only ${BACKGROUND_ACTIVITY_TYPE} ` +
+            `snapshot still reports status="${taskStatus}".`,
         );
       } else if (isBackgroundTask) {
         console.warn(
-          `   ⚠ The ${BACKGROUND_ACTIVITY_TYPE} event is listed but carries no terminal ` +
-            'status. The client is never told the job finished, so the card is ' +
-            'right to still be waiting -- a DIFFERENT bug from the one this ' +
-            'recording set out to document, and a more serious one.',
+          `   ⚠ ${BACKGROUND_ACTIVITY_TYPE} snapshot found (status="${taskStatus}") but no ` +
+            '"Run finished" event -- the run is still open, so nothing is wrong yet.',
         );
       } else {
-        // Dump the row itself. Two runs were spent inferring why the payload
-        // read came back empty; the markup answers it outright.
         console.warn(
-          `   ⚠ An activity event is listed but is not a ${BACKGROUND_ACTIVITY_TYPE}. ` +
-            `Payload head: ${payload.slice(0, 200) || '(empty -- payload never expanded)'}`,
+          `   ⚠ No ${BACKGROUND_ACTIVITY_TYPE} payload among ${pres.length} expanded blocks. ` +
+            'The details toggle expanded but the payload is not a <pre> in this build.',
         );
-        console.warn(`   🔬 all event rows: ${allRows.slice(0, 1200)}`);
       }
       await sleep(4000);
     } else {
@@ -446,9 +455,9 @@ export const runBackgroundTasksAction: PageActionHandler = async (
 
   if (stillWorking && evidenceShown) {
     console.log(
-      `   🔴 FINDING REPRODUCED: the Inspector shows the background task reached a ` +
-        `terminal status, and the card still reads "${WORKING_BADGE}" ` +
-        `(data-status="${finalStatus}").`,
+      `   🔴 FINDING REPRODUCED: the run finished with the background task still ` +
+        `reported as running, and the card still reads "${WORKING_BADGE}" ` +
+        `(data-status="${finalStatus}"). The client is never told the job ended.`,
     );
   } else if (stillWorking) {
     console.log(
@@ -458,8 +467,8 @@ export const runBackgroundTasksAction: PageActionHandler = async (
     );
   } else {
     console.log(
-      `   🟢 Card resolved to data-status="${finalStatus}" -- the discrepancy did ` +
-        `not reproduce on this run.`,
+      `   🟢 Card resolved to data-status="${finalStatus}" -- the completion event DID ` +
+        `arrive on this run, which would mean the defect is intermittent.`,
     );
   }
 
