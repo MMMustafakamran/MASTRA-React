@@ -18,12 +18,18 @@ import { AUDIO_DIR, VIDEOS_DIR } from './config.mjs';
  * Which audio track belongs to which video, matched on the video filename —
  * which carries the demo name (e.g. `MASTRA-react-14-Frontend-Tools.webm`).
  *
- * This repo records silent demos today, so the table is empty. To add a
- * voiceover: drop the file in `autorecorder/audio/` and add one row here. The
- * mapping is explicit rather than inferred from filenames so a renamed demo
- * fails visibly instead of quietly muxing audio onto the wrong clip.
+ * To add a voiceover: drop the file in `autorecorder/audio/` and add one row
+ * here. The mapping is explicit rather than inferred from filenames so a
+ * renamed demo fails visibly instead of quietly muxing audio onto the wrong
+ * clip -- `videoMatch` is matched against the video filename, and a demo whose
+ * `videoName` changes drops its voiceover visibly.
  */
-const AUDIO_TRACKS = [];
+const AUDIO_TRACKS = [
+  {
+    audioFile: 'background-tasks-error.m4a',
+    videoMatch: 'BackgroundTasks',
+  },
+];
 
 function hasFfmpeg() {
   try {
@@ -68,7 +74,12 @@ export function muxAudioFiles() {
 
     try {
       execSync(
-        `ffmpeg -y -i "${inputPath}" -i "${audioPath}" -c:v copy -c:a libopus -map 0:v:0 -map 1:a:0 -shortest "${tempPath}"`,
+        // `-af apad` before `-shortest` is load-bearing: voiceovers are
+        // shorter than the clips they narrate (37s of audio over a 121s
+        // Background Tasks demo), and without padding `-shortest` truncates
+        // the VIDEO down to the audio's length. Padding makes the audio
+        // effectively endless so `-shortest` cuts on the video instead.
+        `ffmpeg -y -i "${inputPath}" -i "${audioPath}" -c:v copy -c:a libopus -af apad -map 0:v:0 -map 1:a:0 -shortest "${tempPath}"`,
         { stdio: 'ignore' },
       );
       fs.copyFileSync(tempPath, inputPath);
