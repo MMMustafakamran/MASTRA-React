@@ -66,8 +66,14 @@ const WORKING_BADGE = 'Working…';
 /** The activity card marks itself with the status it rendered. */
 const ACTIVITY_CARD = '[data-status]';
 
-/** AG-UI event types that carry background-task activity. */
-const ACTIVITY_EVENT_TYPES = ['ACTIVITY_SNAPSHOT', 'ACTIVITY_DELTA'];
+/**
+ * How the Inspector LABELS the AG-UI events that carry background-task
+ * activity. It prints a friendly label -- "Activity snapshot" -- not the
+ * protocol constant `ACTIVITY_SNAPSHOT` that `@ag-ui/mastra` emits. Matching
+ * the constant found nothing on a thread that plainly contained the event,
+ * and the handler then blamed the product for the mismatch.
+ */
+const ACTIVITY_EVENT_LABEL = /activity/i;
 
 /** Mastra's activity type, as `@ag-ui/mastra` emits it. */
 const BACKGROUND_ACTIVITY_TYPE = 'mastra-background-task';
@@ -310,33 +316,67 @@ export const runBackgroundTasksAction: PageActionHandler = async (
   // reported success on a run where the tab had never opened.
   let evidenceShown = false;
   if (onRawEvents) {
-    const typeSelector = ACTIVITY_EVENT_TYPES.map(
-      (t) => `.cpk-td__event:has(.cpk-td__event-type:text-is("${t}"))`,
-    ).join(', ');
     const activityEvent = page
-      .locator(typeSelector)
-      .filter({ hasText: BACKGROUND_ACTIVITY_TYPE })
+      .locator('.cpk-td__event')
+      .filter({ has: page.locator('.cpk-td__event-type', { hasText: ACTIVITY_EVENT_LABEL }) })
       .last();
 
     if (await activityEvent.isVisible({ timeout: 8000 }).catch(() => false)) {
       await activityEvent.scrollIntoViewIfNeeded().catch(() => {});
-      await sleep(800);
-      const payload = (await activityEvent.textContent().catch(() => '')) ?? '';
-      evidenceShown = /completed|failed/.test(payload);
+      await sleep(600);
+
+      // The status lives in the JSON payload, which is not rendered at all
+      // until this event's own toggle is pressed -- the bulk "Expand all"
+      // control is not always present. Reading textContent while collapsed
+      // reports no status on an event that carries one.
+      const toggle = activityEvent.locator('button[aria-expanded="false"]').first();
+      if (await toggle.isVisible({ timeout: 2000 }).catch(() => false)) {
+        const tb = await toggle.boundingBox();
+        if (tb) {
+          await glideTo(page, tb);
+          await humanClick(page);
+        } else {
+          await toggle.click().catch(() => {});
+        }
+        await sleep(1500);
+      }
+
+      const payload =
+        (await activityEvent
+          .locator('.cpk-td__event-payload')
+          .first()
+          .textContent()
+          .catch(() => '')) ?? '';
+      const isBackgroundTask = payload.includes(BACKGROUND_ACTIVITY_TYPE);
+      evidenceShown = isBackgroundTask && /"?status"?\s*:?\s*"?(completed|failed)/i.test(payload);
+
       const box = await activityEvent.boundingBox();
       if (box) await glideTo(page, box);
-      console.log(
-        evidenceShown
-          ? `   ✓ Inspector shows a ${BACKGROUND_ACTIVITY_TYPE} event with a terminal status.`
-          : `   ⚠ Found the ${BACKGROUND_ACTIVITY_TYPE} event, but no terminal status in ` +
-              `its payload -- the run may genuinely still be going.`,
-      );
+
+      if (evidenceShown) {
+        console.log(
+          `   ✓ Inspector shows a ${BACKGROUND_ACTIVITY_TYPE} activity event with a ` +
+            `terminal status.`,
+        );
+      } else if (isBackgroundTask) {
+        console.warn(
+          `   ⚠ The ${BACKGROUND_ACTIVITY_TYPE} event is listed but carries no terminal ` +
+            'status. The client is never told the job finished, so the card is ' +
+            'right to still be waiting -- a DIFFERENT bug from the one this ' +
+            'recording set out to document, and a more serious one.',
+        );
+      } else {
+        console.warn(
+          `   ⚠ An activity event is listed but is not a ${BACKGROUND_ACTIVITY_TYPE}. ` +
+            `Payload head: ${payload.slice(0, 200) || '(empty -- payload never expanded)'}`,
+        );
+      }
       await sleep(4000);
     } else {
       console.warn(
-        `   ⚠ No ${BACKGROUND_ACTIVITY_TYPE} activity event listed. If this holds, ` +
-          'the terminal event never reached the client at all and the card is ' +
-          'right to still be waiting -- a different bug from the one recorded here.',
+        '   ⚠ No activity event listed at all. The terminal event never reached ' +
+          'the client, so the card is right to still be waiting -- a different ' +
+          'bug from the one recorded here.',
       );
     }
   }
