@@ -329,8 +329,12 @@ export const runBackgroundTasksAction: PageActionHandler = async (
       // until this event's own toggle is pressed -- the bulk "Expand all"
       // control is not always present. Reading textContent while collapsed
       // reports no status on an event that carries one.
-      const toggle = activityEvent.locator('button[aria-expanded="false"]').first();
-      if (await toggle.isVisible({ timeout: 2000 }).catch(() => false)) {
+      const toggle = activityEvent
+        .locator('button[aria-expanded], button:has-text("Show details")')
+        .first();
+      const haveToggle = await toggle.isVisible({ timeout: 3000 }).catch(() => false);
+      console.log(`   🔬 details toggle visible: ${haveToggle}`);
+      if (haveToggle) {
         const tb = await toggle.boundingBox();
         if (tb) {
           await glideTo(page, tb);
@@ -339,6 +343,19 @@ export const runBackgroundTasksAction: PageActionHandler = async (
           await toggle.click().catch(() => {});
         }
         await sleep(1500);
+        // A glide-and-click lands on screen coordinates, so anything overlaying
+        // the row swallows it silently. Verify, and fall back to a direct DOM
+        // click that cannot be intercepted.
+        if ((await toggle.getAttribute('aria-expanded').catch(() => null)) !== 'true') {
+          console.log(`   🔬 cursor click did not expand it; clicking directly...`);
+          await toggle.click({ force: true }).catch(() => {});
+          await sleep(1500);
+        }
+        console.log(
+          `   🔬 aria-expanded after clicking: ${await toggle
+            .getAttribute('aria-expanded')
+            .catch(() => 'unknown')}`,
+        );
       }
 
       const payload =
@@ -366,10 +383,14 @@ export const runBackgroundTasksAction: PageActionHandler = async (
             'recording set out to document, and a more serious one.',
         );
       } else {
+        // Dump the row itself. Two runs were spent inferring why the payload
+        // read came back empty; the markup answers it outright.
+        const html = (await activityEvent.innerHTML().catch(() => '')) ?? '';
         console.warn(
           `   ⚠ An activity event is listed but is not a ${BACKGROUND_ACTIVITY_TYPE}. ` +
             `Payload head: ${payload.slice(0, 200) || '(empty -- payload never expanded)'}`,
         );
+        console.warn(`   🔬 event markup head: ${html.slice(0, 600)}`);
       }
       await sleep(4000);
     } else {
