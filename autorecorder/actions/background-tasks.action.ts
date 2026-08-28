@@ -267,6 +267,43 @@ export const runBackgroundTasksAction: PageActionHandler = async (
     await sleep(2000);
   }
 
+  // Diagnostics, kept rather than deleted after the bug was chased.
+  //
+  // A run that finds no background-task event needs to distinguish three very
+  // different situations, and "not found" alone distinguishes none of them:
+  //   - the panel is empty (events never fetched for this thread)
+  //   - the panel is full but carries no ACTIVITY_* events (the terminal event
+  //     never reached the client -- a real, separate finding)
+  //   - ACTIVITY_* events are there under names this handler does not know
+  //     (the constants below have drifted with @ag-ui/mastra)
+  // Logging the event types present answers that from the CI log alone,
+  // without a local repro against a backend this machine may not be able to run.
+  if (onRawEvents) {
+    const seen = await page
+      .locator('.cpk-td__event-type')
+      .allTextContents()
+      .catch(() => [] as string[]);
+    const tally = new Map<string, number>();
+    for (const raw of seen) {
+      const t = raw.trim();
+      if (t) tally.set(t, (tally.get(t) ?? 0) + 1);
+    }
+    console.log(
+      `   🔬 AG-UI events listed (${seen.length}): ` +
+        (tally.size
+          ? [...tally].map(([t, n]) => `${t}×${n}`).join(', ')
+          : '(none -- the panel is empty)'),
+    );
+    const mentionsBackground = await page
+      .locator('.cpk-td__event')
+      .filter({ hasText: 'background' })
+      .count()
+      .catch(() => 0);
+    console.log(
+      `   🔬 Events whose payload mentions "background": ${mentionsBackground}`,
+    );
+  }
+
   // Only claim the evidence is there if the tab is actually active AND an
   // activity event actually carries the background-task type. The previous
   // revision matched a bare `:text("completed")` anywhere on the page, which
