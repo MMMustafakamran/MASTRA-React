@@ -24,9 +24,12 @@ import { sendPrompt } from '../core/actions';
  * So the agent RUN completes while the background TASK is still reported as
  * running, and no later event ever corrects it. The card is not lying; it is
  * never told. The defect is upstream of the renderer: the run's event stream
- * closes with the task unresolved, and nothing reopens it. `_background` in the
- * payload declares `timeoutMs: 10000`, well inside the wait below, so this is
- * not the task simply being slow.
+ * closes with the task unresolved, and nothing reopens it.
+ *
+ * `_background.timeoutMs` varies between runs -- 10000 and 30000 have both been
+ * recorded -- so the wait below deliberately outlasts the larger value. An
+ * earlier revision waited 20s and called the unresolved card proof; against a
+ * 30s timeout it was not, and that reading has been withdrawn.
  *
  * Read "Run finished" carefully when watching: it is the RUN, not the task. It
  * is the most natural thing in the world to read it as the task completing,
@@ -35,8 +38,9 @@ import { sendPrompt } from '../core/actions';
  * The video shows, in one take:
  *
  *   1. the activity card on screen, badge reading "Working…"
- *   2. the Inspector's Threads -> AG-UI Events tab, the activity snapshot
- *      expanded so `status: "running"` is legible next to `Run finished`
+ *   2. the Inspector's Threads -> AG-UI Events tab: the activity snapshot
+ *      expanded so `status: "running"` is legible, then scrolled down to the
+ *      `Run finished` event -- both must be seen, or there is no contradiction
  *   3. back to the card, still reading "Working…"
  *
  * ── Why the AG-UI Events tab ───────────────────────────────────────────────
@@ -214,8 +218,13 @@ export const runBackgroundTasksAction: PageActionHandler = async (
   // evidence that it did. Held generously: a short wait here would leave the
   // recording unable to distinguish "still running" from "finished silently",
   // which is the exact confusion this video exists to remove.
-  console.log(`   ⏳ Letting the background job run to completion...`);
-  await sleep(20000);
+  // Longer than the largest `_background.timeoutMs` this tool has been seen to
+  // declare. That value is NOT fixed -- recorded runs have carried both 10000
+  // and 30000 -- so a 20s wait sat under the task's own timeout on some runs
+  // and the card being unresolved proved nothing there. Outwaiting the ceiling
+  // is what makes "still running" a finding rather than an artefact.
+  console.log(`   ⏳ Letting the background job run past its declared timeout...`);
+  await sleep(45000);
 
   const statusBeforeInspector = await readCardStatus(page);
   const badgeText =
@@ -408,6 +417,26 @@ export const runBackgroundTasksAction: PageActionHandler = async (
 
       const box = await activityEvent.boundingBox();
       if (box) await glideTo(page, box);
+
+      // Scroll on to "Run finished" and rest there. The snapshot alone shows a
+      // task running; the contradiction only reads on screen when the viewer
+      // also sees the run that has ended, and it sits below the fold.
+      if (runFinished) {
+        const finishedRow = page
+          .locator('.cpk-td__event-type')
+          .filter({ hasText: /run finished/i })
+          .last();
+        if (await finishedRow.isVisible({ timeout: 4000 }).catch(() => false)) {
+          await finishedRow.scrollIntoViewIfNeeded().catch(() => {});
+          await sleep(1200);
+          const fb = await finishedRow.boundingBox();
+          if (fb) {
+            await glideTo(page, fb);
+            console.log(`   🎯 Resting on the "Run finished" event.`);
+            await sleep(4000);
+          }
+        }
+      }
 
       if (evidenceShown) {
         console.log(
