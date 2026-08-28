@@ -236,8 +236,23 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/background-tasks/demo-chat/page.tsx",
     startLine: 17,
     endLine: 33,
-    prompt: "Can you tell me a joke?",
-    waitAfterPromptMs: 4000,
+    // The page only mounts the chat. The renderer is where the badge lives, and
+    // the badge is what this recording is about -- see the handler in
+    // actions/background-tasks.action.ts.
+    extraTabs: [
+      {
+        filePath: "frontend/src/components/background-task-activity.tsx",
+        startLine: 40,
+        endLine: 60,
+      },
+    ],
+    // Must actually dispatch the background tool. The old "tell me a joke"
+    // never queued anything, so the activity card never rendered and the video
+    // showed a plain chat reply on a page about background work.
+    prompt: "Research the history of the Dutch East India Company",
+    // Longer than the usual 4s: the handler holds on the card after returning
+    // from the Inspector, and that shot is the finding.
+    waitAfterPromptMs: 6000,
   },
   {
     id: "shared-state-in-app-agent-read",

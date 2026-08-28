@@ -43,6 +43,7 @@ import {
   runSharedStateReadAction,
 } from './shared-state.action';
 import { runAgUiAction } from './ag-ui.action';
+import { runBackgroundTasksAction } from './background-tasks.action';
 import { runDisplayOnlyAction } from './display-only.action';
 import { runFrontendToolsAction } from './frontend-tools.action';
 import { runHeadlessUiAction } from './headless-ui.action';
@@ -64,6 +65,7 @@ export const ACTION_MAP: Record<string, PageActionHandler> = {
   "frontend-tools": runFrontendToolsAction,
   "shared-state-in-app-agent-read": runSharedStateReadAction,
   "ag-ui": runAgUiAction,
+  "background-tasks": runBackgroundTasksAction,
 };
 
 export async function executePageAction(
