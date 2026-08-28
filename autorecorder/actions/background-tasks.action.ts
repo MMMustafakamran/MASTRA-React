@@ -48,6 +48,11 @@ import { sendPrompt } from '../core/actions';
  *   .cpk-td__tab--active       marks which of those is showing
  *   .cpk-td__event             one raw event; .cpk-td__event-type is its label
  *
+ * Match tab LABELS loosely and tab IDS exactly. CI re-resolves dependencies
+ * with no lockfile, so it routinely runs a newer Inspector than the one in
+ * local node_modules -- which is exactly how "Raw AG-UI Events" became
+ * "AG-UI Events" between two runs of this handler.
+ *
  * An earlier revision guessed `cpk-thread-list li, cpk-thread-list button` and
  * matched nothing, so the tab strip was never reached and the run still claimed
  * success. Every navigation step below therefore VERIFIES it landed and the
@@ -66,6 +71,17 @@ const ACTIVITY_EVENT_TYPES = ['ACTIVITY_SNAPSHOT', 'ACTIVITY_DELTA'];
 
 /** Mastra's activity type, as `@ag-ui/mastra` emits it. */
 const BACKGROUND_ACTIVITY_TYPE = 'mastra-background-task';
+
+/**
+ * The raw-events tab, matched on the part of its label that has held across
+ * releases. The Inspector has shipped it as both "Raw AG-UI Events" and
+ * "AG-UI Events"; an exact-match check passed locally and then silently
+ * skipped the whole evidence half in CI, which re-resolves to whatever is
+ * newest. Its tab *id* -- `raw-events` -- is the stable handle, and that is
+ * what `selectTab` below takes.
+ */
+const RAW_EVENTS_LABEL = /AG-UI Events/i;
+const RAW_EVENTS_TAB_ID = 'raw-events';
 
 async function glideTo(page: Page, box: { x: number; y: number; width: number; height: number }) {
   await humanGlide(
@@ -213,33 +229,33 @@ export const runBackgroundTasksAction: PageActionHandler = async (
         'view lists this run\'s thread.',
     );
   } else {
-    console.log(`   Opening the "Raw AG-UI Events" tab...`);
-    await clickIfVisible(page, 'button[role="tab"]:has-text("Raw AG-UI Events")', 6000);
+    console.log(`   Opening the AG-UI Events tab...`);
+    await clickIfVisible(page, 'button[role="tab"]:has-text("AG-UI Events")', 6000);
     await sleep(2000);
 
     // The tab label is the contract with a specific Inspector release. If it
     // was renamed, drive the component's own API instead of failing the shot --
     // `cpk-thread-details.selectTab(id)` takes the stable tab ids.
-    if ((await activeTabLabel(page)) !== 'Raw AG-UI Events') {
-      console.log(`   Tab label did not match; calling selectTab('raw-events')...`);
+    if (!RAW_EVENTS_LABEL.test((await activeTabLabel(page)) ?? '')) {
+      console.log(`   Tab label did not match; calling selectTab('${RAW_EVENTS_TAB_ID}')...`);
       await page
-        .evaluate(() => {
+        .evaluate((tabId) => {
           const inspector = document.querySelector('cpk-web-inspector');
           const details = inspector?.shadowRoot?.querySelector('cpk-thread-details') as
             | (HTMLElement & { selectTab?: (id: string) => void })
             | null;
-          details?.selectTab?.('raw-events');
-        })
+          details?.selectTab?.(tabId);
+        }, RAW_EVENTS_TAB_ID)
         .catch(() => {});
       await sleep(2000);
     }
 
     const active = await activeTabLabel(page);
-    onRawEvents = active === 'Raw AG-UI Events';
+    onRawEvents = RAW_EVENTS_LABEL.test(active ?? '');
     console.log(
       onRawEvents
-        ? `   ✓ Raw AG-UI Events tab is active.`
-        : `   ⚠ Could not reach Raw AG-UI Events (active tab: "${active ?? 'none'}").`,
+        ? `   ✓ AG-UI Events tab is active (label: "${active}").`
+        : `   ⚠ Could not reach the AG-UI Events tab (active tab: "${active ?? 'none'}").`,
     );
   }
 
