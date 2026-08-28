@@ -2,6 +2,7 @@ import { type Page } from 'playwright';
 import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt } from '../core/actions';
+import { openInspector, openInspectorPanel } from './inspector.action';
 
 /**
  * Records what the Background Tasks page actually does, which is not what the
@@ -235,28 +236,17 @@ export const runBackgroundTasksAction: PageActionHandler = async (
   );
 
   // ── Half 2: the Inspector's own read of the same stream ──────────────────
-  console.log(`   Opening the CopilotKit Inspector...`);
-  const opened = await clickIfVisible(
-    page,
-    'cpk-web-inspector button, button[aria-label*="Inspector" i]',
-    5000,
-  );
-  if (!opened) {
-    console.warn(
-      '   ⚠ Inspector trigger not found. showDevConsole="auto" only mounts it ' +
-        'on localhost -- check components/providers.tsx and the host in ' +
-        'config/project.config.ts.',
-    );
-  }
-  await sleep(2500);
+  //
+  // Both nav steps go through inspector.action's helpers rather than matching
+  // on button text. Text matching resolves to whichever ancestor contains the
+  // words -- a panel wrapper, not the nav button -- and clicking that is a
+  // silent no-op. The helpers walk shadow roots recursively, target
+  // `data-inspector-menu-key`, and throw if the panel does not go active.
+  await openInspector(page);
 
-  // Sidebar: Agent / Frontend Tools / Context / Threads / Memory. Opening
-  // Threads calls the Inspector's own autoSelectLatestThread(), so the details
-  // pane usually arrives already populated -- the explicit row click below is
-  // the fallback for when it does not.
   console.log(`   Navigating to Threads...`);
-  await clickIfVisible(page, ':is(button, [role="button"]):has-text("Threads")', 6000);
-  await sleep(2500);
+  await openInspectorPanel(page, 'threads');
+  await sleep(2000);
 
   const tabStrip = page.locator('button[role="tab"]').first();
   if (!(await tabStrip.isVisible({ timeout: 4000 }).catch(() => false))) {

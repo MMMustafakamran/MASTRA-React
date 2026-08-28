@@ -3,122 +3,263 @@ import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt } from '../core/actions';
 
+/**
+ * Driving the CopilotKit Inspector.
+ *
+ * The Inspector is a Lit web component (`@copilotkit/web-inspector`) whose nav
+ * lives behind NESTED shadow roots, so `document.querySelector` cannot see it
+ * and a one-level shadow walk finds only the outer host. An earlier revision
+ * matched `div`/`span` on `textContent`, which resolves to whichever ancestor
+ * container happens to contain the words — a panel wrapper, not the nav button.
+ * Clicking that wrapper's centre is a no-op, and the cursor lands mid-panel:
+ * the clip looked like it did something and had not.
+ *
+ * Three rules came out of that, and they are why this file looks the way it
+ * does:
+ *
+ *   1. **Walk shadow roots recursively.** One level is not enough.
+ *   2. **Target `data-inspector-menu-key`, never text.** The nav renders that
+ *      attribute on each leaf button. Labels are translated, renamed between
+ *      releases, and duplicated on containers; the key is none of those things.
+ *   3. **Click with a real mouse at resolved coordinates.** `el.click()` fires
+ *      the handler without moving the cursor overlay, so the video shows a
+ *      panel changing with no visible interaction.
+ *
+ * And one rule about honesty: assert the panel actually became active, and
+ * throw if it did not. A recording that quietly skips the single interaction it
+ * exists to show is worse than a failed one, because it looks like a pass.
+ *
+ * ── Which panel ────────────────────────────────────────────────────────────
+ * `agents` renders EMPTY on these demo pages — there is no per-agent detail to
+ * show for a single-agent app — so a clip that opens it documents a blank
+ * rectangle. `ag-ui-events` is the panel with content: the protocol events the
+ * run actually produced. That swap is the point of this action.
+ *
+ * ── Version floor ──────────────────────────────────────────────────────────
+ * `data-inspector-menu-key` exists in @copilotkit/web-inspector 1.69.x. Older
+ * installs (1.66.x still sits in some repos' node_modules) do not have it, so
+ * the throw below is the correct outcome there rather than a silent fallback to
+ * text matching — CI resolves without a lockfile and gets 1.69.x, and a local
+ * run on 1.66.x SHOULD fail loudly rather than record something different from
+ * what CI records.
+ */
+
+/** Nav keys the Inspector renders. `agents` is deliberately not used here. */
+export type InspectorMenuKey =
+  | 'agents'
+  | 'ag-ui-events'
+  | 'agent-context'
+  | 'frontend-tools'
+  | 'capabilities'
+  | 'threads'
+  | 'memories';
+
+/**
+ * The recursive shadow-root walk below is repeated inside each `page.evaluate`
+ * rather than shared: evaluate serialises its callback and cannot close over
+ * anything in this module. An earlier revision worked around that by shipping
+ * the helper as a string and calling `eval` on it in the page -- one CSP
+ * tightening away from breaking, and invisible to the type checker. Duplicating
+ * ten lines keeps both properties.
+ */
+
+/** Opens the Inspector overlay. Returns false when no trigger is on screen. */
+export async function openInspector(page: Page): Promise<boolean> {
+  console.log(`   Opening CopilotKit Inspector overlay...`);
+  const triggerPos = await page.evaluate(() => {
+    const seen = new Set<Document | ShadowRoot>();
+    const walk = (root: Document | ShadowRoot): HTMLElement | null => {
+      if (!root || seen.has(root)) return null;
+      seen.add(root);
+      const hit = root.querySelector(
+        'button[aria-label*="Inspector" i], button[aria-label*="Console" i], #trigger, .trigger',
+      ) as HTMLElement | null;
+      if (hit) return hit;
+      for (const el of Array.from(root.querySelectorAll('*'))) {
+        if (el.shadowRoot) {
+          const nested = walk(el.shadowRoot);
+          if (nested) return nested;
+        }
+      }
+      return null;
+    };
+    const btn = walk(document);
+    if (!btn) return null;
+    const r = btn.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return null;
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+
+  if (!triggerPos) {
+    console.warn(
+      '   ⚠ Inspector trigger not found. It mounts only on localhost ' +
+        '(showDevConsole="auto") -- check the provider and the host in ' +
+        'config/project.config.ts.',
+    );
+    return false;
+  }
+
+  await humanGlide(page, triggerPos.x, triggerPos.y, 22);
+  await humanClick(page);
+  await sleep(2500);
+  return true;
+}
+
+/**
+ * Selects one Inspector nav panel and proves it became active.
+ *
+ * Leaves live inside collapsible groups, so a leaf that is not in the DOM yet
+ * is looked for again after opening each group. Groups toggle, so they are only
+ * touched when the leaf is genuinely missing -- clicking them all up front
+ * would close whichever one was already open.
+ *
+ * @throws if the nav item cannot be found, or does not go active once clicked.
+ */
+export async function openInspectorPanel(
+  page: Page,
+  menuKey: InspectorMenuKey,
+): Promise<void> {
+  const locate = async (): Promise<{ x: number; y: number } | null> =>
+    page.evaluate((key) => {
+      const seen = new Set<Document | ShadowRoot>();
+      const walk = (root: Document | ShadowRoot): HTMLElement | null => {
+        if (!root || seen.has(root)) return null;
+        seen.add(root);
+        const hit = root.querySelector(
+          `button[data-inspector-menu-key="${key}"]`,
+        ) as HTMLElement | null;
+        if (hit) return hit;
+        for (const el of Array.from(root.querySelectorAll('*'))) {
+          if (el.shadowRoot) {
+            const nested = walk(el.shadowRoot);
+            if (nested) return nested;
+          }
+        }
+        return null;
+      };
+      const tab = walk(document);
+      if (!tab) return null;
+      tab.scrollIntoView({ block: 'center', inline: 'center' });
+      const r = tab.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return null;
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }, menuKey);
+
+  let pos = await locate();
+
+  if (!pos) {
+    // The leaf's group is collapsed. Open groups one at a time, re-checking
+    // after each, so an already-open group is never toggled shut.
+    const groups: string[] = await page.evaluate(() => {
+      const seen = new Set<Document | ShadowRoot>();
+      const out: string[] = [];
+      const walk = (root: Document | ShadowRoot) => {
+        if (!root || seen.has(root)) return;
+        seen.add(root);
+        for (const el of Array.from(
+          root.querySelectorAll('button[data-inspector-group]:not([data-inspector-menu-key])'),
+        )) {
+          const g = el.getAttribute('data-inspector-group');
+          if (g && !out.includes(g)) out.push(g);
+        }
+        for (const el of Array.from(root.querySelectorAll('*'))) {
+          if (el.shadowRoot) walk(el.shadowRoot);
+        }
+      };
+      walk(document);
+      return out;
+    });
+
+    for (const group of groups) {
+      await page.evaluate((g) => {
+        const seen = new Set<Document | ShadowRoot>();
+        const walk = (root: Document | ShadowRoot): HTMLElement | null => {
+          if (!root || seen.has(root)) return null;
+          seen.add(root);
+          const hit = root.querySelector(
+            `button[data-inspector-group="${g}"]:not([data-inspector-menu-key])`,
+          ) as HTMLElement | null;
+          if (hit) return hit;
+          for (const el of Array.from(root.querySelectorAll('*'))) {
+            if (el.shadowRoot) {
+              const nested = walk(el.shadowRoot);
+              if (nested) return nested;
+            }
+          }
+          return null;
+        };
+        walk(document)?.click();
+      }, group);
+      await sleep(600);
+      pos = await locate();
+      if (pos) break;
+    }
+  }
+
+  if (!pos) {
+    throw new Error(
+      `[Inspector] Could not find the "${menuKey}" nav item ` +
+        `(button[data-inspector-menu-key="${menuKey}"]) in any shadow root. ` +
+        'Either the nav markup changed, or @copilotkit/web-inspector is older ' +
+        'than 1.69 and does not carry the attribute at all.',
+    );
+  }
+
+  console.log(`   🎯 "${menuKey}" at (${Math.round(pos.x)}, ${Math.round(pos.y)})`);
+  await humanGlide(page, pos.x, pos.y, 20);
+  await humanClick(page);
+  await sleep(1200);
+
+  const active = await page.evaluate((key) => {
+    const seen = new Set<Document | ShadowRoot>();
+    const walk = (root: Document | ShadowRoot): HTMLElement | null => {
+      if (!root || seen.has(root)) return null;
+      seen.add(root);
+      const hit = root.querySelector(
+        `button[data-inspector-menu-key="${key}"]`,
+      ) as HTMLElement | null;
+      if (hit) return hit;
+      for (const el of Array.from(root.querySelectorAll('*'))) {
+        if (el.shadowRoot) {
+          const nested = walk(el.shadowRoot);
+          if (nested) return nested;
+        }
+      }
+      return null;
+    };
+    const tab = walk(document);
+    return (
+      tab?.getAttribute('aria-current') === 'page' ||
+      !!tab?.className.includes('inspector-nav-control-active')
+    );
+  }, menuKey);
+
+  if (!active) {
+    throw new Error(
+      `[Inspector] Clicked the "${menuKey}" nav item but it did not become ` +
+        'active -- the panel did not switch.',
+    );
+  }
+  console.log(`   ✓ "${menuKey}" panel is active.`);
+}
+
 export const runInspectorAction: PageActionHandler = async (
   page: Page,
   config: PageRecordConfig,
 ) => {
-  console.log(`   [Inspector] Sending message to populate dev console...`);
+  console.log(`   [Inspector] Sending message to populate the Inspector...`);
   await sendPrompt(page, config.prompt, { timeoutMs: 12000 });
 
   console.log(`   Waiting for initial agent response...`);
   await sleep(4500);
 
-  // Look for CopilotKit Inspector trigger (both in shadowRoot and main document)
-  console.log(`   Opening CopilotKit Inspector overlay...`);
-  const triggerPos = await page.evaluate(() => {
-    // 1. Check all elements with shadowRoot
-    for (const el of Array.from(document.querySelectorAll('*'))) {
-      if (el.shadowRoot) {
-        const btn = el.shadowRoot.querySelector(
-          'button, [role="button"], #trigger, .trigger, [aria-label*="Inspector"], [aria-label*="dev"], [aria-label*="Console"]',
-        ) as HTMLElement;
-        if (btn) {
-          const r = btn.getBoundingClientRect();
-          if (r.width > 0 && r.height > 0) {
-            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-          }
-        }
-      }
-    }
-    // 2. Check main document
-    const mainBtn = document.querySelector(
-      'button[aria-label*="Inspector"], button[aria-label*="dev"], button[aria-label*="Console"], .copilotKitDevConsole, [class*="inspector"], button:has-text("Inspector")',
-    ) as HTMLElement;
-    if (mainBtn) {
-      const r = mainBtn.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) {
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      }
-    }
-    return null;
-  });
+  await openInspector(page);
 
-  if (triggerPos) {
-    await humanGlide(page, triggerPos.x, triggerPos.y, 22);
-    await humanClick(page);
-    // Also trigger inside shadow root if click needed
-    await page.evaluate(() => {
-      for (const el of Array.from(document.querySelectorAll('*'))) {
-        if (el.shadowRoot) {
-          const btn = el.shadowRoot.querySelector(
-            'button, [role="button"], #trigger, .trigger, [aria-label*="Inspector"]',
-          ) as HTMLElement;
-          if (btn) btn.click();
-        }
-      }
-    });
-    await sleep(2500);
-  }
-
-  // After inspector is opened, locate and click on "Agents" tab
-  console.log(`   Clicking on "Agents" tab in Inspector...`);
-  const agentsPos = await page.evaluate(() => {
-    // 1. Search inside shadow roots
-    for (const el of Array.from(document.querySelectorAll('*'))) {
-      if (el.shadowRoot) {
-        const items = Array.from(
-          el.shadowRoot.querySelectorAll('button, a, [role="tab"], div, span, p'),
-        );
-        const tab = items.find((e) => {
-          const t = (e.textContent || '').trim().toLowerCase();
-          return t === 'agents' || t === 'agent';
-        }) as HTMLElement;
-        if (tab) {
-          tab.click();
-          const r = tab.getBoundingClientRect();
-          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        }
-      }
-    }
-    // 2. Search main document
-    const docTab = Array.from(
-      document.querySelectorAll('button, a, [role="tab"], span, div'),
-    ).find((e) => {
-      const t = (e.textContent || '').trim().toLowerCase();
-      return t === 'agents' || t === 'agent';
-    }) as HTMLElement;
-    if (docTab) {
-      docTab.click();
-      const r = docTab.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    }
-    return null;
-  });
-
-  if (agentsPos && agentsPos.x > 0 && agentsPos.y > 0) {
-    console.log(
-      `   🎯 Detected Agents tab at (${Math.round(agentsPos.x)}, ${Math.round(agentsPos.y)})`,
-    );
-    await humanGlide(page, agentsPos.x, agentsPos.y, 20);
-    await humanClick(page);
-    console.log(`   ✓ Switched to Agents tab in Inspector!`);
-    await sleep(4000);
-  } else {
-    // Fallback: search via Playwright locator
-    const agentsTab = page
-      .locator(
-        'button:has-text("Agents"), [role="tab"]:has-text("Agents"), span:has-text("Agents")',
-      )
-      .first();
-    if (await agentsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const atBox = await agentsTab.boundingBox();
-      if (atBox) {
-        await humanGlide(page, atBox.x + atBox.width / 2, atBox.y + atBox.height / 2, 20);
-        await humanClick(page);
-        await sleep(3500);
-      }
-    }
-  }
+  // `agents` renders empty on a single-agent demo; `ag-ui-events` is where the
+  // run's actual protocol traffic shows up.
+  console.log(`   Selecting the AG-UI Events panel...`);
+  await openInspectorPanel(page, 'ag-ui-events');
+  await sleep(4000);
 
   await humanGlide(page, 960, 500, 25);
   await sleep(config.waitAfterPromptMs ?? 4000);
