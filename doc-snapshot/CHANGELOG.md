@@ -8,6 +8,99 @@ Holds the 3 most recent dated entries. When a change lands on a fourth
 date, the oldest entry is dropped. Entries are counted, not aged, so a gap of
 weeks between changes does not expire anything.
 
+## 2026-08-30
+
+### 13:45 UTC — 9 pages, highest severity high
+
+**High — Background Tasks**
+
+`/mastra/background-tasks` · route `/background-tasks` · under “Observational Memory as background activity” · in a `typescript` block
+
+1 code line changed.
+
+````diff
++ resourceId: "user-1",
+````
+
+**High — Copilot Runtime**
+
+`/mastra/copilot-runtime` · route `/copilot-runtime` · under “Execution tracing” · in a `ts` block
+
+1 code line changed.
+
+````diff
++ resourceId: "user-1",
+````
+
+**High — Reading agent state**
+
+`/mastra/shared-state/in-app-agent-read` · route `/shared-state/in-app-agent-read` · under “What is this?” · in a `ts` block
+
+2 code lines changed.
+
+````diff
+- agents: MastraAgent.getLocalAgents({ mastra }),
++ agents: MastraAgent.getLocalAgents({ mastra, resourceId: "user-1" }),
+````
+
+**High — Writing agent state**
+
+`/mastra/shared-state/in-app-agent-write` · route `/shared-state/in-app-agent-write` · under “What is this?” · in a `ts` block
+
+2 code lines changed.
+
+````diff
+- agents: MastraAgent.getLocalAgents({ mastra }),
++ agents: MastraAgent.getLocalAgents({ mastra, resourceId: "user-1" }),
+````
+
+**High — Predictive State Updates**
+
+`/mastra/shared-state/predictive-state-updates` · route `/shared-state/predictive-state-updates` · under “How it works” · in a `ts` block
+
+2 code lines changed.
+
+````diff
+- agents: MastraAgent.getLocalAgents({ mastra }),
++ agents: MastraAgent.getLocalAgents({ mastra, resourceId: "user-1" }),
+````
+
+**Low — Quickstart**
+
+`/mastra/quickstart` · route `/quickstart` · under “Quickstart”
+
+7 prose lines changed.
+
+````diff
+- <OpsPlatformCTA
+- variant="card"
+- title="Ship Mastra to production"
+- body="Add persistent threads and the inspector with CopilotKit Intelligence."
+- ctaLabel="Create a free account"
++ <IntelligenceOnboardingPrompt
++ feature="learning"
+````
+
+**Info — Headless Threads**
+
+`/mastra/headless-threads` · route `/headless-threads`
+
+Now tracked for the first time.
+
+**Info — CopilotThreadsDrawer**
+
+`/mastra/prebuilt-components/copilot-threads-drawer` · route `/prebuilt-components/copilot-threads-drawer`
+
+Now tracked for the first time.
+
+**Info — Persistent Threads**
+
+`/mastra/threads` · route `/threads`
+
+Now tracked for the first time.
+
+---
+
 ## 2026-08-26
 
 ### 15:05 UTC — 3 pages, highest severity high
@@ -76,6 +169,8 @@ A new section decides local vs remote by where the agent already runs, documents
 
 ---
 
+---
+
 ## 2026-08-24
 
 ### 13:19 UTC — 3 pages, highest severity high
@@ -130,46 +225,5 @@ A new section decides local vs remote by where the agent already runs, documents
 - **Learning**. Threads is the default. Open a real Thread to inspect its
 + The sidebar has three groups: **Home**, **Workbench** (Threads, Memory), and
 ````
-
----
-
-## 2026-08-21
-
-### 18:38 UTC — 2 pages, highest severity medium
-
-**Low — Inspector**
-
-`/mastra/inspector` · route `/inspector` · under “Showing or hiding the Inspector”
-
-7 prose lines changed.
-
-````diff
-+ `NEXT_PUBLIC_COPILOTKIT_LICENSE_KEY` is a browser-visible publishable key and is
-+ a **different credential** from the server-side `INTELLIGENCE_API_KEY` that
-+ `copilotkit project select` writes into your `.env`. The server-side key is
-+ consumed by the `CopilotKitIntelligence` client described in
-+ [Runtime endpoints](/mastra/backend/runtime-endpoints). Do not substitute one for the
-+ other, and never expose the server-side key to the browser.
-+ 
-````
-
-**Medium — Quickstart**
-
-`/mastra/quickstart` · route `/quickstart` · under “🎉 Start chatting!”
-
-1 heading, 13 prose lines changed.
-
-````diff
-+ 
-+ <Step>
-+ ### Open Inspector and confirm setup
-+ 
-+ On localhost, click the Inspector button in the corner of the app.
-+ 
-+ 1. Open **Agents**, then **Agent**. Your agent is listed.
-+ 2. Send a chat message. Open **Agents**, then **AG-UI Events**. Events are moving.
-````
-
----
 
 ---

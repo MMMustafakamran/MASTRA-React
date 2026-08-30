@@ -4,11 +4,8 @@
 
 
 
-<OpsPlatformCTA
-  variant="card"
-  title="Ship Mastra to production"
-  body="Add persistent threads and the inspector with CopilotKit Intelligence."
-  ctaLabel="Create a free account"
+<IntelligenceOnboardingPrompt
+  feature="learning"
   surface="docs_mastra_quickstart"
 />
 
