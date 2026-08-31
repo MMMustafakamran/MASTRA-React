@@ -12,4 +12,8 @@
 # and MANIFEST.md recording each clip's date, hash, and whether the code it shows
 # has changed since. That is how you tell a fresh recording from a stale one.
 *.webm
+*.mp4
+*.m4a
+*.wav
+*.mp3
 !.gitignore
