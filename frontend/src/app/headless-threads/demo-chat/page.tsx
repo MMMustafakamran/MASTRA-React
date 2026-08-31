@@ -1,19 +1,20 @@
 "use client";
 
 import { CopilotChat, useThreads } from "@copilotkit/react-core/v2";
+import { useState } from "react";
 import { DemoFrame } from "@/components/demo-frame";
 import { ThreadsProvider } from "@/components/threads-provider";
 
 function HeadlessThreadsDemo() {
-  const {
-    threads,
-    activeThreadId,
-    setActiveThreadId,
-    createNewThread,
-    deleteThread,
-    isLoading,
-    error,
-  } = useThreads({ agentId: "myAgent" });
+  // The guide's "Switch between threads" step owns the selection in the app,
+  // not in the hook: `const [activeThreadId, setActiveThreadId] = useState()`,
+  // then `<CopilotChat threadId={activeThreadId} />`. `useThreads` returns the
+  // list and the mutations only.
+  // https://docs.copilotkit.ai/mastra/headless-threads
+  const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
+
+  const { threads, isLoading, error, deleteThread, startNewThread } =
+    useThreads({ agentId: "myAgent" });
 
   return (
     <div className="flex h-full min-h-0 flex-1 overflow-hidden">
@@ -25,7 +26,10 @@ function HeadlessThreadsDemo() {
           </h2>
           <button
             type="button"
-            onClick={() => createNewThread?.()}
+            onClick={() => {
+              startNewThread();
+              setActiveThreadId(undefined);
+            }}
             className="rounded bg-[var(--accent)] px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
           >
             + New
@@ -47,7 +51,7 @@ function HeadlessThreadsDemo() {
               return (
                 <div
                   key={thread.id}
-                  onClick={() => setActiveThreadId?.(thread.id)}
+                  onClick={() => setActiveThreadId(thread.id)}
                   className={`group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-xs transition-colors ${
                     isSelected
                       ? "bg-[var(--accent)] text-white font-medium shadow-sm"
@@ -61,7 +65,7 @@ function HeadlessThreadsDemo() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      deleteThread?.(thread.id);
+                      void deleteThread(thread.id);
                     }}
                     className={`opacity-0 group-hover:opacity-100 hover:text-red-400 text-xs px-1 ${
                       isSelected ? "text-white/80" : "text-slate-400"
@@ -85,6 +89,9 @@ function HeadlessThreadsDemo() {
       <div className="min-h-0 flex-1">
         <CopilotChat
           agentId="myAgent"
+          // The guide highlights exactly this line. Without it the selection
+          // never reaches the chat: it stays on whatever thread it opened with.
+          threadId={activeThreadId}
           key={activeThreadId || "default"}
           labels={{
             welcomeMessageText:

@@ -1,6 +1,6 @@
 import { RouteHeader } from "@/components/route-header";
 import { SourceCode, SourceCodeGroup } from "@/components/source-code";
-import { Panel, TryIt } from "@/components/ui";
+import { Callout, Panel, TryIt } from "@/components/ui";
 
 export default function Page() {
   return (
@@ -42,6 +42,32 @@ export default function Page() {
           ]}
         />
       </Panel>
+
+      <Callout
+        tone="warn"
+        title="Finding — the load-bearing provider was missing until this page was tracked"
+      >
+        <p>
+          Reconciled on 2026-08-31, the first sync that tracked this page. The
+          guide is explicit that the shared provider is what makes the drawer
+          work: &ldquo;Place <code>&lt;CopilotThreadsDrawer&gt;</code> next to{" "}
+          <code>&lt;CopilotChat&gt;</code> and wrap <strong>both</strong> in a
+          shared <code>&lt;CopilotChatConfigurationProvider&gt;</code> … That
+          shared configuration is what lets the Drawer drive the chat: with no
+          callbacks, selecting a row connects the chat to that thread and
+          replays its history.&rdquo;
+        </p>
+        <p className="mt-2">
+          <code>ThreadsProvider</code> supplied only{" "}
+          <code>CopilotKitProvider</code>, so both this route and{" "}
+          <code>/threads</code> paired the two components with no shared
+          configuration between them and no callbacks of their own — the one
+          arrangement the guide says will not work. It is added there now,
+          around all three thread routes. Nothing in the pipeline could have
+          caught this: the route, the recorder entry and the build were all
+          green, and the page had no drift baseline to compare against.
+        </p>
+      </Callout>
     </>
   );
 }
