@@ -1,26 +1,47 @@
-# Project Context
+# Project Goal
 
-This project is already implemented based on the documentation in the `doc-snapshot/` folder.
+QA on the CopilotKit React Mastra docs
+(<https://docs.copilotkit.ai/mastra>). The job is **finding bugs and
+ambiguity in those doc pages**. The deliverable is a written QA report of the findings plus one
+recording per page. Everything here is tooling for that; a clean run that finds
+nothing when the docs are broken is a failed run, not a passing one.
 
-`doc-snapshot/pages/` holds one Markdown file per live doc page — instructions, explanations, code snippets, highlighted snippets, and examples. The working project contains their corresponding implementations. `doc-snapshot/manifest.json` records when the snapshot was last synced, and `doc-snapshot/CHANGELOG.md` records what changed upstream between syncs.
+## Layout
 
-The project is intentionally **simple, lightweight, and testing-friendly**, allowing the implementation to be manually inspected and demonstrated. `autorecorder/` records that demonstration as video, one clip per doc page.
+| Path | What it is |
+|---|---|
+| `doc-snapshot/` | Version-controlled copy of the upstream doc pages, plus `CHANGELOG.md` of drift |
+| `frontend/`, `cli/` | The harness — each doc page is a live route running what that page teaches, plus the CLI install paths |
+| `autorecorder/` | Per-page demo capture (doc → code → live feature), paced to look human |
+| `ci/` | `automate.mjs`: drift → preflight → deps → servers → record → report |
 
-### Documentation Rules
+## Cycle
 
-* Treat the documentation as the source of truth for the intended implementation.
-* **Strictly follow the documented code snippets and instructions.**
-* Do not make changes simply to improve, refactor, or reinterpret the documented implementation.
-* If something is wrong because of the **documentation itself** (for example, an incorrect instruction or incorrect code snippet), **do not fix the documentation-related issue in the project**. Report/identify it instead.
-* If the problem is genuinely caused by the project implementation not matching correct documentation, it can be treated as a project-related issue.
-* Do not silently change documented behavior.
+```
+drift check → implement changed pages into the harness → record → report
+```
 
-### Relationship
+## Rules
 
-* `doc-snapshot/pages/` = documented behavior and implementation (a synced copy of the live CopilotKit docs)
-* Project code = working implementation
-* Highlighted/code snippets = references to relevant implementation areas
+1. Snippets go in **verbatim**, highlighted ones especially. A snippet that fails
+   as published is the finding — do not fix it.
+2. Broken pages keep their broken implementation; the clip exists to show the
+   defect.
+3. Ambiguity is a defect: missing steps, undefined identifiers, unstated
+   prerequisites. Report it even if inference makes the page work.
+4. Every finding pins installed vs declared versions.
 
-The overall purpose is to provide a simple working representation of the documented functionality for manual QA and demonstration.
+## Gaps the pipeline misses — check by hand
 
-When comments or annotations are requested, keep them **short, specific, and directly tied to the relevant documentation or code snippet**.
+- **New pages** — no route, no recorder entry, no diff; snapshotted but untested.
+- **Removed/renamed pages** — leave a live route and a passing recording behind.
+- **Legacy code** — the old implementation surviving beside the new one and
+  keeping a page falsely green.
+- **Pages with no `/demo` route** — unregistered in the recorder, never recorded.
+- **Silent failures** — clean console, no error; drift and recording both pass.
+- **Divergence from the Angular build** of the same guide; nothing compares them.
+
+## Done
+
+Drift implemented · §gaps reconciled · superseded code deleted · all routes
+recorded · report rebuilt · **clips actually watched**.
