@@ -13,7 +13,7 @@ import { execSync } from 'node:child_process';
 import {
   FRONTEND_PORT,
   FRONTEND_URL,
-  RUNTIME_WARM_PATH,
+  RUNTIME_WARM_PATHS,
   WARMUP_ROUTES,
   isWindows,
 } from './config.mjs';
@@ -151,14 +151,16 @@ export async function warmFrontendRoutes(timeoutMs = 180000) {
  * never replied.
  */
 export async function warmRuntimeEndpoint(timeoutMs = 120000) {
-  if (!RUNTIME_WARM_PATH) return;
-  const url = `${FRONTEND_URL}${RUNTIME_WARM_PATH}`;
-  process.stdout.write(`🔥 [Warmup] ${RUNTIME_WARM_PATH} ... `);
-  try {
-    // A GET against a POST-only route answers 405. That is a compiled route.
-    await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-    process.stdout.write('✅ compiled\n');
-  } catch {
-    process.stdout.write('⚠️ no answer; first prompt may pay the compile.\n');
+  for (const warmPath of RUNTIME_WARM_PATHS) {
+    if (!warmPath) continue;
+    const url = `${FRONTEND_URL}${warmPath}`;
+    process.stdout.write(`🔥 [Warmup] ${warmPath} ... `);
+    try {
+      // A GET against a POST-only route answers 405. That is a compiled route.
+      await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+      process.stdout.write('✅ compiled\n');
+    } catch {
+      process.stdout.write('⚠️ no answer; first prompt may pay the compile.\n');
+    }
   }
 }

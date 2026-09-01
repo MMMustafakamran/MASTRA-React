@@ -43,8 +43,8 @@ export const FRONTEND_URL = `http://127.0.0.1:${FRONTEND_PORT}`;
 export const WARMUP_ROUTES = ['/', '/quickstart/demo-chat'];
 
 /**
- * The path the browser posts to for agent replies, and the one route that
- * carries Mastra itself.
+ * The paths the browser posts to for agent replies — the routes that carry
+ * Mastra itself.
  *
  * A dev server compiles API routes lazily and only on first request, so without
  * this the page is ready while the endpoint behind it is not: the first POST
@@ -53,5 +53,15 @@ export const WARMUP_ROUTES = ['/', '/quickstart/demo-chat'];
  *
  * The GET is expected to fail (405 against a POST-only route) — compiling it is
  * the whole point.
+ *
+ * `/api/copilotkit` is the documented quickstart runtime. `/api/copilotkit-threads`
+ * is the Intelligence-backed runtime the three Rich Threads pages use — a separate
+ * route that compiles separately, so warming only the first leaves every threads
+ * page to pay the compile. A full run hides this: the first threads page absorbs
+ * the cost and the rest look fine. A threads-only run shards one page per worker,
+ * so every worker pays it and all three pages fail with "agent never replied".
  */
-export const RUNTIME_WARM_PATH = '/api/copilotkit';
+export const RUNTIME_WARM_PATHS = [
+  '/api/copilotkit',
+  '/api/copilotkit-threads/info',
+];
