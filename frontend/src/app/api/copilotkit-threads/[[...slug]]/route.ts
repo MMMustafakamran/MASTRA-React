@@ -8,8 +8,19 @@ import { MastraAgent } from "@ag-ui/mastra";
 
 import { mastra } from "@/mastra";
 
-const LICENSE_TOKEN = process.env.COPILOTKIT_LICENSE_TOKEN;
-const INTELLIGENCE_KEY = process.env.INTELLIGENCE_API_KEY;
+// Treat empty/whitespace values as absent. A GitHub Actions `${{ secrets.X }}`
+// reference to a secret that does not exist expands to an empty string, which
+// still *defines* the variable — so a plain `??` or truthiness check on
+// process.env would sail past it and hand Intelligence an empty credential.
+const firstSet = (...values: (string | undefined)[]) =>
+  values.find((v) => typeof v === "string" && v.trim().length > 0)?.trim();
+
+// CLI >= 4.9 writes CPK_INTELLIGENCE_API_KEY; older CLIs wrote INTELLIGENCE_API_KEY.
+const INTELLIGENCE_KEY = firstSet(
+  process.env.INTELLIGENCE_API_KEY,
+  process.env.CPK_INTELLIGENCE_API_KEY,
+);
+const LICENSE_TOKEN = firstSet(process.env.COPILOTKIT_LICENSE_TOKEN);
 
 const localAgents = MastraAgent.getLocalAgents({
   mastra,
