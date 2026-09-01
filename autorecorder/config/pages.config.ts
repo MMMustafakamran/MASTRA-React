@@ -164,7 +164,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/generative-ui/your-components/display-only/demo-chat/page.tsx",
     startLine: 44,
     endLine: 52,
-    prompt: "Display a weather card for a city.",
+    prompt: "Show the weather card for London: 64 degrees, cloudy.",
     waitAfterPromptMs: 4000,
   },
   {

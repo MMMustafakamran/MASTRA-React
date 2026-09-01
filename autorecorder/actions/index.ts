@@ -37,7 +37,7 @@ import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { runStandardAction } from '../core/actions';
 import { type Page } from 'playwright';
 
-import { waitForPageReady } from './page-ready';
+import { READY_INPUT_OVERRIDES, waitForPageReady } from './page-ready';
 
 import {
   runSharedStateReadAction,
@@ -79,7 +79,14 @@ export async function executePageAction(
   // so markup can be on screen before anything is wired to it -- and a prompt
   // typed into an unhydrated input goes nowhere. Handlers that remount a chat
   // mid-run (tab switches) call waitForDomSettled again themselves.
-  await waitForPageReady(page, { label: config.id });
+  //
+  // Pages that are not driven through a chat box name their own control in
+  // READY_INPUT_OVERRIDES; without it the gate waits on a chat input the page
+  // never renders and spends its whole timeout before every such recording.
+  await waitForPageReady(page, {
+    label: config.id,
+    inputSelector: READY_INPUT_OVERRIDES[config.id],
+  });
 
   const handler = ACTION_MAP[config.id] ?? runStandardAction;
   await handler(page, config, rootPath);

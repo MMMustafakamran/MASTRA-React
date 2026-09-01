@@ -21,7 +21,11 @@ export const runDisplayOnlyAction: PageActionHandler = async (
   const msgCount = await sendPrompt(page, config.prompt, { timeoutMs: 12000 });
 
   console.log(`   Waiting for the generative WeatherCard to render inline...`);
-  const weatherCard = page.locator('div:has-text("Tokyo"), div:has-text("77°F")').last();
+  // Matched on the city the prompt asks for, narrowed to the card's own
+  // wrapper: a bare `div:has-text()` also matches every ancestor that contains
+  // the word, and `.last()` picking one of those parks the cursor on a
+  // container rather than on the card.
+  const weatherCard = page.locator('div.max-w-xs:has-text("London")').last();
   await weatherCard.waitFor({ state: 'visible', timeout: 25000 }).catch(() => {});
 
   if (await weatherCard.isVisible({ timeout: 3000 }).catch(() => false)) {

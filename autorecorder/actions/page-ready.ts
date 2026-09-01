@@ -47,6 +47,28 @@ export interface ReadyOptions {
 }
 
 /**
+ * Pages whose readiness is not proved by `SELECTORS.chatInput`, keyed by page id.
+ *
+ * That default describes a chat surface, which is what nearly every demo route
+ * renders. A page that drives the agent from its own controls has no such box,
+ * so the gate waits out its whole 30s budget on an element that was never going
+ * to appear, logs `input-usable=false`, and hands the handler a recording that
+ * opens with half a minute of nothing. It reads exactly like a hydration
+ * failure and is not one -- the page was ready the whole time.
+ *
+ * `programmatic-control` is the case: no chat component at all, just a draft
+ * box that is a bare `<input>`. `input[type="text"]` matches on the attribute,
+ * which that element does not carry, so nothing matched.
+ *
+ * Kept here rather than in `PageDefinition` because `core/` is frozen; this
+ * belongs in the page config and should move there when the contract is next
+ * revised, along with the rest of this file.
+ */
+export const READY_INPUT_OVERRIDES: Record<string, string> = {
+  'programmatic-control': 'input[placeholder="Message to send"]',
+};
+
+/**
  * Resolves once the DOM has stopped changing for `settleMs`.
  *
  * Cheap proxy for "the framework finished rendering": a page still hydrating,

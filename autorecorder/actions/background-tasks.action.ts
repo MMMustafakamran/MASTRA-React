@@ -102,6 +102,21 @@ const BACKGROUND_ACTIVITY_TYPE = 'mastra-background-task';
 const RAW_EVENTS_LABEL = /AG-UI Events/i;
 const RAW_EVENTS_TAB_ID = 'raw-events';
 
+/**
+ * The two events the recording closes on.
+ *
+ * `TEXT_MESSAGE_END` and `RUN_FINISHED` are what the Inspector lists once the
+ * model has stopped speaking and the run has closed -- both while the activity
+ * snapshot above them still says the task is running. Expanding each payload is
+ * what makes that legible on video; the event headers alone only carry names.
+ *
+ * Matched loosely because the Inspector prints friendly labels and has moved
+ * their wording between releases: the run recorded here listed them as
+ * "Text message end" and "Run finished".
+ */
+const TEXT_FINISHED_LABEL = /text\s*(message\s*)?(end|finished)/i;
+const RUN_FINISHED_LABEL = /run\s*finished/i;
+
 async function glideTo(page: Page, box: { x: number; y: number; width: number; height: number }) {
   await humanGlide(
     page,
@@ -146,6 +161,81 @@ async function readCardStatus(page: Page): Promise<string | null> {
     .first()
     .getAttribute('data-status')
     .catch(() => null);
+}
+
+/**
+ * A short wheel nudge under the cursor.
+ *
+ * An event that is expanded from its header renders its payload *below* that
+ * header, so the thing worth filming opens off the bottom of the panel. The
+ * wheel goes to wherever the cursor already is, which after an expand is the
+ * row itself -- inside the Inspector's own scroller, not the page's.
+ */
+async function nudgeScroll(page: Page, pixels = 220): Promise<void> {
+  const steps = 6;
+  for (let i = 0; i < steps; i++) {
+    await page.mouse.wheel(0, Math.round(pixels / steps));
+    await sleep(130);
+  }
+  await sleep(500);
+}
+
+/**
+ * Opens one AG-UI event's payload and leaves it on screen.
+ *
+ * Same two-stage click as the activity snapshot above: a glide-and-click lands
+ * on screen coordinates and is swallowed silently by anything overlaying the
+ * row, so `aria-expanded` is read back and a direct click used as the fallback.
+ *
+ * @returns Whether the payload ended up expanded.
+ */
+async function expandEvent(
+  page: Page,
+  label: RegExp,
+  name: string,
+): Promise<boolean> {
+  const row = page
+    .locator('.cpk-td__event')
+    .filter({ has: page.locator('.cpk-td__event-type', { hasText: label }) })
+    .last();
+
+  if (!(await row.isVisible({ timeout: 6000 }).catch(() => false))) {
+    console.warn(`   ⚠ No "${name}" event listed -- skipping its details.`);
+    return false;
+  }
+
+  await row.scrollIntoViewIfNeeded().catch(() => {});
+  await sleep(900);
+
+  const toggle = row
+    .locator('button[aria-expanded], button:has-text("Show details")')
+    .first();
+  if (!(await toggle.isVisible({ timeout: 3000 }).catch(() => false))) {
+    // Already open, or this build renders the payload without a toggle.
+    console.log(`   ℹ "${name}" has no details toggle; resting on the row.`);
+    const rb = await row.boundingBox();
+    if (rb) await glideTo(page, rb);
+    return false;
+  }
+
+  const tb = await toggle.boundingBox();
+  if (tb) {
+    await glideTo(page, tb);
+    await humanClick(page);
+  } else {
+    await toggle.click().catch(() => {});
+  }
+  await sleep(1200);
+
+  if ((await toggle.getAttribute('aria-expanded').catch(() => null)) !== 'true') {
+    await toggle.click({ force: true }).catch(() => {});
+    await sleep(1200);
+  }
+
+  const expanded =
+    (await toggle.getAttribute('aria-expanded').catch(() => null)) === 'true';
+  console.log(`   ${expanded ? '✓' : '⚠'} "${name}" details expanded: ${expanded}`);
+  return expanded;
 }
 
 /** Which thread tab the Inspector is actually showing, by its label. */
@@ -387,25 +477,20 @@ export const runBackgroundTasksAction: PageActionHandler = async (
       const box = await activityEvent.boundingBox();
       if (box) await glideTo(page, box);
 
-      // Scroll on to "Run finished" and rest there. The snapshot alone shows a
-      // task running; the contradiction only reads on screen when the viewer
-      // also sees the run that has ended, and it sits below the fold.
-      if (runFinished) {
-        const finishedRow = page
-          .locator('.cpk-td__event-type')
-          .filter({ hasText: /run finished/i })
-          .last();
-        if (await finishedRow.isVisible({ timeout: 4000 }).catch(() => false)) {
-          await finishedRow.scrollIntoViewIfNeeded().catch(() => {});
-          await sleep(1200);
-          const fb = await finishedRow.boundingBox();
-          if (fb) {
-            await glideTo(page, fb);
-            console.log(`   🎯 Resting on the "Run finished" event.`);
-            await sleep(4000);
-          }
-        }
-      }
+      // Close the Inspector half on the two terminal events, each opened and
+      // then nudged into view. The snapshot alone shows a task running; the
+      // contradiction only reads on screen when the viewer also sees the model
+      // stop speaking and the run close, and both sit below the fold with
+      // their payloads collapsed.
+      console.log(`   Opening the terminal events' payloads...`);
+      await expandEvent(page, TEXT_FINISHED_LABEL, 'Text message end');
+      await nudgeScroll(page);
+      await sleep(2500);
+
+      await expandEvent(page, RUN_FINISHED_LABEL, 'Run finished');
+      await nudgeScroll(page);
+      console.log(`   🎯 Resting on the expanded "Run finished" payload.`);
+      await sleep(4500);
 
       if (evidenceShown) {
         console.log(
