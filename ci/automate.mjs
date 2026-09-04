@@ -329,7 +329,20 @@ async function main() {
     console.error('\n❌ Automation failed:', err.message || err);
     process.exitCode = 1;
   } finally {
-    muxAudioFiles();
+    // Only mux when the recorder actually produced videos this run.
+    //
+    // In `finally` unconditionally, this re-muxed whatever `.webm` files were
+    // already on disk from an earlier run — including after a preflight refusal
+    // that recorded nothing at all. Harmless-looking, and it was not: before
+    // `-af apad` was added below, each pass truncated the stale clip to the
+    // voiceover's length, so a run that never started a browser could still
+    // shorten yesterday's video. It also prints "✅ Added audio to ..." after
+    // "❌ Automation failed", which reads like something was salvaged.
+    if (reportData.success) {
+      muxAudioFiles();
+    } else {
+      console.log('\nℹ️ [Audio Mux] Skipped — no recording completed this run.');
+    }
     generateReport(reportData);
     cleanup();
   }
