@@ -204,6 +204,21 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const autoUpdate = args.includes('--update') || args.includes('--sync') || args.includes('-u');
 
+  // What this script does NOT do, said out loud on every run.
+  //
+  // It compares hashes of pages already in the manifest. It never fetches the
+  // sitemap, so a page that appeared or disappeared upstream is invisible to
+  // it -- only the /doc-sync action makes that comparison. Without this line a
+  // clean run prints "NO DOC DRIFT", which reads as "the docs have not moved"
+  // when it only means "the pages we already knew about have not moved". Ten
+  // new pages per framework were missed exactly that way on 2026-09-04.
+  process.on('exit', () => {
+    console.log(
+      '\nℹ️  Scope: tracked pages only. New, renamed, and removed upstream pages\n' +
+        '   are NOT checked here — run the sitemap comparison on /doc-sync.',
+    );
+  });
+
   const result = await checkAllDocDrift();
   if (result.drifted) {
     console.log('🚨 [DOC DRIFT DETECTED] The following live documentation pages have changed:');
