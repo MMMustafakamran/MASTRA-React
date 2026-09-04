@@ -170,7 +170,11 @@ Code on a page is never a re-typed approximation: each page reads real files via
 
 **`/human-in-the-loop/tool-based`** — `offerOptions`. **Try:** `Can you show me two good options for a restaurant name?` **Pass:** two buttons render and **nothing further streams** until you click one.
 
+**`/human-in-the-loop/governed-actions`** — An approval checkpoint in front of a side-effecting action, showing the policy verdict and the exact arguments before anything runs. **Try:** `Send an invoice reminder to acme@example.com. Ask me to approve it first.` **Pass:** a card renders with the verdict and the JSON arguments, and the run holds until Approve or Reject. **Fail:** the agent reports the reminder sent with no card.
+
 **`/background-tasks`** — A background tool surfaced as AG-UI activity events. **Try:** `Research the history of the Dutch East India Company`. **Pass:** a short reply plus an activity card that shows "Working…" then completes, with no further input from you.
+
+**`/webmcp`** — 🚧 **Tracked, not implemented.** The doc adds a `webmcp` flag to a frontend tool so browser agents can discover it. Its own test procedure needs Chrome 149+ with the WebMCP origin trial (or `chrome://flags/#enable-webmcp-testing`) and Chrome's Model Context Tool Inspector; CopilotKit no-ops where `document.modelContext` is absent, so a demo here would register nothing and still look green.
 
 ### Shared State
 
@@ -189,6 +193,10 @@ Code on a page is never a re-typed approximation: each page reads real files via
 **`/ag-ui`** — Live AG-UI event capture. **Try:** `Hello`. **Pass:** `RUN_STARTED` → `TEXT_MESSAGE_CONTENT` burst → `RUN_FINISHED`.
 
 **`/status`** — Every route in one table.
+
+### Intelligence
+
+**`/intelligence/quickstart`** — 🚧 **Tracked, not implemented.** Connecting an existing app to a hosted CopilotKit Intelligence project so threads persist. Step 1 is `npx copilotkit@latest login` plus `project select`, which writes a `CPK_INTELLIGENCE_API_KEY` — an account-scoped resource this harness does not have, so every later step has nothing to assert against. Tracked because it is a genuinely new page; the rest of `/mastra/intelligence/*` is the old `/mastra/premium/*` set renamed, and stays out of scope.
 
 ---
 
@@ -216,11 +224,16 @@ Code on a page is never a re-typed approximation: each page reads real files via
 | `/mastra/shared-state/predictive-state-updates` | `/shared-state/predictive-state-updates` | ✅ Working | |
 | `/mastra/agent-app-context` | `/agent-app-context` | ✅ Working | |
 | `/mastra/human-in-the-loop/tool-based` | `/human-in-the-loop/tool-based` | ✅ Working | |
+| `/mastra/human-in-the-loop/governed-actions` | `/human-in-the-loop/governed-actions` | ✅ Working | Approval card with the policy verdict. The published `z.record(z.unknown())` is valid on this repo’s zod 3.24.2 and went in verbatim. |
 | `/mastra/background-tasks` | `/background-tasks` | ✅ Working | |
 | `/mastra/copilot-runtime` | `/copilot-runtime` | ✅ Working | |
 | `/mastra/ag-ui` | `/ag-ui` | ✅ Working | |
+| `/mastra/webmcp` | `/webmcp` | 🚧 Not started | Tracked for drift. Needs Chrome 149+ and the WebMCP origin trial. |
+| `/mastra/intelligence/quickstart` | `/intelligence/quickstart` | 🚧 Not started | Tracked for drift. Needs a hosted Intelligence project and `CPK_INTELLIGENCE_API_KEY`. |
 
 **Legend:** ✅ Working · ⚠️ Partial · 📖 Reference · 🚧 Not started · ❌ Broken
+
+**Tracked without a demo.** `/mastra/webmcp` and `/mastra/intelligence/quickstart` carry a route, a nav entry and a snapshot so drift is watched, but nothing is implemented behind them and the recorder does not touch them. The reason is on each route’s page and in §7. The rest of `/mastra/intelligence/` is the old `/mastra/premium/` set under a new prefix and stays in `doc-snapshot/manifest.json`’s `knownUnmapped` list.
 
 > **Caveat on "Working":** every route typechecks, lints, and renders, and the dev server boots with all seven agents registered. Individual agent *behaviours* — particularly Background Tasks and Predictive State Updates, which depend on Mastra internals — have not each been driven end-to-end against a live model.
 
@@ -358,12 +371,16 @@ mastra/
 
 **Generative UI** — [Display-only](https://docs.copilotkit.ai/mastra/generative-ui/your-components/display-only) · [Interactive](https://docs.copilotkit.ai/mastra/generative-ui/your-components/interactive) · [Tool Rendering](https://docs.copilotkit.ai/mastra/generative-ui/tool-rendering) · [State Rendering](https://docs.copilotkit.ai/mastra/generative-ui/state-rendering)
 
-**App Control** — [Frontend Tools](https://docs.copilotkit.ai/mastra/frontend-tools) · [Human in the Loop](https://docs.copilotkit.ai/mastra/human-in-the-loop/tool-based) · [Background Tasks](https://docs.copilotkit.ai/mastra/background-tasks)
+**App Control** — [Frontend Tools](https://docs.copilotkit.ai/mastra/frontend-tools) · [Human in the Loop](https://docs.copilotkit.ai/mastra/human-in-the-loop/tool-based) · [Governed Actions](https://docs.copilotkit.ai/mastra/human-in-the-loop/governed-actions) · [Background Tasks](https://docs.copilotkit.ai/mastra/background-tasks) · [WebMCP](https://docs.copilotkit.ai/mastra/webmcp) ‡
 
 **Shared State** — [Reading agent state](https://docs.copilotkit.ai/mastra/shared-state/in-app-agent-read) · [Writing agent state](https://docs.copilotkit.ai/mastra/shared-state/in-app-agent-write) · [Predictive State Updates](https://docs.copilotkit.ai/mastra/shared-state/predictive-state-updates) · [Readables](https://docs.copilotkit.ai/mastra/agent-app-context)
 
 **Backend** — [Copilot Runtime](https://docs.copilotkit.ai/mastra/copilot-runtime) · [AG-UI](https://docs.copilotkit.ai/mastra/ag-ui)
 
+**Intelligence** — [Quickstart](https://docs.copilotkit.ai/mastra/intelligence/quickstart) ‡
+
 **External** — [Mastra docs](https://mastra.ai/en/docs) · [Mastra working memory](https://mastra.ai/en/docs/memory/working-memory) · [AG-UI protocol](https://ag-ui.com)
 
 † Resolves but is absent from the doc sidebar as of the sync date.
+
+‡ Tracked for drift only — a route and a snapshot exist, the demo does not.

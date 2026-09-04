@@ -196,6 +196,18 @@
       "age": 0,
       "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     },
+    "/mastra/intelligence/quickstart": {
+      "file": "mastra__intelligence__quickstart.md",
+      "sha256": "a6e54b3f838fb9b0446e29f2586657e503e26565c45a91e6b062f71bb316e18e",
+      "bytes": 7233,
+      "lines": 160,
+      "routes": [
+        "/intelligence/quickstart"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Fri, 04 Sep 2026 13:40:34 GMT"
+    },
     "/mastra/prebuilt-components": {
       "file": "mastra__prebuilt-components.md",
       "sha256": "f98d0b1cca75478ceae64c3ead0ab28d1399b80090329f94d2ed4221e9653ae8",
@@ -291,6 +303,18 @@
       "status": "ok",
       "age": 0,
       "date": "Fri, 04 Sep 2026 07:58:29 GMT"
+    },
+    "/mastra/webmcp": {
+      "file": "mastra__webmcp.md",
+      "sha256": "fb1990ba3635580c715618e9294ba814c79fa723b007ac8f42e49924c5780156",
+      "bytes": 7479,
+      "lines": 153,
+      "routes": [
+        "/webmcp"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Fri, 04 Sep 2026 13:40:34 GMT"
     }
   },
   "sitemap": {
@@ -364,7 +388,6 @@
       "https://docs.copilotkit.ai/mastra/intelligence/intelligence-platform",
       "https://docs.copilotkit.ai/mastra/intelligence/managed-intelligence-platform",
       "https://docs.copilotkit.ai/mastra/intelligence/overview",
-      "https://docs.copilotkit.ai/mastra/intelligence/quickstart",
       "https://docs.copilotkit.ai/mastra/intelligence/self-hosting",
       "https://docs.copilotkit.ai/mastra/intelligence/threads-explained",
       "https://docs.copilotkit.ai/mastra/migrate/1.10.X",
@@ -411,7 +434,6 @@
       "https://docs.copilotkit.ai/mastra/tutorials/multi-conversation-chat",
       "https://docs.copilotkit.ai/mastra/voice",
       "https://docs.copilotkit.ai/mastra/vs-code-extension",
-      "https://docs.copilotkit.ai/mastra/webmcp",
       "https://docs.copilotkit.ai/mastra/whats-new",
       "https://docs.copilotkit.ai/mastra/whats-new/a2a-mcp-handshake",
       "https://docs.copilotkit.ai/mastra/whats-new/a2ui-launch",
