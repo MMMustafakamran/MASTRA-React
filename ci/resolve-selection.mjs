@@ -10,7 +10,7 @@
  * Prints the ids on stdout, or nothing at all when the selection is empty
  * (which the workflow reads as "record every page").
  */
-import { resolveSelection } from './lib/pages.mjs';
+import { assertGroupsCoverAllPages, resolveSelection } from './lib/pages.mjs';
 
 function argValue(name) {
   const prefix = `--${name}=`;
@@ -19,6 +19,15 @@ function argValue(name) {
 }
 
 try {
+  // Every page must belong to a group, or it cannot be picked from the dispatch
+  // checkboxes and quietly drops out of the section-based runs. `pages.mjs` has
+  // always exported this check with a comment saying it "enforces that" — but
+  // nothing called it, in any repo, so it enforced nothing. A page added to
+  // pages.config.ts and forgotten here stayed invisible until someone noticed
+  // by hand. Called at the point the workflow resolves a selection, so a
+  // dispatch fails fast and names the ungrouped page.
+  assertGroupsCoverAllPages();
+
   const groups = argValue('groups')
     .split(',')
     .map((s) => s.trim())

@@ -45,6 +45,7 @@ export const PAGE_GROUPS = {
   app_control: [
     'frontend-tools',
     'human-in-the-loop-tool-based',
+    'human-in-the-loop-governed-actions',
     'background-tasks',
     'shared-state-in-app-agent-read',
     'shared-state-in-app-agent-write',
