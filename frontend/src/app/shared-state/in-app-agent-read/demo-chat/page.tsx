@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { CopilotChat, useAgent } from "@copilotkit/react-core/v2";
 
 import { DemoFrame } from "@/components/demo-frame";
@@ -11,9 +13,10 @@ import { DemoFrame } from "@/components/demo-frame";
  * switch language updates that memory, and `agent.state` — and this panel —
  * follow, with no message parsing on the frontend.
  *
- * The doc seeds the starting value with `useAgent({ initialState })`. That prop
- * does not exist on `useAgent` in @copilotkit/react-core 1.66.2, so the value
- * simply starts undefined until the agent first writes it.
+ * The page used to seed with `useAgent({ initialState })`, a prop that has
+ * never existed on the hook. It now seeds in an effect gated on `isReady`,
+ * which is a real return value in @copilotkit/react-core 1.66.2 — so the
+ * published snippet compiles and is reproduced verbatim below.
  */
 
 type AgentState = {
@@ -21,8 +24,17 @@ type AgentState = {
 };
 
 export default function Page() {
-  const { agent } = useAgent({ agentId: "languageAgent" });
-  const state = agent.state as AgentState | undefined;
+  // [1] shared state: read working memory
+  // [!code highlight]
+  const { agent, isReady } = useAgent({ agentId: "languageAgent" });
+  const state = (agent.state ?? {}) as Partial<AgentState>;
+
+  // [2] shared state: seed state once the agent is ready
+  // [!code highlight]
+  useEffect(() => {
+    if (!isReady || state.language !== undefined) return;
+    agent.setState({ ...(agent.state ?? {}), language: "english" });
+  }, [agent, isReady, state.language]);
 
   return (
     <DemoFrame
@@ -37,7 +49,7 @@ export default function Page() {
           <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
             Language:{" "}
             <strong className="text-[var(--accent)]">
-              {state?.language ?? "—"}
+              {state.language ?? "—"}
             </strong>
           </p>
 

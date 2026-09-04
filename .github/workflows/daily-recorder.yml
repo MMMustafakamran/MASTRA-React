@@ -382,7 +382,10 @@ jobs:
       COPILOTKIT_LICENSE_TOKEN: ${{ secrets.COPILOTKIT_LICENSE_TOKEN }}
       # Read by src/app/api/copilotkit-threads/[[...slug]]/route.ts. Without it
       # the three Rich Threads pages still record, but in their locked state.
+      # The docs renamed this to CPK_INTELLIGENCE_API_KEY; both are passed
+      # through because a repo secret may still carry either name.
       INTELLIGENCE_API_KEY: ${{ secrets.INTELLIGENCE_API_KEY }}
+      CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
 
     steps:
       - name: Checkout Code

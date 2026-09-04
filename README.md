@@ -236,8 +236,8 @@ The Quickstart, Tool Rendering, and Shared State pages all construct agents with
 **2. `getLocalAgents` requires a `resourceId`**
 Every page shows `MastraAgent.getLocalAgents({ mastra })`. `GetLocalAgentsOptions` requires `resourceId`, which scopes working memory. A real app would pass the signed-in user's id.
 
-**3. `useAgent` has no `initialState`**
-Both Shared State pages seed with `useAgent({ agentId, initialState })`. `UseAgentProps` has no such field. The read page also passes a `render` function to `useAgent`, likewise absent from the shipped type.
+**3. `useAgent` has no `initialState`** — *fixed upstream 2026-09-04*
+Both Shared State pages used to seed with `useAgent({ agentId, initialState })`, and the read page passed a `render` function; neither is on `UseAgentProps`. Both are gone. The seed is now a `useEffect` gated on `isReady`, which the hook does return, so the snippet compiles. What replaced it has its own problems — see the callouts on `/shared-state/in-app-agent-read`.
 
 **4. `useRenderTool` sample does not compile**
 Tool Rendering writes `render: ({ status, args })` with no `parameters` schema. The shipped named overload requires the schema and names the prop `parameters`.

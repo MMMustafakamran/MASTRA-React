@@ -26,6 +26,26 @@ export default function Page() {
         </div>
       </Panel>
 
+      <Callout tone="warn" title="A managed project is now said to never get a license token">
+        The page gained a paragraph this sync: &ldquo;Managed project setup does
+        not issue <code>COPILOTKIT_LICENSE_TOKEN</code>. That token is only for
+        offline or self-hosted licensing and does not replace the managed
+        project API key.&rdquo; It never says what a managed-only project should
+        do about the drawer, which gates on a license status and stays locked
+        without one. Follow the current pages from scratch and the drawer never
+        unlocks, with nothing on the page to explain why.
+      </Callout>
+
+      <Callout tone="info" title="Two more variables the CLI now writes">
+        The same step lists <code>SL_ENABLED</code> and{" "}
+        <code>CPK_TELEMETRY_ID</code> as written to <code>.env</code> by{" "}
+        <code>init</code> and its <code>create</code> alias, alongside the
+        renamed <code>CPK_INTELLIGENCE_API_KEY</code>. The telemetry id is
+        described as &ldquo;a non-secret analytics identity&rdquo;;{" "}
+        <code>SL_ENABLED</code> is named and defined nowhere. Nothing here reads
+        either.
+      </Callout>
+
       <Panel title="The demo">
         <SourceCode file="frontend/src/app/headless-threads/demo-chat/page.tsx" />
       </Panel>

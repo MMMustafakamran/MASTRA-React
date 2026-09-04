@@ -53,6 +53,18 @@ export default function Page() {
         </p>
       </Callout>
 
+      <Callout tone="info" title="The runtime key was renamed this sync">
+        The page&apos;s <code>.env.local</code> block went from{" "}
+        <code>INTELLIGENCE_API_KEY=your_license_key</code> to{" "}
+        <code>CPK_INTELLIGENCE_API_KEY=cpk-...</code>, and the prose now calls it
+        the project API key rather than the license key — the first time the
+        page separates the two credentials. Nothing says whether the old
+        variable still works, so this repo&apos;s runtime route reads the new
+        name first and falls back to the old one. Only the Rich Threads route
+        reads it; the quickstart route here stays on the documented SSE
+        fallback.
+      </Callout>
+
       <Callout tone="info" title="The doc's main path is now a separate agent server">
         <p>
           The quickstart now starts Mastra with <code>npx mastra dev</code> and

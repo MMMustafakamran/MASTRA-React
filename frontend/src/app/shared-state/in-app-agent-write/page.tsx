@@ -1,6 +1,6 @@
 import { RouteHeader } from "@/components/route-header";
 import { SourceCode } from "@/components/source-code";
-import { Panel, TryIt } from "@/components/ui";
+import { Callout, Panel, TryIt } from "@/components/ui";
 
 export default function Page() {
   return (
@@ -29,6 +29,25 @@ export default function Page() {
           />
         </div>
       </Panel>
+
+      <Callout tone="info" title="`setState` replaces — the doc now spreads">
+        The page used to publish{" "}
+        <code>agent.setState({"{ language: … }"})</code>. It now publishes{" "}
+        <code>agent.setState({"{ ...(agent.state ?? {}), language: … }"})</code>
+        . That is a correction, not a style change:{" "}
+        <code>setState</code> assigns the whole object, so the old form dropped
+        every other key working memory was holding. A one-key schema never
+        showed it; a wider one would. The toggle below spreads.
+      </Callout>
+
+      <Callout tone="info" title="Seeding moved into an effect">
+        The starting value used to come from an <code>initialState</code> prop
+        the hook does not accept, so the panel sat on a dash until the agent
+        first wrote memory. It now seeds after connect —{" "}
+        <code>isReady</code>, then <code>setState</code> if the key is still
+        missing — so the first Toggle flips english → spanish instead of
+        flipping an unset value.
+      </Callout>
 
       <Panel title="Source">
         <SourceCode file="frontend/src/app/shared-state/in-app-agent-write/demo-chat/page.tsx" />
