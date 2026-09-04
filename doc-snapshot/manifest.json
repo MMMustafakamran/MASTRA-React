@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "docsRoot": "https://docs.copilotkit.ai/mastra",
-  "syncedAt": "2026-08-30T13:45:26.095Z",
+  "syncedAt": "2026-09-04T07:58:29.558Z",
   "pages": {
     "/mastra": {
       "file": "mastra.md",
@@ -150,15 +150,15 @@
     },
     "/mastra/headless-threads": {
       "file": "mastra__headless-threads.md",
-      "sha256": "ea6fcc806f6ef92dbf4adbe0e5fbfc3f1660c35b128ad63ba46c08e7c1f0b5e6",
-      "bytes": 10036,
-      "lines": 208,
+      "sha256": "fc4ed0735526202408df6ac3a2c9b9b2322c18d503d115dbdd75bdfaa8916d6a",
+      "bytes": 10503,
+      "lines": 222,
       "routes": [
         "/headless-threads"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Sun, 30 Aug 2026 13:45:27 GMT"
+      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     },
     "/mastra/human-in-the-loop/tool-based": {
       "file": "mastra__human-in-the-loop__tool-based.md",
@@ -174,15 +174,15 @@
     },
     "/mastra/inspector": {
       "file": "mastra__inspector.md",
-      "sha256": "3b99ce2f1fc1eec2514252624b9499938629afb950c933509275b96664e414c4",
-      "bytes": 5959,
+      "sha256": "7bd9075f585db80d987fbf31e38e34fc98a3c13e63fc28f60bd5d4852ca9869f",
+      "bytes": 5963,
       "lines": 127,
       "routes": [
         "/inspector"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Sun, 30 Aug 2026 13:45:27 GMT"
+      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     },
     "/mastra/prebuilt-components": {
       "file": "mastra__prebuilt-components.md",
@@ -222,39 +222,39 @@
     },
     "/mastra/quickstart": {
       "file": "mastra__quickstart.md",
-      "sha256": "73bc0dc09ace02002b17865990d9fd394174927f53557b69a5e86eac9dda9057",
-      "bytes": 16955,
+      "sha256": "4db3a998b4fa10f6aba5ca70e0124994ae0437a9ac91714f190b541a98cf890f",
+      "bytes": 16959,
       "lines": 454,
       "routes": [
         "/quickstart"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Sun, 30 Aug 2026 13:45:27 GMT"
+      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     },
     "/mastra/shared-state/in-app-agent-read": {
       "file": "mastra__shared-state__in-app-agent-read.md",
-      "sha256": "4552ec95d32b1cc6e9be2d59579a6eb1208a6aed11d2c444ac6b68e4769fa757",
-      "bytes": 5589,
+      "sha256": "13d34cf1c437677996a5596358550dd4efd4ee2e0b544f5feaa178bfd1c252dd",
+      "bytes": 5638,
       "lines": 162,
       "routes": [
         "/shared-state/in-app-agent-read"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Sun, 30 Aug 2026 13:45:27 GMT"
+      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     },
     "/mastra/shared-state/in-app-agent-write": {
       "file": "mastra__shared-state__in-app-agent-write.md",
-      "sha256": "09322710109d4ab39bcec51e9cf19c841e9c6c03f8eaf9fdccb2986f3c2235c9",
-      "bytes": 5196,
-      "lines": 138,
+      "sha256": "72f25c2b0de8ad9e033eb6ca7d299369a52406a158e5d1af8c724fa08d764b5e",
+      "bytes": 5427,
+      "lines": 143,
       "routes": [
         "/shared-state/in-app-agent-write"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Sun, 30 Aug 2026 13:45:27 GMT"
+      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     },
     "/mastra/shared-state/predictive-state-updates": {
       "file": "mastra__shared-state__predictive-state-updates.md",
@@ -270,15 +270,15 @@
     },
     "/mastra/threads": {
       "file": "mastra__threads.md",
-      "sha256": "ba5cc4a682a245719821656de853b7ea25f41ca41e863e23295fb801ed988109",
-      "bytes": 11875,
+      "sha256": "f8eb0bea159aea6272db639a0232f65c2d632a2b0337264613d39b111e1dc2ef",
+      "bytes": 11890,
       "lines": 211,
       "routes": [
         "/threads"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Sun, 30 Aug 2026 13:45:27 GMT"
+      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     }
   },
   "sitemap": {
