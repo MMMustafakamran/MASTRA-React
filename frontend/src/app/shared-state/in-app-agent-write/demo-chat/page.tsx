@@ -53,7 +53,7 @@ export default function Page() {
           <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
             Language:{" "}
             <strong className="text-[var(--accent)]">
-              {state.language ?? "—"}
+              {agent.state?.language}
             </strong>
           </p>
 

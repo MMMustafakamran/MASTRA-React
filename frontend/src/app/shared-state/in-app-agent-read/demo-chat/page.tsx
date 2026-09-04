@@ -23,6 +23,26 @@ type AgentState = {
   language: "english" | "spanish";
 };
 
+/**
+ * "Rendering agent state in your app", verbatim.
+ *
+ * The page names this `YourMainContent` — the same name as the component in
+ * the step above, which draws the whole page. Reproduced under that name so
+ * the collision is visible; rendered as a small widget so the route survives
+ * it.
+ */
+// [4] shared state: render state in your app
+// [!code highlight]
+function YourMainContent() {
+  const { agent } = useAgent({
+    agentId: "languageAgent",
+  });
+  const state = (agent.state ?? {}) as Partial<AgentState>;
+
+  if (!state.language) return null;
+  return <div>Language: {state.language}</div>;
+}
+
 export default function Page() {
   // [1] shared state: read working memory
   // [!code highlight]
@@ -47,11 +67,20 @@ export default function Page() {
             Your main content
           </h1>
           <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
+            {/* [3] shared state: display state */}
+            {/* [!code highlight] */}
             Language:{" "}
             <strong className="text-[var(--accent)]">
-              {state.language ?? "—"}
+              {agent.state?.language}
             </strong>
           </p>
+
+          <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            The page&apos;s render sample
+          </h2>
+          <div className="mt-2 rounded-lg border border-dashed border-slate-300 p-3 text-sm dark:border-slate-600">
+            <YourMainContent />
+          </div>
 
           <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Raw agent.state
