@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "docsRoot": "https://docs.copilotkit.ai/mastra",
-  "syncedAt": "2026-09-04T07:58:29.558Z",
+  "syncedAt": "2026-09-04T10:51:17.370Z",
   "pages": {
     "/mastra": {
       "file": "mastra.md",
@@ -160,6 +160,18 @@
       "age": 0,
       "date": "Fri, 04 Sep 2026 07:58:29 GMT"
     },
+    "/mastra/human-in-the-loop/governed-actions": {
+      "file": "mastra__human-in-the-loop__governed-actions.md",
+      "sha256": "c3ffbf2aa5a8b697765c47f5668c9ac1f3608ae778728bb504b77c18a995214b",
+      "bytes": 7168,
+      "lines": 256,
+      "routes": [
+        "/human-in-the-loop/governed-actions"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Fri, 04 Sep 2026 10:51:17 GMT"
+    },
     "/mastra/human-in-the-loop/tool-based": {
       "file": "mastra__human-in-the-loop__tool-based.md",
       "sha256": "c7af96de339c30beefe0c3446fcc0c677389e96276ebbbe8e746e0806f052328",
@@ -282,8 +294,8 @@
     }
   },
   "sitemap": {
-    "fetchedAt": "2026-08-30T13:45:26.095Z",
-    "urlsUnderRoot": 142,
+    "fetchedAt": "2026-09-04T10:56:11.541Z",
+    "urlsUnderRoot": 146,
     "knownUnmapped": [
       "https://docs.copilotkit.ai/mastra/agent-config",
       "https://docs.copilotkit.ai/mastra/agent-spec",
@@ -343,11 +355,18 @@
       "https://docs.copilotkit.ai/mastra/generative-ui/reasoning",
       "https://docs.copilotkit.ai/mastra/generative-ui/tool-based",
       "https://docs.copilotkit.ai/mastra/headless",
-      "https://docs.copilotkit.ai/mastra/headless-threads",
       "https://docs.copilotkit.ai/mastra/human-in-the-loop",
       "https://docs.copilotkit.ai/mastra/human-in-the-loop/headless",
       "https://docs.copilotkit.ai/mastra/human-in-the-loop/interrupt-flow",
       "https://docs.copilotkit.ai/mastra/human-in-the-loop/useInterrupt",
+      "https://docs.copilotkit.ai/mastra/intelligence/connect-your-runtime",
+      "https://docs.copilotkit.ai/mastra/intelligence/headless-ui",
+      "https://docs.copilotkit.ai/mastra/intelligence/intelligence-platform",
+      "https://docs.copilotkit.ai/mastra/intelligence/managed-intelligence-platform",
+      "https://docs.copilotkit.ai/mastra/intelligence/overview",
+      "https://docs.copilotkit.ai/mastra/intelligence/quickstart",
+      "https://docs.copilotkit.ai/mastra/intelligence/self-hosting",
+      "https://docs.copilotkit.ai/mastra/intelligence/threads-explained",
       "https://docs.copilotkit.ai/mastra/migrate/1.10.X",
       "https://docs.copilotkit.ai/mastra/migrate/1.8.2",
       "https://docs.copilotkit.ai/mastra/migrate/v2",
@@ -355,16 +374,8 @@
       "https://docs.copilotkit.ai/mastra/multimodal-attachments",
       "https://docs.copilotkit.ai/mastra/prebuilt-components/chat",
       "https://docs.copilotkit.ai/mastra/prebuilt-components/chat-controls",
-      "https://docs.copilotkit.ai/mastra/prebuilt-components/copilot-threads-drawer",
       "https://docs.copilotkit.ai/mastra/prebuilt-components/popup",
       "https://docs.copilotkit.ai/mastra/prebuilt-components/sidebar",
-      "https://docs.copilotkit.ai/mastra/premium/connect-your-runtime",
-      "https://docs.copilotkit.ai/mastra/premium/headless-ui",
-      "https://docs.copilotkit.ai/mastra/premium/intelligence-platform",
-      "https://docs.copilotkit.ai/mastra/premium/managed-intelligence-platform",
-      "https://docs.copilotkit.ai/mastra/premium/overview",
-      "https://docs.copilotkit.ai/mastra/premium/self-hosting",
-      "https://docs.copilotkit.ai/mastra/premium/threads-explained",
       "https://docs.copilotkit.ai/mastra/reference/v2/hooks/useCapabilities",
       "https://docs.copilotkit.ai/mastra/runtime-server-adapter",
       "https://docs.copilotkit.ai/mastra/shared-state",
@@ -372,7 +383,6 @@
       "https://docs.copilotkit.ai/mastra/shared-state/rendering-in-app",
       "https://docs.copilotkit.ai/mastra/shared-state/streaming",
       "https://docs.copilotkit.ai/mastra/telemetry",
-      "https://docs.copilotkit.ai/mastra/threads",
       "https://docs.copilotkit.ai/mastra/threads-import",
       "https://docs.copilotkit.ai/mastra/threads-lifecycle",
       "https://docs.copilotkit.ai/mastra/threads-self-managed",
@@ -401,6 +411,7 @@
       "https://docs.copilotkit.ai/mastra/tutorials/multi-conversation-chat",
       "https://docs.copilotkit.ai/mastra/voice",
       "https://docs.copilotkit.ai/mastra/vs-code-extension",
+      "https://docs.copilotkit.ai/mastra/webmcp",
       "https://docs.copilotkit.ai/mastra/whats-new",
       "https://docs.copilotkit.ai/mastra/whats-new/a2a-mcp-handshake",
       "https://docs.copilotkit.ai/mastra/whats-new/a2ui-launch",

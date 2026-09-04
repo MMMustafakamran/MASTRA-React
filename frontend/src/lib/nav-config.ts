@@ -210,6 +210,15 @@ export const NAV: NavGroup[] = [
         status: "working",
       },
       {
+        path: "/human-in-the-loop/governed-actions",
+        hasDemo: true,
+        title: "Governed Action Approval",
+        docPath: "/mastra/human-in-the-loop/governed-actions",
+        summary:
+          "An approval checkpoint in front of a side-effecting action, with the policy verdict and the exact arguments.",
+        status: "working",
+      },
+      {
         path: "/background-tasks",
         hasDemo: true,
         title: "Background Tasks",

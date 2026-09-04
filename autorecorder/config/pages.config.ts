@@ -228,6 +228,20 @@ export const PAGES = definePages([
     waitAfterPromptMs: 4000,
   },
   {
+    id: "human-in-the-loop-governed-actions",
+    name: "App Control - Governed Action Approval",
+    videoName: "GovernedActions",
+    docPath: "human-in-the-loop/governed-actions",
+    route: "human-in-the-loop/governed-actions",
+    ideFile:
+      "frontend/src/app/human-in-the-loop/governed-actions/demo-chat/page.tsx",
+    startLine: 104,
+    endLine: 145,
+    prompt:
+      "Send an invoice reminder to acme@example.com. Ask me to approve it first.",
+    waitAfterPromptMs: 6000,
+  },
+  {
     id: "background-tasks",
     name: "App Control - Background Tasks",
     videoName: "BackgroundTasks",

@@ -12,12 +12,16 @@ import { DemoFrame } from "@/components/demo-frame";
  * run suspends on the call and stays suspended until `respond` fires, so what
  * the user clicks becomes the tool result the model reads next.
  *
- * The generic is supplied explicitly: unlike `useRenderTool`, this hook does
- * not infer its arg type from `parameters`, so `args.option_1` would otherwise
- * be `unknown` and unusable in JSX.
+ * No explicit generic: the hook infers `args` from `parameters`, so this is
+ * the page's snippet unchanged. It used to be written
+ * `useHumanInTheLoop<{ option_1: string; option_2: string }>` here, on the
+ * belief that inference did not work — that is not true of
+ * @copilotkit/react-core 1.66.2, and the added generic was a departure from
+ * the published code with nothing to show for it. Verified by probe: removing
+ * it typechecks, and `args.someUnknownField` is still a compile error.
  */
 export default function Page() {
-  useHumanInTheLoop<{ option_1: string; option_2: string }>({
+  useHumanInTheLoop({
     name: "offerOptions",
     description:
       "Give the user a choice between two options and have them select one.",

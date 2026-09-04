@@ -46,6 +46,7 @@ import { runAgUiAction } from './ag-ui.action';
 import { runBackgroundTasksAction } from './background-tasks.action';
 import { runDisplayOnlyAction } from './display-only.action';
 import { runFrontendToolsAction } from './frontend-tools.action';
+import { runGovernedActionsAction } from './governed-actions.action';
 import { runHeadlessUiAction } from './headless-ui.action';
 import { runInspectorAction } from './inspector.action';
 import { runPrebuiltAction } from './prebuilt.action';
@@ -63,6 +64,7 @@ export const ACTION_MAP: Record<string, PageActionHandler> = {
   "generative-ui-your-components-display-only": runDisplayOnlyAction,
   "generative-ui-tool-rendering": runToolRenderingAction,
   "frontend-tools": runFrontendToolsAction,
+  "human-in-the-loop-governed-actions": runGovernedActionsAction,
   "shared-state-in-app-agent-read": runSharedStateReadAction,
   "ag-ui": runAgUiAction,
   "background-tasks": runBackgroundTasksAction,
