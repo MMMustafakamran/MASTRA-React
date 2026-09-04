@@ -235,8 +235,8 @@ export const PAGES = definePages([
     route: "human-in-the-loop/governed-actions",
     ideFile:
       "frontend/src/app/human-in-the-loop/governed-actions/demo-chat/page.tsx",
-    startLine: 104,
-    endLine: 145,
+    startLine: 102,
+    endLine: 148,
     prompt:
       "Send an invoice reminder to acme@example.com. Ask me to approve it first.",
     waitAfterPromptMs: 6000,
@@ -275,8 +275,8 @@ export const PAGES = definePages([
     docPath: "shared-state/in-app-agent-read",
     route: "shared-state/in-app-agent-read",
     ideFile: "frontend/src/app/shared-state/in-app-agent-read/demo-chat/page.tsx",
-    startLine: 24,
-    endLine: 28,
+    startLine: 47,
+    endLine: 57,
     prompt: "Switch to Spanish",
     waitAfterPromptMs: 4000,
   },
