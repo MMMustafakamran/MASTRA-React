@@ -158,6 +158,8 @@ export interface SendPromptOptions {
   timeoutMs?: number;
   /** Override when the page renders messages through a custom slot. */
   messageSelector?: string;
+  /** Whether submitting is expected to clear the input field (defaults to true). */
+  expectInputToEmpty?: boolean;
 }
 
 /**
@@ -183,6 +185,7 @@ export async function sendPrompt(
     clearFirst = false,
     timeoutMs = 15000,
     messageSelector = DEFAULT_ASSISTANT_MESSAGE_SELECTOR,
+    expectInputToEmpty = true,
   } = options;
 
   const inputLocator = page.locator(inputSelector).first();
@@ -205,34 +208,115 @@ export async function sendPrompt(
     await page.keyboard.press('Backspace');
   }
 
-  await page.keyboard.type(prompt, { delay: 35 });
-  await sleep(300);
-
-  // If a sudden React re-render wiped the text mid-typing, put it back.
-  const currentVal = await inputLocator.inputValue().catch(() => '');
-  if (!currentVal && prompt) {
-    await inputLocator.fill(prompt);
-    await sleep(200);
-  }
-
   const submitBtn = page.locator(submitSelector).first();
-  if (await submitBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    const btnBox = await submitBtn.boundingBox();
-    if (btnBox) {
-      await humanGlide(page, btnBox.x + btnBox.width / 2, btnBox.y + btnBox.height / 2, 16);
-      await humanClick(page);
-    } else {
-      await submitBtn.click();
+
+  // Type, submit, and confirm it actually went -- up to three attempts.
+  //
+  // In dev the demo route compiles on first request, so the chat can paint and
+  // accept keystrokes seconds before React hydrates. Typing into that window
+  // fills the textarea natively, hydration then resets it to React's empty
+  // state, and the Enter that follows submits nothing. The recording looked
+  // perfect and the page failed 30s later with "agent never responded".
+  //
+  // So: wait for the composer to prove it is live (v2 keeps the send button
+  // disabled until its state holds the text), then verify the box emptied.
+  let sent = false;
+  for (let attempt = 1; attempt <= 3 && !sent; attempt++) {
+    if (attempt > 1) {
+      console.log(`   ↻ Prompt did not submit -- retyping (attempt ${attempt}/3)...`);
+      await inputLocator.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.press('Backspace');
     }
-  } else {
-    await page.keyboard.press('Enter');
+
+    await page.keyboard.type(prompt, { delay: attempt === 1 ? 35 : 12 });
+    await sleep(300);
+
+    // React owns the value once hydrated; if it wiped what we typed, put it back.
+    const typedVal = await inputLocator.inputValue().catch(() => prompt);
+    if (!typedVal.trim() && prompt) {
+      await inputLocator.fill(prompt);
+      await sleep(250);
+    }
+
+    // A send button that is still disabled means React has not caught up.
+    const enabled = await submitBtn
+      .isEnabled({ timeout: 4000 })
+      .catch(() => false);
+    if (!enabled) {
+      const stillVisible = await submitBtn.isVisible().catch(() => false);
+      if (stillVisible) {
+        await page
+          .waitForFunction(
+            (sel) => {
+              try {
+                const b = document.querySelector(sel) as HTMLButtonElement | null;
+                return !!b && !b.disabled;
+              } catch {
+                return true;
+              }
+            },
+            submitSelector,
+            { timeout: 5000 },
+          )
+          .catch(() => {});
+      }
+    }
+
+    if (await submitBtn.isEnabled({ timeout: 1500 }).catch(() => false)) {
+      const btnBox = await submitBtn.boundingBox();
+      if (btnBox) {
+        await humanGlide(page, btnBox.x + btnBox.width / 2, btnBox.y + btnBox.height / 2, 16);
+        await humanClick(page);
+      } else {
+        await submitBtn.click();
+      }
+    } else {
+      await page.keyboard.press('Enter');
+    }
+
+    if (!expectInputToEmpty) {
+      sent = true;
+      break;
+    }
+
+    // Submitting clears the composer. Anything left in it was swallowed.
+    const composerEmptied = () =>
+      page
+        .waitForFunction(
+          (sel) => {
+            try {
+              const el = document.querySelector(sel) as
+                | (HTMLElement & { value?: string })
+                | null;
+              if (!el) return true;
+              const v = el.value ?? el.textContent ?? '';
+              return v.trim().length === 0;
+            } catch {
+              return true;
+            }
+          },
+          inputSelector,
+          { timeout: 3500 },
+        )
+        .then(() => true)
+        .catch(() => false);
+
+    sent = await composerEmptied();
+
+    // One keyboard fallback before giving up on this attempt -- a click that
+    // landed a pixel off is far likelier than a genuinely dead composer.
+    if (!sent) {
+      await page.keyboard.press('Enter');
+      sent = await composerEmptied();
+    }
   }
 
-  // A swallowed submit leaves the text sitting in the box -- retry once.
-  await sleep(800);
-  const remainingVal = await inputLocator.inputValue().catch(() => '');
-  if (remainingVal.trim().length > 0) {
-    await page.keyboard.press('Enter');
+  if (!sent) {
+    throw new Error(
+      'Prompt never submitted -- the composer still holds the text after three ' +
+        'attempts. Check selectors.config.ts (chatInput / chatSubmit) against this page.',
+    );
   }
 
   return initialMsgCount;

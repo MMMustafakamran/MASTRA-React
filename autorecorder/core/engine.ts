@@ -1,10 +1,19 @@
 import { existsSync, mkdirSync, rmSync, unlinkSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { chromium, type Page } from 'playwright';
+import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 import { executePageAction } from '../actions';
 import { diagnoseError } from './diagnostics';
+import { PROJECT } from '../config/project.config';
 import { SELECTORS } from '../config/selectors.config';
-import { generateIdeHtml } from './ide/generator';
+import { castDuration, compressCast, type Cast } from './cli/cast';
+import {
+  ServiceStartError,
+  startService,
+  type RunningService,
+} from './cli/service';
+import { generateTerminalHtml } from './cli/terminal';
+import { generateIdeHtml, type IdeTabConfig } from './ide/generator';
+import { closeNotepad, openNotepad, typeInNotepad } from './overlays/notepad';
 import { humanClick, humanGlide, humanScrollDown, setGlobalCursorPos, sleep } from './overlays/cursor';
 import { clickTaskbarApp, ensureOverlays, waitForHydration } from './overlays/taskbar';
 import { type PageRecordConfig } from './types';
@@ -62,6 +71,69 @@ async function humanScrollCodeViewport(
  */
 const IDE_ROUTE_PATH = '/__autorecord_ide__';
 
+/** Same trick for the terminal window: served from memory, never from Next.js. */
+const TERMINAL_ROUTE_PATH = '/__autorecord_terminal__';
+
+/** One terminal segment of a CLI video. */
+export interface CliRecordSegment {
+  /** The captured session to replay. Compress it before passing it in. */
+  cast: Cast;
+  /** Terminal title-bar text. Defaults to the cast's own title. */
+  title?: string;
+}
+
+/** What `recordCliFlow` needs: captured sessions and where they came from. */
+export interface CliRecordRequest {
+  /** Flow id, for logs. */
+  id: string;
+  /** Human title, for logs. */
+  name: string;
+  /** Video filename stem, without extension. */
+  filename: string;
+  /**
+   * Sessions to replay, in order, in one terminal window.
+   *
+   * More than one so a single video can carry a whole set — four package
+   * managers installing the same project belong in one clip, not four, because
+   * the point of the matrix is the comparison between them.
+   */
+  segments: CliRecordSegment[];
+  /** Doc page to open before the terminal, when the flow names one. */
+  docUrl?: string;
+
+  /**
+   * Folder under `videos/` to write into.
+   *
+   * CLI clips keep to their own: they are a different kind of artifact from the
+   * per-doc-page recordings, and mixing them makes the directory useless for
+   * finding either.
+   */
+  subdir?: string;
+
+  /**
+   * Source files shown in the simulated IDE before the terminal.
+   *
+   * For a finding, this is where "installed versus declared" lives — the
+   * resolved versions next to the manifest that declared them, and the line
+   * that actually breaks. A terminal error on its own says something failed;
+   * these say what it was running against.
+   */
+  ideTabs?: IdeTabConfig[];
+
+  /** Seconds to dwell on each IDE tab. */
+  ideDwellMs?: number;
+
+  /**
+   * A written explanation, typed into Notepad at the end of the take.
+   *
+   * The clip has to survive being watched by someone who was not here. A
+   * terminal error explains what happened; this explains why it happened and
+   * what it means, in the recording rather than in a separate document that
+   * will drift away from it.
+   */
+  notepad?: { filename: string; body: string; charDelayMs?: number };
+}
+
 /** Result of one page recording, with hard failures separated from cosmetic notes. */
 export interface RecordResult {
   success: boolean;
@@ -87,23 +159,18 @@ export class RecordingEngine {
     }
   }
 
-  async recordPage(config: PageRecordConfig): Promise<RecordResult> {
-    console.log(`\n======================================================`);
-    console.log(`🎬 RECORDING: ${config.name} (${config.id})`);
-    console.log(`======================================================`);
-
-    setGlobalCursorPos(960, 540);
-
-    let recordSuccess = false;
-    let recordError: string | undefined;
-    let finalSavedFilename = '';
-    const warnings: string[] = [];
-
-    /** A step that renders the thing under test failed -- the video is not usable. */
-    const fail = (message: string): void => {
-      if (!recordError) recordError = message;
-    };
-
+  /**
+   * Launches the browser and opens a video-recording page.
+   *
+   * Shared by page recordings and CLI recordings so both produce video with
+   * identical launch flags, viewport and colour scheme — a terminal clip that
+   * differed in any of those would cut against the rest of the suite.
+   */
+  private async openStage(warmUrl?: string): Promise<{
+    browser: Browser;
+    context: BrowserContext;
+    page: Page;
+  }> {
     const browser = await chromium.launch({
       headless: false,
       args: [
@@ -126,13 +193,15 @@ export class RecordingEngine {
     // the first navigation takes is dead footage at the head of every video.
     // Warming the doc URL in a throwaway page of the same context primes DNS,
     // TLS and the HTTP cache, which measured 1717ms -> 843ms on the real page.
-    const warmup = await context.newPage();
-    await warmup
-      .goto(config.docUrl, { waitUntil: 'domcontentloaded', timeout: 20000 })
-      .catch(() => {});
-    const warmupVideo = warmup.video();
-    await warmup.close().catch(() => {});
-    await warmupVideo?.delete().catch(() => {});
+    if (warmUrl) {
+      const warmup = await context.newPage();
+      await warmup
+        .goto(warmUrl, { waitUntil: 'domcontentloaded', timeout: 20000 })
+        .catch(() => {});
+      const warmupVideo = warmup.video();
+      await warmup.close().catch(() => {});
+      await warmupVideo?.delete().catch(() => {});
+    }
 
     const page = await context.newPage();
 
@@ -145,6 +214,310 @@ export class RecordingEngine {
         if (document.body) document.body.style.background = '#1e1e1e';
       })
       .catch(() => {});
+
+    return { browser, context, page };
+  }
+
+  /**
+   * Saves the recorded video and tears the browser down.
+   *
+   * Returns the filename actually written, which is what the summary reports.
+   */
+  private async closeStage(
+    browser: Browser,
+    context: BrowserContext,
+    page: Page,
+    baseFilename: string,
+    announceSuccess: boolean,
+    subdir?: string,
+  ): Promise<string> {
+    const video = page.video();
+    await page.close().catch(() => {});
+    await context.close().catch(() => {});
+
+    let savedFilename = '';
+    if (video) {
+      savedFilename = `${baseFilename}.webm`;
+      // CLI recordings land in their own folder: they are a different kind of
+      // artifact from the per-doc-page clips, and mixing them makes a directory
+      // listing useless for finding either.
+      const targetDir = subdir ? join(this.videosDir, subdir) : this.videosDir;
+      mkdirSync(targetDir, { recursive: true });
+      const finalWebm = join(targetDir, savedFilename);
+      try {
+        if (existsSync(finalWebm)) unlinkSync(finalWebm);
+        await video.saveAs(finalWebm);
+        await video.delete().catch(() => {});
+        if (announceSuccess) {
+          console.log(`\n🎥 [RECORDING SUCCESSFUL]: ${finalWebm}\n`);
+        }
+      } catch (err) {
+        console.warn(`Video save note: ${err}`);
+      }
+    }
+
+    await browser.close().catch(() => {});
+
+    // Playwright's raw chunk lands here before saveAs moves it out. Nothing
+    // should survive the run; left alone it accumulated one stray .webm per
+    // recording, gitignored and invisible.
+    try {
+      rmSync(this.tempVideoDir, { recursive: true, force: true });
+    } catch {}
+
+    return savedFilename;
+  }
+
+  /**
+   * Navigates to a terminal window and plays a cast through to the end.
+   *
+   * The frontend does not have to be running: the page is served by
+   * intercepting a URL on the frontend's origin and fulfilling it from memory,
+   * exactly as the simulated IDE is, so nothing reaches the network.
+   *
+   * Replay is driven inside the page rather than by writing bytes over CDP,
+   * which would put a round trip between every character.
+   */
+  private async playCastInTerminal(
+    page: Page,
+    opts: { cast: Cast; title?: string; origin?: string },
+  ): Promise<void> {
+    const terminalHtml = generateTerminalHtml({ cast: opts.cast, title: opts.title });
+    const terminalUrl = new URL(
+      TERMINAL_ROUTE_PATH,
+      opts.origin ?? PROJECT.frontendUrl,
+    ).toString();
+
+    await page.route(terminalUrl, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'text/html; charset=utf-8',
+        body: terminalHtml,
+      }),
+    );
+    await page.goto(terminalUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await ensureOverlays(page, 'terminal');
+    await sleep(400);
+
+    await page.evaluate(`window.__startCastReplay && window.__startCastReplay()`);
+
+    // The replay's own duration plus slack. A cast that plays for four minutes
+    // needs a wait longer than four minutes, so this cannot be a constant.
+    const replayTimeoutMs = castDuration(opts.cast) * 1000 + 60_000;
+    await page.waitForFunction(`window.__castReplayDone === true`, undefined, {
+      timeout: replayTimeoutMs,
+      polling: 250,
+    });
+
+    // The route stays registered for the life of the page; unrouting keeps a
+    // second terminal segment on the same page from being served the first
+    // one's HTML.
+    await page.unroute(terminalUrl).catch(() => {});
+  }
+
+  /**
+   * Films a captured CLI session: the doc page it belongs to, then a terminal
+   * window replaying the cast.
+   *
+   * Deliberately reads from a cast rather than driving a live terminal. The CLI
+   * has already run, once, under `npm run capture` — this is the render pass,
+   * so a re-shoot costs seconds and never re-scaffolds a project or asks anyone
+   * to sign in again. See `core/cli/cast.ts`.
+   *
+   * The frontend does not have to be running: the terminal page is served by
+   * intercepting a URL on the frontend's origin and fulfilling it from memory,
+   * exactly as the simulated IDE is, so nothing reaches the network.
+   */
+  async recordCliFlow(req: CliRecordRequest): Promise<RecordResult> {
+    console.log(`\n======================================================`);
+    console.log(`🎬 RECORDING CLI: ${req.name} (${req.id})`);
+    console.log(`======================================================`);
+
+    setGlobalCursorPos(960, 540);
+
+    const warnings: string[] = [];
+    let recordError: string | undefined;
+    let finalSavedFilename = '';
+
+    const { browser, context, page } = await this.openStage(req.docUrl);
+
+    try {
+      // ----------------------------------------------------
+      // STEP 1: THE DOC PAGE THIS FLOW IS EVIDENCE FOR
+      // ----------------------------------------------------
+      if (req.docUrl) {
+        console.log(`\n📖 Step 1: Navigating to Official Doc (${req.docUrl})...`);
+        try {
+          await page.goto(req.docUrl, {
+            waitUntil: 'domcontentloaded',
+            timeout: 25000,
+          });
+          await page
+            .waitForSelector(SELECTORS.docContentReady, {
+              state: 'visible',
+              timeout: 5000,
+            })
+            .catch(() => {});
+          await ensureOverlays(page, 'chrome');
+
+          const hydration = waitForHydration(page);
+          await sleep(500);
+          await humanGlide(page, 960, 380, 16);
+          await hydration;
+
+          console.log(`   Smooth scrolling down doc page...`);
+          await humanScrollDown(page, 1200, 2600);
+          await sleep(600);
+
+          console.log(
+            `   🖱️ Switching to ${req.ideTabs?.length ? 'VS Code' : 'Terminal'} via Windows 11 Taskbar...`,
+          );
+          await clickTaskbarApp(page, req.ideTabs?.length ? 'vscode' : 'terminal');
+        } catch (e) {
+          // The doc site is external and not the thing under test, so a bad
+          // fetch degrades the intro rather than invalidating the recording.
+          const note = `Doc page (${req.docUrl}): ${diagnoseError(e, 'doc-page')}`;
+          warnings.push(note);
+          console.warn(`⚠️ Doc navigation notice -- ${note}`);
+        }
+      }
+
+      // ----------------------------------------------------
+      // STEP 2: TERMINAL WINDOW REPLAYING THE CAPTURED SESSION
+      // ----------------------------------------------------
+      // ----------------------------------------------------
+      // STEP 1b: THE CODE THE FINDING IS ABOUT
+      // ----------------------------------------------------
+      if (req.ideTabs?.length) {
+        console.log(`\n💻 Step 1b: Showing ${req.ideTabs.length} file(s) in VS Code...`);
+        const ideHtml = await generateIdeHtml(
+          this.rootDir,
+          req.ideTabs[0].filePath,
+          req.ideTabs[0].startLine,
+          req.ideTabs[0].endLine,
+          req.ideTabs.slice(1),
+          0,
+        );
+        const ideUrl = new URL(IDE_ROUTE_PATH, PROJECT.frontendUrl).toString();
+        await page.route(ideUrl, (route) =>
+          route.fulfill({
+            status: 200,
+            contentType: 'text/html; charset=utf-8',
+            body: ideHtml,
+          }),
+        );
+        await page.goto(ideUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        await ensureOverlays(page, 'vscode');
+
+        const dwell = req.ideDwellMs ?? 3800;
+        for (let i = 0; i < req.ideTabs.length; i++) {
+          if (i > 0) {
+            await page.evaluate(`window.switchIdeTab && window.switchIdeTab(${i})`);
+            await sleep(500);
+          }
+          await humanScrollCodeViewport(page, req.ideTabs[i].startLine, i);
+          const line = page.locator(`#ide-view-${i} .code-line.highlighted`).first();
+          const box = await line.boundingBox().catch(() => null);
+          if (box) {
+            await humanGlide(page, box.x + Math.min(box.width / 2, 420), box.y + 12, 18);
+          }
+          await sleep(dwell);
+        }
+
+        await page.unroute(ideUrl).catch(() => {});
+        console.log(`   🖱️ Switching to Terminal via Windows 11 Taskbar...`);
+        await clickTaskbarApp(page, 'terminal');
+      }
+
+      for (const [i, segment] of req.segments.entries()) {
+        console.log(
+          `\n⌨️  Step 2.${i + 1}: Replaying ${segment.title ?? 'terminal cast'} ` +
+            `(${segment.cast.events.length} events, ${castDuration(segment.cast).toFixed(1)}s)...`,
+        );
+        await this.playCastInTerminal(page, {
+          cast: segment.cast,
+          title: segment.title,
+        });
+      }
+
+      console.log(`   ✅ Replay complete (${req.segments.length} segment(s)).`);
+
+      // ----------------------------------------------------
+      // STEP 3: THE FINDING, WRITTEN OUT
+      // ----------------------------------------------------
+      if (req.notepad) {
+        console.log(`\n📝 Step 3: Writing the finding in Notepad...`);
+        await openNotepad(page, req.notepad.filename);
+        await typeInNotepad(page, req.notepad.body, { charDelayMs: req.notepad.charDelayMs });
+        await closeNotepad(page);
+      }
+    } catch (e) {
+      recordError = `CLI replay failed: ${diagnoseError(e, 'cli-replay')}`;
+      console.error(`❌ ${recordError}`);
+    } finally {
+      finalSavedFilename = await this.closeStage(
+        browser,
+        context,
+        page,
+        req.filename,
+        !recordError,
+        req.subdir,
+      );
+    }
+
+    return {
+      success: !recordError,
+      filename: finalSavedFilename,
+      error: recordError,
+      warnings,
+    };
+  }
+
+  async recordPage(config: PageRecordConfig): Promise<RecordResult> {
+    console.log(`\n======================================================`);
+    console.log(`🎬 RECORDING: ${config.name} (${config.id})`);
+    console.log(`======================================================`);
+
+    setGlobalCursorPos(960, 540);
+
+    let recordSuccess = false;
+    let recordError: string | undefined;
+    let finalSavedFilename = '';
+    const warnings: string[] = [];
+
+    /** A step that renders the thing under test failed -- the video is not usable. */
+    const fail = (message: string): void => {
+      if (!recordError) recordError = message;
+    };
+
+    // A page that brings its own dev server starts it before anything is filmed:
+    // the boot cast has to exist before it can be replayed, and the app has to be
+    // serving before the demo step reaches it. Failing here aborts the recording
+    // rather than producing a full-length video of a connection refused.
+    let service: RunningService | undefined;
+    if (config.devServer) {
+      try {
+        service = await startService(
+          // The page the demo step opens is the page worth warming — see
+          // `warmUrl` in service.ts. Config may still override it.
+          { warmUrl: config.demoUrl, ...config.devServer },
+          {
+            rootDir: this.rootDir,
+            title: config.devServer.title,
+          },
+        );
+      } catch (e) {
+        const detail = e instanceof ServiceStartError ? `\n${e.tail}` : '';
+        return {
+          success: false,
+          filename: '',
+          error: `Dev server failed to start: ${e instanceof Error ? e.message : String(e)}${detail}`,
+          warnings: [],
+        };
+      }
+    }
+
+    const { browser, context, page } = await this.openStage(config.docUrl);
 
     // Attach informational console & request listeners (error detection disabled)
     page.on('pageerror', (err) => {
@@ -400,9 +773,11 @@ export class RecordingEngine {
           }
         }
 
-        // Switch back to Chrome via Windows 11 Taskbar
-        console.log(`   🖱️ Switching back to Chrome via Windows 11 Taskbar...`);
-        await clickTaskbarApp(page, 'chrome');
+        // Straight to the terminal when this page has a server to show starting;
+        // otherwise back to the browser for the demo.
+        const nextApp = service ? 'terminal' : 'chrome';
+        console.log(`   🖱️ Switching to ${nextApp} via Windows 11 Taskbar...`);
+        await clickTaskbarApp(page, nextApp);
       } catch (e) {
         // The IDE view is generated from local files, so a failure here is a real
         // defect in this repo -- never a flaky-network excuse.
@@ -410,6 +785,33 @@ export class RecordingEngine {
         fail(msg);
         console.error(`❌ ${msg}`);
         await sleep(600);
+      }
+
+      // ----------------------------------------------------
+      // STEP 2b: THE DEV SERVER BOOTING, IN A TERMINAL
+      // ----------------------------------------------------
+      if (service) {
+        console.log(
+          `\n⌨️  Step 2b: Replaying dev server boot (${service.bootSeconds}s to ready)...`,
+        );
+        try {
+          await this.playCastInTerminal(page, {
+            cast: compressCast(service.cast, {
+              maxGapSec: config.devServer?.render?.maxGapSec ?? 0.8,
+              speed: config.devServer?.render?.speed ?? 1.6,
+            }),
+            title: config.devServer?.title,
+          });
+          console.log(`   🖱️ Switching back to Chrome via Windows 11 Taskbar...`);
+          await clickTaskbarApp(page, 'chrome');
+        } catch (e) {
+          // The server is up — that was proven before filming started — so a
+          // failure here is the replay, not the project. Note it and carry on to
+          // the demo rather than throwing away a recording of a working app.
+          const note = `Dev server terminal replay: ${diagnoseError(e, 'cli-replay')}`;
+          warnings.push(note);
+          console.warn(`⚠️ ${note}`);
+        }
       }
 
       // ----------------------------------------------------
@@ -474,36 +876,21 @@ export class RecordingEngine {
       recordSuccess = false;
       console.error(`❌ Recording error for ${config.id}:`, recordError);
     } finally {
-      const video = page.video();
-      await page.close().catch(() => {});
-      await context.close().catch(() => {});
+      finalSavedFilename = await this.closeStage(
+        browser,
+        context,
+        page,
+        config.filename ?? config.id,
+        recordSuccess,
+      );
 
-      if (video) {
-        const baseFilename = config.filename ?? config.id;
-        finalSavedFilename = `${baseFilename}.webm`;
-
-        const finalWebm = join(this.videosDir, finalSavedFilename);
-        try {
-          if (existsSync(finalWebm)) unlinkSync(finalWebm);
-          await video.saveAs(finalWebm);
-          await video.delete().catch(() => {});
-
-          if (recordSuccess) {
-            console.log(`\n🎥 [RECORDING SUCCESSFUL]: ${finalWebm}\n`);
-          }
-        } catch (err) {
-          console.warn(`Video save note: ${err}`);
-        }
+      // Always, including on the failure paths above: a dev server left running
+      // holds its port, and the next page in the run would find it occupied and
+      // silently record against the previous package manager's app.
+      if (service) {
+        console.log(`   🛑 Stopping dev server...`);
+        await service.stop();
       }
-
-      await browser.close().catch(() => {});
-
-      // Playwright's raw chunk lands here before saveAs moves it out. Nothing
-      // should survive the run; left alone it accumulated one stray .webm per
-      // recording, gitignored and invisible.
-      try {
-        rmSync(this.tempVideoDir, { recursive: true, force: true });
-      } catch {}
     }
 
     return {

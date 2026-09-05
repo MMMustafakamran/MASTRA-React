@@ -1,8 +1,37 @@
 import { type Page } from 'playwright';
 import { PROJECT, demoUrlFor, docUrlFor } from '../config/project.config';
+import { type ServiceDefinition } from './cli/service';
 import { type IdeTabConfig } from './ide/generator';
 
 export { type IdeTabConfig };
+
+/**
+ * A dev server this page's demo needs, and which the recording shows starting.
+ *
+ * When present, the engine boots it before filming, replays its boot in a
+ * terminal window between the IDE and the demo, points the demo at
+ * `originUrl`, and kills it afterwards. The terminal segment is therefore the
+ * actual process serving the app in the next segment.
+ */
+export interface PageDevServer extends ServiceDefinition {
+  /** Where the demo is reached once this is up, e.g. `http://localhost:3101`. */
+  originUrl: string;
+
+  /**
+   * Path to open on that origin. Defaults to `/`.
+   *
+   * A scaffolded starter is a different application from this repo's frontend —
+   * it has its own routes and none of this project's `demoSuffix` convention —
+   * so its URL is built from the origin and this, not from `route`.
+   */
+  demoPath?: string;
+
+  /** Terminal title-bar text. Defaults to the command line. */
+  title?: string;
+
+  /** Pacing for the boot replay. A cold compile is mostly waiting. */
+  render?: { maxGapSec?: number; speed?: number };
+}
 
 /**
  * What an adaptation writes in `config/pages.config.ts`.
@@ -20,6 +49,16 @@ export interface PageDefinition {
 
   /** Video filename stem: `<videoPrefix>-<NN>-<videoName>.webm`. */
   videoName: string;
+
+  /**
+   * Replaces the derived `<NN>-<videoName>` stem with this, after the prefix.
+   *
+   * For pages that belong to a numbered *set* rather than to the doc-nav order —
+   * the per-package-manager videos, where the three files of one manager's set
+   * need to sort together and be readable as a set. Leave unset everywhere else,
+   * so nav order keeps naming the files.
+   */
+  videoFile?: string;
 
   /** Appended to `PROJECT.docBaseUrl`. Query strings are fine. */
   docPath: string;
@@ -45,6 +84,24 @@ export interface PageDefinition {
 
   /** Reading pause after the reply finishes streaming. */
   waitAfterPromptMs?: number;
+
+  /**
+   * Boot a dev server for this page, and show it booting.
+   *
+   * Omit for pages that run against the repo's own frontend — which is all of
+   * them, apart from the package-manager matrix, where each scaffold is its own
+   * app on its own port.
+   */
+  devServer?: PageDevServer;
+
+  /**
+   * This page's `ideFile` does not exist until the CLI pipeline has run.
+   *
+   * The doctor must not fail on a matrix page before the scaffold has been
+   * created and distributed — the files genuinely are not there yet — but it
+   * still says so, because a missing file at record time is a real problem.
+   */
+  generated?: boolean;
 }
 
 /** A page definition with everything resolved. What the engine consumes. */
@@ -69,8 +126,12 @@ export function definePages(defs: PageDefinition[]): PageRecordConfig[] {
       ...def,
       order,
       docUrl: docUrlFor(def.docPath),
-      demoUrl: demoUrlFor(def.route),
-      filename: `${PROJECT.videoPrefix}-${String(order).padStart(2, '0')}-${def.videoName}`,
+      demoUrl: def.devServer
+        ? `${def.devServer.originUrl.replace(/\/$/, '')}${def.devServer.demoPath ?? '/'}`
+        : demoUrlFor(def.route),
+      filename: def.videoFile
+        ? `${PROJECT.videoPrefix}-${def.videoFile}`
+        : `${PROJECT.videoPrefix}-${String(order).padStart(2, '0')}-${def.videoName}`,
     };
   });
 }

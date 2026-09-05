@@ -28,7 +28,144 @@
  * markers it also checks the range still covers one.
  */
 
-import { definePages } from '../core/types';
+import { definePages, type PageDefinition } from '../core/types';
+
+/**
+ * The scaffolded app, running — video 3 of each package manager's set.
+ *
+ * The other two are the CLI creating the project and that manager installing
+ * it, both in `config/cli.config.ts`. This one is the payoff, and it is a
+ * recording of the real app rather than a re-enactment: the dev server filmed
+ * booting in the terminal is the same process that serves the page driven
+ * immediately afterwards.
+ *
+ * The order on screen is how someone would actually check a fresh scaffold:
+ *
+ *   1. the doc page that told them to run the CLI
+ *   2. `package.json` — what the starter declares
+ *   3. the lockfile — what this manager actually resolved, pinned
+ *   4. the app's own CopilotKit code, so the chat below has a source
+ *   5. `<pm> run dev` booting, in a terminal
+ *   6. the app open in a browser, asked a question, answering
+ *
+ * Steps 2 and 3 are the pair that matters. `package.json` carries RANGES, so on
+ * its own it cannot answer "which versions is this?" — and the resolved set is
+ * exactly where four package managers can differ. The lockfile is where that
+ * difference is written down, which is why this tab is a different file in each
+ * set. VERSIONS.md, the generated summary of the same thing, stays on the
+ * install clips: showing both here would say it twice before the app has
+ * appeared.
+ *
+ * All four managers are listed, bun included. No finding has been recorded
+ * against any of them in this repo yet — unlike the reference repo, whose bun
+ * install dies in a Python starter's `install:agent` postinstall, a script this
+ * starter does not have. All four scaffolds under `1-cli-testing/` installed
+ * cleanly by hand, so all four are expected to produce a demo. If one starts
+ * failing, its dev server never prints its ready line, the recorder reports a
+ * server that never started and writes no video — which is the entry doing its
+ * job as a test.
+ *
+ * Ports 3141–3144, and every part of that is deliberate:
+ *
+ *   - never 3000: this repo's own Next frontend holds it, and a recording that
+ *     quietly used *that* would look like a pass while proving nothing about
+ *     the scaffold.
+ *   - never 3121–3124: those are the reference repo's range. This block ships
+ *     to every framework repo, so if every copy kept one range, a sibling
+ *     repo's scaffold left running is enough for the dev server here to fail
+ *     with EADDRINUSE while the browser happily records *that other
+ *     framework's app* answering nothing. Each repo takes its own range.
+ *
+ * `readyPattern` is what the dev server prints when it is serving. If a future
+ * starter changes that wording, the recorder waits out the timeout and reports
+ * that the server never started — the right failure, since it never became
+ * reachable in a way this config recognises.
+ */
+const DEMO_PAGES: PageDefinition[] = [
+  { pm: 'npm', command: 'npm', args: ['run', 'dev'], lockfile: 'package-lock.json', port: 3141 },
+  { pm: 'pnpm', command: 'pnpm', args: ['run', 'dev'], lockfile: 'pnpm-lock.yaml', port: 3142 },
+  { pm: 'yarn', command: 'yarn', args: ['run', 'dev'], lockfile: 'yarn.lock', port: 3143 },
+  // bun 1.2+ writes a text `bun.lock`; older bun wrote the binary `bun.lockb`,
+  // which has nothing readable to put on screen. The bun scaffold already on
+  // disk carries `bun.lock`, so this is confirmed rather than assumed — but the
+  // doctor names this file if a future bun produces the other one.
+  { pm: 'bun', command: 'bun', args: ['run', 'dev'], lockfile: 'bun.lock', port: 3144 },
+].map(({ pm, command, args, lockfile, port }) => {
+  const app = `1-cli-testing/${pm}/app`;
+  return {
+    id: `demo-${pm}`,
+    name: `${pm} · 3 · Scaffolded app - manifest, lockfile, dev server and a live agent`,
+    videoName: `Demo-${pm}`,
+    // Names the file as the third of this manager's set rather than by doc-nav
+    // position, so one manager's three clips sort together.
+    videoFile: `${pm}-3-Demo`,
+    docPath: 'quickstart?agent=bring-your-own',
+    // Unused for these pages — the demo URL comes from devServer — but kept
+    // meaningful so logs read sensibly.
+    route: 'quickstart',
+    generated: true,
+
+    // What the starter declares. Also the file whose absence tells the runner
+    // this manager's app has not been scaffolded and installed yet. Lines 1-24
+    // are the scripts block plus the CopilotKit and Mastra dependencies — the
+    // packages under test — out of 56.
+    ideFile: `${app}/package.json`,
+    startLine: 1,
+    endLine: 24,
+    extraTabs: [
+      // What it resolved to. A lockfile is long and mostly uninteresting; its
+      // head is the part that identifies the tree — format version, then the
+      // first resolved entries.
+      { filePath: `${app}/${lockfile}`, startLine: 1, endLine: 26 },
+      // The CopilotKit integration itself — the code behind the chat that
+      // answers a few seconds later. This starter's `src/app/page.tsx` opens
+      // with the `@copilotkit/react-core/v2` imports and the `useFrontendTool`
+      // registration, which is exactly the surface the demo exercises.
+      { filePath: `${app}/src/app/page.tsx`, startLine: 7, endLine: 35 },
+    ],
+
+    // The starter's own suggestion chip for its generative-UI path, so this is
+    // a prompt the shipped agent is built to answer rather than one invented
+    // for the recording. `src/mastra/agents/index.ts` registers `weatherTool`
+    // (`src/mastra/tools/index.ts`, a real open-meteo lookup) on a gpt-4o
+    // agent, and `src/components/weather.tsx` renders the result — so the
+    // answer is a rendered card, not just streamed text.
+    prompt: 'Get the weather in San Francisco.',
+    waitAfterPromptMs: 5000,
+
+    devServer: {
+      cwd: app,
+      command,
+      args,
+      env: { PORT: String(port), BROWSER: 'none' },
+      // This starter's `dev` is not a bare `next dev`. It is
+      //   dev:infra && concurrently "npm run dev:ui" "npm run dev:agent"
+      // with `dev:ui` = `next dev --turbopack` and `dev:agent` = `mastra dev`,
+      // so two servers boot into one stream and concurrently tags every line
+      // with `[ui]` or `[agent]`.
+      //
+      // The pattern is left UNANCHORED on purpose — that is what tolerates the
+      // prefix. `[ui]  ✓ Ready in 766ms` contains `Ready in`, so it matches
+      // without the pattern having to know about concurrently at all; anchoring
+      // it to the start of a line is what would break here.
+      //
+      // `Ready in` is Next's real ready line for this starter, not a guess:
+      // `1-cli-testing/npm/app/.next/dev/logs/next-development.log` from the
+      // earlier manual boot opens with `✓ Ready in 766ms`. `Local:\s+http` is
+      // kept as a fallback for the startup banner. Neither has been seen come
+      // through concurrently's prefixing yet — the first real run should
+      // confirm it.
+      readyPattern: /Ready in|Local:\s+http/i,
+      // A first `next dev` compiles the whole app, and `mastra dev` bundles the
+      // agent alongside it; on a cold cache this is slow and a tighter cap
+      // would report a failure for a server that was fine.
+      readyTimeoutMs: 240_000,
+      originUrl: `http://localhost:${port}`,
+      demoPath: '/',
+      title: `${command} run dev`,
+    },
+  };
+});
 
 export const PAGES = definePages([
   {
@@ -340,4 +477,16 @@ export const PAGES = definePages([
     prompt: "Can you tell me a joke?",
     waitAfterPromptMs: 4000,
   },
+
+  // The scaffolded app, once per package manager — video 3 of each set.
+  // LAST on purpose: order determines the NN in every derived filename, so
+  // appending keeps all 23 doc pages above at the numbers they already have.
+  // These four name their own files via `videoFile` and so take no number.
+  //
+  // `generated: true`: these files are produced by the CLI pipeline, so before
+  // it has run the doctor reports them as warnings rather than failing, and an
+  // unfiltered run skips them with a note. All four scaffolds happen to be on
+  // disk already from an earlier manual run, so today the doctor checks their
+  // line ranges for real.
+  ...DEMO_PAGES,
 ]);

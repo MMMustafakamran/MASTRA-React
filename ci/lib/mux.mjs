@@ -40,7 +40,14 @@ function hasFfmpeg() {
   }
 }
 
-export function muxAudioFiles() {
+/**
+ * `since` is a timestamp (ms) taken just before the recorder was started. Only
+ * videos written after it are eligible, so a clip left on disk by an earlier
+ * run is never re-muxed -- that is what layered a second audio track onto an
+ * already-muxed file, and what let a run that recorded nothing still rewrite
+ * yesterday's video. Omit it and every video in the directory is eligible.
+ */
+export function muxAudioFiles({ since } = {}) {
   if (AUDIO_TRACKS.length === 0) return;
   if (!fs.existsSync(AUDIO_DIR)) return;
 
@@ -53,7 +60,14 @@ export function muxAudioFiles() {
     return;
   }
 
-  const files = fs.readdirSync(VIDEOS_DIR);
+  const files = fs.readdirSync(VIDEOS_DIR).filter((f) => {
+    if (since === undefined) return true;
+    try {
+      return fs.statSync(path.join(VIDEOS_DIR, f)).mtimeMs >= since;
+    } catch {
+      return false;
+    }
+  });
 
   for (const track of tracks) {
     const audioPath = path.join(AUDIO_DIR, track.audioFile);

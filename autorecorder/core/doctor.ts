@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACTION_MAP } from '../actions';
+import { CLI_FLOWS } from '../config/cli.config';
 import { PAGES } from '../config/pages.config';
 import { PROJECT, REPLACE_ME } from '../config/project.config';
 import { SELECTORS } from '../config/selectors.config';
@@ -196,16 +197,29 @@ function checkPages(rootDir: string, problems: Problem[]): void {
       });
     }
 
-    checkTab(
-      rootDir,
-      scope,
-      { filePath: page.ideFile, startLine: page.startLine, endLine: page.endLine },
-      'ideFile',
-      problems,
-    );
-    (page.extraTabs ?? []).forEach((tab, i) =>
-      checkTab(rootDir, scope, tab, `extraTabs[${i}]`, problems),
-    );
+    // A generated page's files are produced by the CLI pipeline, so before that
+    // has run they are legitimately absent. Report the state rather than failing
+    // the whole adaptation over work that has not happened yet — but check them
+    // normally the moment they do exist, because then a bad range is a real bug.
+    const tabs = [
+      {
+        tab: { filePath: page.ideFile, startLine: page.startLine, endLine: page.endLine },
+        label: 'ideFile',
+      },
+      ...(page.extraTabs ?? []).map((tab, i) => ({ tab, label: `extraTabs[${i}]` })),
+    ];
+
+    for (const { tab, label } of tabs) {
+      if (page.generated && !existsSync(join(rootDir, tab.filePath))) {
+        problems.push({
+          scope,
+          severity: 'warning',
+          message: `${label} ${tab.filePath} not present yet — run the CLI pipeline (capture --scaffold, --distribute) before recording this page`,
+        });
+        continue;
+      }
+      checkTab(rootDir, scope, tab, label, problems);
+    }
   }
 
   // Handlers registered for pages that no longer exist.
@@ -221,6 +235,76 @@ function checkPages(rootDir: string, problems: Problem[]): void {
 }
 
 /** Live probes: the half that catches a config pointing at the wrong app. */
+/**
+ * The CLI flow registry.
+ *
+ * The failure this is really guarding against: a flow that answers prompts by
+ * counting keypresses instead of naming the row it wants. That version works on
+ * the day it is written and silently scaffolds the wrong framework the day the
+ * menu gains an entry — a passing run that produced the wrong project. Nothing
+ * downstream can detect it, so it has to be caught here.
+ */
+function checkCliFlows(problems: Problem[]): void {
+  for (const flow of CLI_FLOWS) {
+    const scope = `cli:${flow.id}`;
+
+    if (!flow.command || flow.command.includes(REPLACE_ME)) {
+      problems.push({ scope, severity: 'error', message: 'command is empty or a placeholder' });
+    }
+
+    // Only flows that answer prompts are expected to produce something. A flow
+    // with no steps is a bare command (a sign-in, say) whose output may be
+    // somewhere this config has no business asserting about.
+    if (flow.steps?.length && !flow.expectFiles?.length) {
+      problems.push({
+        scope,
+        severity: 'warning',
+        message:
+          'no expectFiles — a command that answers every prompt and writes nothing would still pass',
+      });
+    }
+
+    for (const [i, step] of (flow.steps ?? []).entries()) {
+      const stepScope = `${scope} step ${i + 1} (${step.label})`;
+
+      if (!step.waitFor) {
+        problems.push({
+          scope: stepScope,
+          severity: 'warning',
+          message:
+            'no waitFor — the step acts as soon as the previous one finishes, which is a race with the prompt painting',
+        });
+      }
+
+      if (!step.select && !step.keys?.length && step.type == null) {
+        problems.push({
+          scope: stepScope,
+          severity: 'error',
+          message: 'does nothing: no select, no keys, no text to type',
+        });
+      }
+
+      // Down/Up repeated by hand is the counting antipattern in disguise.
+      const arrowRun = (step.keys ?? []).filter((k) => k === 'Down' || k === 'Up').length;
+      if (!step.select && arrowRun > 1) {
+        problems.push({
+          scope: stepScope,
+          severity: 'error',
+          message: `sends ${arrowRun} arrow keys without a select — name the row with select: { label } instead of counting keypresses`,
+        });
+      }
+    }
+
+    if (flow.steps?.length && !flow.steps.some((s) => s.waitFor)) {
+      problems.push({
+        scope,
+        severity: 'error',
+        message: 'no step waits for anything — the whole flow is a race',
+      });
+    }
+  }
+}
+
 async function checkOnline(problems: Problem[]): Promise<void> {
   const get = async (url: string): Promise<number | string> => {
     try {
@@ -307,6 +391,7 @@ export async function runDoctor(
   checkProject(problems);
   checkSelectors(problems);
   checkPages(rootDir, problems);
+  checkCliFlows(problems);
   if (opts.online) await checkOnline(problems);
 
   const errors = problems.filter((p) => p.severity === 'error');
@@ -316,6 +401,7 @@ export async function runDoctor(
   console.log(`  project : ${PROJECT.frameworkLabel} (${PROJECT.framework})`);
   console.log(`  docs    : ${PROJECT.docBaseUrl}`);
   console.log(`  pages   : ${PAGES.length}`);
+  console.log(`  cli     : ${CLI_FLOWS.length} flow(s)`);
   console.log(`  mode    : ${opts.online ? 'static + online' : 'static (pass --online for live probes)'}\n`);
 
   if (problems.length === 0) {

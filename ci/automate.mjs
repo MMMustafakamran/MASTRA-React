@@ -217,6 +217,9 @@ async function waitForHealth(url, name, logPath, timeoutMs = 60000) {
 }
 
 async function main() {
+  // Set the moment the recorder is launched; stays undefined if the run never
+  // gets that far. Read by the audio-mux gate in `finally`.
+  let recordingStartedAt;
   const reportData = {
     success: false,
     driftResult: null,
@@ -318,6 +321,9 @@ async function main() {
     console.log('\n▶ [Step] Running Autorecorder...');
     const recorderCmd =
       forwardArgs.length > 0 ? `npm run record -- ${forwardArgs.join(' ')}` : 'npm run record';
+    // Everything written after this instant is this run's output, and only
+    // those files are eligible for muxing below.
+    recordingStartedAt = Date.now();
     runSync(recorderCmd, RECORDER_DIR, 'Executing Autorecorder');
 
     reportData.success = true;
@@ -329,20 +335,28 @@ async function main() {
     console.error('\n❌ Automation failed:', err.message || err);
     process.exitCode = 1;
   } finally {
-    // Only mux when the recorder actually produced videos this run.
+    // Mux the videos this run produced -- and only those.
     //
     // In `finally` unconditionally, this re-muxed whatever `.webm` files were
-    // already on disk from an earlier run — including after a preflight refusal
+    // already on disk from an earlier run, including after a preflight refusal
     // that recorded nothing at all. Harmless-looking, and it was not: before
-    // `-af apad` was added below, each pass truncated the stale clip to the
+    // `-af apad` was added, each pass truncated the stale clip to the
     // voiceover's length, so a run that never started a browser could still
-    // shorten yesterday's video. It also prints "✅ Added audio to ..." after
-    // "❌ Automation failed", which reads like something was salvaged.
-    if (reportData.success) {
-      muxAudioFiles();
+    // shorten yesterday's video.
+    //
+    // Gating on `reportData.success` fixed that by overshooting. The recorder
+    // works page by page, so a single page failing anywhere in the list left
+    // every clip it had already produced silent -- including Background Tasks,
+    // whose voiceover is the explanation of the stuck card and the reason that
+    // clip is worth keeping. The gate now names the actual hazard: files older
+    // than this run's recorder start are ineligible, so a partial run still
+    // gets its audio.
+    if (recordingStartedAt !== undefined) {
+      muxAudioFiles({ since: recordingStartedAt });
     } else {
-      console.log('\nℹ️ [Audio Mux] Skipped — no recording completed this run.');
+      console.log('\nℹ️ [Audio Mux] Skipped — the recorder never started this run.');
     }
+
     generateReport(reportData);
     cleanup();
   }

@@ -3,6 +3,7 @@ import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt } from '../core/actions';
 import { openInspector, openInspectorPanel } from './inspector.action';
+import { closeNotepadNote, openNotepadWindow, typeInNotepad } from './notepad';
 
 /**
  * Records what the Background Tasks page actually does, which is not what the
@@ -39,10 +40,18 @@ import { openInspector, openInspectorPanel } from './inspector.action';
  * The video shows, in one take:
  *
  *   1. the activity card on screen, badge reading "Working…"
- *   2. the Inspector's Threads -> AG-UI Events tab: the activity snapshot
+ *   2. a Notepad note stating the claim, so a viewer knows the stuck badge is
+ *      the subject and not a slow demo -- closed again before the Inspector,
+ *      which wants the same edge of the screen
+ *   3. the Inspector's Threads -> AG-UI Events tab: the activity snapshot
  *      expanded so `status: "running"` is legible, then scrolled down to the
  *      `Run finished` event -- both must be seen, or there is no contradiction
- *   3. back to the card, still reading "Working…"
+ *   4. back to the card, still reading "Working…", with a second Notepad note
+ *      carrying the verdict for the branch that actually fired
+ *
+ * Every conclusion this handler reaches used to go to the console alone, which
+ * nobody watching the clip ever sees. The notes are how the recording says, on
+ * screen, that this is a defect -- see `actions/notepad.ts`.
  *
  * ── Why the AG-UI Events tab ───────────────────────────────────────────────
  * The Inspector's thread view carries three tabs: Timeline, AG-UI Events,
@@ -275,6 +284,37 @@ export const runBackgroundTasksAction: PageActionHandler = async (
 
   // Half 1: rest on the badge so the "Working…" state is unmistakable on video.
   await restOn(page, ACTIVITY_CARD, 3500);
+
+  // State the claim in writing before the evidence, not after. Everything this
+  // handler proves already went to the console, where nobody watching the clip
+  // will ever see it -- the video showed a card sitting on "Working…" with
+  // nothing on screen saying that was the defect rather than a slow demo.
+  //
+  // Anchored right so the card and the chat stay readable behind it, and closed
+  // again before the Inspector opens, because the Inspector claims the same
+  // edge of the screen.
+  console.log(`   📝 Stating the claim before opening the Inspector...`);
+  await openNotepadWindow(page, 'background-tasks-finding.txt', {
+    right: '28px',
+    top: '95px',
+    width: '620px',
+    height: '420px',
+  });
+  await typeInNotepad(
+    page,
+    [
+      'background tasks — the card is never told the job ended',
+      '',
+      'the tool is marked background: { enabled: true }, so the agent answers',
+      'at once and progress is meant to arrive on the activity channel.',
+      '',
+      'watch the badge: it says "Working…". checking the raw stream next.',
+    ],
+    1550,
+    280,
+  );
+  await sleep(2500);
+  await closeNotepadNote(page);
 
   // Give the queued work time to actually finish before we go looking for
   // evidence that it did. Held generously: a short wait here would leave the
@@ -528,24 +568,72 @@ export const runBackgroundTasksAction: PageActionHandler = async (
     (await page.locator(ACTIVITY_CARD).first().textContent().catch(() => '')) ?? '';
   const stillWorking = finalText.includes(WORKING_BADGE);
 
+  // The verdict is written on screen as well as logged, and it is written from
+  // the same three branches -- a note that always says "reproduced" would be
+  // filming a conclusion instead of a result.
+  let verdict: string[];
+
   if (stillWorking && evidenceShown) {
     console.log(
       `   🔴 FINDING REPRODUCED: the run finished with the background task still ` +
         `reported as running, and the card still reads "${WORKING_BADGE}" ` +
         `(data-status="${finalStatus}"). The client is never told the job ended.`,
     );
+    verdict = [
+      'FINDING — reproduced',
+      '',
+      'the Inspector lists ONE mastra-background-task snapshot, status',
+      '"running", never superseded — and a "Run finished" event beside it.',
+      '',
+      `so the RUN closed while the TASK is still reported running, and the`,
+      `card behind this window still reads "${WORKING_BADGE}"`,
+      `(data-status="${finalStatus}").`,
+      '',
+      'not a renderer bug: the stream closes with the task unresolved and',
+      'nothing ever reopens it. read "Run finished" carefully — it is the',
+      'run, not the task.',
+    ];
   } else if (stillWorking) {
     console.log(
       `   🟠 Card still reads "${WORKING_BADGE}" (data-status="${finalStatus}"), but the ` +
         `Inspector evidence was not captured -- this clip shows a stuck card, not ` +
         `a proven discrepancy.`,
     );
+    verdict = [
+      'PARTIAL — stuck card, discrepancy not proven',
+      '',
+      `the card still reads "${WORKING_BADGE}" (data-status="${finalStatus}"),`,
+      'but the Inspector evidence was not captured on this run.',
+      '',
+      'this clip shows a stuck card. it does not show WHY, so do not cite',
+      'it as the run/task contradiction.',
+    ];
   } else {
     console.log(
       `   🟢 Card resolved to data-status="${finalStatus}" -- the completion event DID ` +
         `arrive on this run, which would mean the defect is intermittent.`,
     );
+    verdict = [
+      'NOT REPRODUCED on this run',
+      '',
+      `the card resolved to data-status="${finalStatus}" — the completion`,
+      'event did arrive this time.',
+      '',
+      'that makes the defect intermittent rather than absent. re-record',
+      'before withdrawing the finding.',
+    ];
   }
+
+  console.log(`   📝 Writing the verdict over the card...`);
+  await openNotepadWindow(page, 'background-tasks-finding.txt', {
+    right: '28px',
+    top: '95px',
+    width: '620px',
+    height: '460px',
+  });
+  await typeInNotepad(page, verdict, 1550, 280);
+  await sleep(6000);
+  await closeNotepadNote(page);
 
   await restOn(page, ACTIVITY_CARD, config.waitAfterPromptMs ?? 4000);
 };
