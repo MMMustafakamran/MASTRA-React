@@ -29,6 +29,7 @@ import {
   LOGS_DIR,
   RECORDER_DIR,
   ROOT_DIR,
+  VIDEOS_DIR,
   isWindows,
 } from './lib/config.mjs';
 import { loadEnvFiles, trimInheritedCredentials } from './lib/env.mjs';
@@ -318,6 +319,11 @@ async function main() {
     await warmRuntimeEndpoint();
 
     // 7. Record
+    //
+    // The recorder writes videos/RECORD_RESULTS.json and the report reads it.
+    // Drop any earlier one first, so a run that dies before recording cannot
+    // report yesterday's results as today's.
+    fs.rmSync(path.join(VIDEOS_DIR, 'RECORD_RESULTS.json'), { force: true });
     console.log('\n▶ [Step] Running Autorecorder...');
     const recorderCmd =
       forwardArgs.length > 0 ? `npm run record -- ${forwardArgs.join(' ')}` : 'npm run record';

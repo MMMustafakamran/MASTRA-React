@@ -61,8 +61,56 @@ export interface ServiceDefinition {
   /** How long to allow the warm request. */
   warmTimeoutMs?: number;
 
+  /**
+   * Output that means the boot has failed, however much else it printed.
+   *
+   * `readyPattern` is matched against the whole stream, and a `next dev` that
+   * died on EADDRINUSE still prints enough around the error for "Ready in" to
+   * match — the recorder then reported `Ready in 3.6s` and filmed whatever was
+   * already on that port. Anything here is checked first. Defaults to the
+   * usual port-clash and fatal-error wordings; pass `[]` to disable.
+   */
+  abortOn?: (string | RegExp)[];
+
+  /**
+   * Port this server will listen on, checked free before it is spawned.
+   *
+   * A foreign process already there — a sibling repo's scaffold left running,
+   * the repo's own frontend — would otherwise become the subject of the
+   * recording while the real server died quietly. The engine fills this in
+   * from `originUrl`; set it only when the two differ.
+   */
+  port?: number;
+
   cols?: number;
   rows?: number;
+}
+
+const DEFAULT_ABORT_ON: (string | RegExp)[] = [
+  /EADDRINUSE/i,
+  /address already in use/i,
+  /port \d+ is (already )?in use/i,
+  /Error: Cannot find module/i,
+];
+
+/**
+ * Is something already answering on this port?
+ *
+ * Resolves true when a TCP connect succeeds; false on refusal or timeout. A
+ * refusal is the normal state of a free port, not an error.
+ */
+export async function isPortInUse(port: number, host = '127.0.0.1'): Promise<boolean> {
+  const { connect } = await import('node:net');
+  return new Promise((resolve) => {
+    const socket = connect({ port, host });
+    const done = (busy: boolean): void => {
+      socket.destroy();
+      resolve(busy);
+    };
+    socket.setTimeout(800, () => done(false));
+    socket.once('connect', () => done(true));
+    socket.once('error', () => done(false));
+  });
 }
 
 export interface RunningService {
@@ -98,6 +146,14 @@ export async function startService(
     );
   }
 
+  if (def.port && (await isPortInUse(def.port))) {
+    throw new ServiceStartError(
+      `Port ${def.port} is already in use, so this server could not have been the one recorded. ` +
+        `Stop whatever holds it (a sibling repo's dev server, usually) and re-run.`,
+      '',
+    );
+  }
+
   const commandLine = [def.command, ...(def.args ?? [])].join(' ');
   console.log(`\n🌐 Starting dev server: ${commandLine}`);
   console.log(`   in ${cwd}`);
@@ -112,7 +168,7 @@ export async function startService(
     rows: def.rows ?? 32,
     echo: opts.echo ?? true,
     title: opts.title ?? commandLine,
-    preamble: `${cwd}> ${commandLine}\r\n`,
+    preamble: { prompt: `${cwd}> `, command: commandLine },
   });
 
   const stop = async (): Promise<void> => {
@@ -120,22 +176,24 @@ export async function startService(
     await session.waitForExit(3000);
   };
 
-  const { matched, waitedMs } = await session.waitFor(
+  const { matched, aborted } = await session.waitFor(
     def.readyPattern,
     def.readyTimeoutMs ?? 180_000,
     // Scan the whole stream: a fast server can print its ready line before this
     // wait is even entered, and a view-scoped match would miss it and then hang
     // for the full timeout on a server that started perfectly.
-    { scope: 'stream' },
+    { scope: 'stream', abortOn: def.abortOn ?? DEFAULT_ABORT_ON },
   );
 
   if (!matched) {
     const tail = session.tail(14);
     await stop();
     throw new ServiceStartError(
-      session.hasExited
-        ? `Dev server exited (code ${session.code}) before it was ready.`
-        : `Dev server never printed ${String(def.readyPattern)} within ${((def.readyTimeoutMs ?? 180_000) / 1000).toFixed(0)}s.`,
+      aborted
+        ? `Dev server reported an error while booting (matched ${aborted}).`
+        : session.hasExited
+          ? `Dev server exited (code ${session.code}) before it was ready.`
+          : `Dev server never printed ${String(def.readyPattern)} within ${((def.readyTimeoutMs ?? 180_000) / 1000).toFixed(0)}s.`,
       tail,
     );
   }

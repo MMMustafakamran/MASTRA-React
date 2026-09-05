@@ -361,10 +361,49 @@ export const CLI_FLOWS = defineCliFlows([
  *
  * The third video of each set is a page recording, in `pages.config.ts`.
  */
+/**
+ * The deliverable: one CLI clip, then two clips per package manager.
+ *
+ *   1. `CLI-Create`        the CLI scaffolding the app — once, shared by all
+ *                          four, because the CLI ran once and the result was
+ *                          copied; four clips of it would be the same footage
+ *   2. `<pm>-2-Install`    that manager installing the copy, pass or fail —
+ *                          this is the clip that shows whether the install
+ *                          command works, so it is always filmed
+ *   3. `<pm>-3-Demo`       the app running and answering a prompt, when the
+ *                          install succeeded (a page recording, see
+ *                          `pages.config.ts`)
+ *      `<pm>-3-Finding`    the failure explained, when it did not: the doc
+ *                          page, the versions it resolved, the manifest line,
+ *                          the command failing, and a note written out
+ *
+ * Which of the two third clips a manager gets is decided by its install
+ * report, not by hand: `npm run cli:videos` reads `casts/*.report.json` and
+ * films the finding for a failed install or records the demo for a working
+ * one. A failure nobody has analysed yet still gets a clip — the note is
+ * generated from the report (command, exit code, last screen) and the
+ * hand-written `analysis` below is appended when there is one.
+ *
+ * `project-context.md`: a broken thing keeps its broken implementation and
+ * the recording exists to show the defect; every finding pins installed
+ * against declared versions. That is what the finding clip's IDE tabs are.
+ */
+
+/**
+ * Hand-written analysis for a failure that has been understood. Keyed by
+ * package manager; a manager with no entry gets the generated note alone.
+ *
+ * Empty until the pipeline has been run here and a failure read. The
+ * reference repo's entry was a bun/Windows backslash bug in a Python
+ * starter's `install:agent` script; whether this starter has anything like
+ * it is exactly what the first run will say.
+ */
+const INSTALL_ANALYSIS: Partial<Record<string, string>> = {};
+
+/** Narration for a finding that has been recorded, relative to this folder. */
+const FINDING_AUDIO: Partial<Record<string, string>> = {};
+
 export const CLI_VIDEOS = defineCliVideos([
-  // One CLI video, not one per manager. The CLI runs once and its result is
-  // copied into the four folders, so four clips of it would be four copies of
-  // the same footage — nothing about them is per-manager.
   {
     id: 'cli',
     name: 'CopilotKit CLI — creating the app',
@@ -373,31 +412,42 @@ export const CLI_VIDEOS = defineCliVideos([
     flows: ['scaffold'],
   },
 
-  // The install is where the managers actually differ, so this one is per
-  // manager.
-  ...PACKAGE_MANAGERS.map(({ id }) => ({
-    id: `install-video-${id}`,
-    name: `${id} · Installing dependencies`,
-    videoName: `${id}-2-Install`,
-    docPath: 'quickstart?agent=bring-your-own',
-    flows: [`install-${id}`],
-  })),
+  ...PACKAGE_MANAGERS.map(({ id }) => {
+    const app = `${SCAFFOLD_DIR}/${id}/${APP_NAME}`;
+    return {
+      id: `install-video-${id}`,
+      name: `${id} · 2 · Installing dependencies`,
+      videoName: `${id}-2-Install`,
+      docPath: 'quickstart?agent=bring-your-own',
+      flows: [`install-${id}`],
+
+      // Video 3 when the install worked: the app, live. `demo-<pm>` in
+      // pages.config.ts boots that copy's dev server and drives it.
+      onSuccess: { recordPage: `demo-${id}` },
+
+      // Video 3 when it did not: the finding.
+      onFailure: {
+        id: `finding-${id}`,
+        name: `${id} · 3 · Finding — install failed`,
+        videoName: `${id}-3-Finding`,
+        ideTabs: [
+          // Installed, not declared: what this run actually resolved to.
+          // Written by the install flow even when it fails partway, as long
+          // as something landed in node_modules.
+          { filePath: `${app}/VERSIONS.md`, startLine: 1, endLine: 20 },
+          // What the starter declares — the CopilotKit packages under test.
+          { filePath: `${app}/package.json`, startLine: 1, endLine: 30 },
+        ],
+        ideDwellMs: 4200,
+        analysis: INSTALL_ANALYSIS[id],
+        notepadFile: `${id}-install-finding.txt`,
+        // Faster than the 62ms default: a finding note is several times
+        // longer than a one-line jotting, and at the default it would spend
+        // two minutes typing while the viewer has already read it.
+        charDelayMs: 22,
+        audio: FINDING_AUDIO[id],
+      },
+    };
+  }),
 ]);
 
-/**
- * Findings from this repo's QA pass, as clips that explain themselves.
- *
- * Empty: no finding has been recorded for Mastra yet. The CLI pipeline has not
- * been run in this repo, so there is nothing observed to show, and inventing
- * one would put a defect on camera that this framework may not have. The
- * reference repo's entry here is a bun/Windows backslash bug in a *Python*
- * starter's `install:agent` script — a script this starter does not have.
- *
- * When a real run turns one up, add an entry: the doc page that led there, the
- * resolved versions, the failing line, the command failing, and a notepad note
- * explaining it, so the clip stands on its own for someone who was not here.
- *
- * The export itself is not optional. `cli-render.ts` imports it and spreads it
- * into the render list, and that file is frozen.
- */
-export const CLI_FINDING_VIDEOS = defineCliVideos([]);

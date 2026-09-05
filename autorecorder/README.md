@@ -145,11 +145,19 @@ and correctness are different questions — the run summary answers the second o
 ```
 
 - **PASS** — every step completed.
-- **PASS\*** — recorded, but the external doc page misbehaved. The intro footage
-  is degraded; the feature under test is not implicated.
+- **PASS\*** — recorded, with a note. Either the external doc page misbehaved
+  (intro footage degraded, feature not implicated), or the page's handler
+  reported something the doc promises that it did not see (`ctx.warn`), or the
+  browser console logged errors during the demo step.
 - **FAIL** — the demo route 404'd, never rendered a chat surface, the agent never
-  answered, or the IDE view could not be built. The process exits 1, so this is
-  safe to gate CI on.
+  answered, the IDE view could not be built, or the handler reported that the
+  feature under test did not work (`ctx.fail`). The clip is still saved as
+  evidence. The process exits 1, so this is safe to gate CI on.
+
+Every run also writes `videos/RECORD_RESULTS.json` — one entry per page with
+the verdict, duration, warnings and distinct console errors. `ci/lib/report.mjs`
+reads it, so the CI report lists what *this run* recorded rather than every
+`.webm` that happens to be in the folder.
 
 ---
 
@@ -172,15 +180,25 @@ autorecorder/
 │   └── *.action.ts               per-page interaction scripts
 │
 ├── core/                       ← ✖ DO NOT EDIT — no framework knowledge here
+│   ├── CORE_MANIFEST.json        hash per core file; `npm run core:check` enforces it
 │   ├── engine.ts                 browser lifecycle, the 3-step sequence, pass/fail
 │   ├── actions.ts                sendPrompt, response detection, standard action
 │   ├── doctor.ts                 the adaptation contract, as a command
 │   ├── diagnostics.ts            pre-flight health check
-│   ├── types.ts                  PageDefinition → PageRecordConfig
+│   ├── console-capture.ts        browser console/page/network errors, per take
+│   ├── select.ts                 which pages a `record` invocation means
+│   ├── timeouts.ts               every fixed wait, with project/page overrides
+│   ├── types.ts                  PageDefinition → PageRecordConfig, ActionContext
+│   ├── cli/                      PTY driver, casts, terminal replay, finding notes
 │   ├── ide/generator.ts          VS Code simulator, Shiki-highlighted from disk
-│   └── overlays/                 Windows 11 taskbar + virtual cursor
+│   └── overlays/                 Windows 11 taskbar, virtual cursor, Notepad, human pacing
 │
-└── videos/                     ← output
+├── cli-capture.ts              ← run the real CLI and the installs, write casts
+├── cli-render.ts               ← film the casts; `npm run cli:videos` for the set
+├── scripts/core-manifest.mjs   ← core/ drift check (--check / --write / --diff)
+├── test/                       ← unit tests for the pure modules (`npm test`)
+│
+└── videos/                     ← output, plus RECORD_RESULTS.json per run
 ```
 
 Every framework-specific value lives in `config/`. If something in `core/` needs
@@ -201,6 +219,24 @@ to change for a port, that is a bug in this folder — see ADAPT.md.
    ready, types the prompt, waits for the reply to finish streaming, and pauses
    for reading.
 
+### What makes it read as a person
+
+Every pace in a take comes from `core/overlays/human.ts`, seeded from the
+page id. So two clips do not type, pause and scroll in the same rhythm — but
+tonight's Quickstart clip is identical to last night's, which keeps two
+recordings of the same page comparable.
+
+- **Typing** has a person's rhythm everywhere it happens: the chat prompt, the
+  Notepad note, and the command typed at the terminal prompt before its output
+  starts. Jittered keystrokes, a beat after punctuation, the odd pause.
+- **Scrolling** is in bursts: a few wheel notches, a reading pause, a few more,
+  sometimes a nudge back up.
+- **Pauses** vary by about a quarter around their nominal length.
+- **The cursor** overshoots slightly on long travel and settles, hovers a
+  variable moment before a click, drifts while a reply streams instead of
+  freezing, and starts each take somewhere plausible rather than dead centre.
+- **Windows** fade in over 180ms (IDE, terminal, Notepad) instead of cutting.
+
 Two details worth knowing, because both were bugs once:
 
 - Overlays are injected as children of `<html>`, which React owns on any App
@@ -217,6 +253,43 @@ Two details worth knowing, because both were bugs once:
   stop changing, the input to be genuinely enabled, and `runtimeWarmPath` to be
   built, before any handler types anything. Without it a cold route produces a
   video of a prompt that was never really sent.
+
+---
+
+## Recording the CLI
+
+The quickstart's own first step is `npx copilotkit@latest create`, and this
+folder records it for real: the CLI driven through a PTY, then the scaffold
+installed with each of npm, pnpm, yarn and bun, then each copy's dev server
+booted and its app driven. It is local-only — sign-in needs a browser — and
+`ci-guard.ts` refuses to run it on a runner.
+
+```bash
+npm run capture -- --login        # once; opens a browser
+npm run capture -- --scaffold     # drives `copilotkit create`, writes casts/
+npm run capture -- --distribute   # copies the scaffold into the four folders
+npm run capture -- --install-npm  # and pnpm, yarn, bun
+npm run cli:videos                # films everything the reports say to film
+```
+
+### The videos
+
+| Clip | What it shows | When |
+|---|---|---|
+| `CLI-Create` | the CLI scaffolding the app | always, once |
+| `<pm>-2-Install` | that manager installing the copy | always, per manager |
+| `<pm>-3-Demo` | the app running and answering a prompt | when the install passed |
+| `<pm>-3-Finding` | the failure explained: versions, manifest, the error, a note | when it failed |
+
+Which third clip a manager gets is read from its install report in
+`casts/*.report.json`, not decided by hand. A failure nobody has analysed yet
+still gets a clip: the note is generated from the report, and the hand-written
+`INSTALL_ANALYSIS` entry in `config/cli.config.ts` is appended once there is one.
+
+The prompts the CLI is answered with are in `config/cli.config.ts` and were
+carried over from the reference run, not observed here yet — see
+`1-cli-testing/CLI-FLOW.md` for what is predicted versus verified, and
+[PORT-CLI.md](PORT-CLI.md) for how the pipeline fits together.
 
 ---
 

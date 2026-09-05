@@ -243,7 +243,7 @@ export async function runCliFlow(
     rows,
     echo: opts.echo ?? true,
     title: flow.name,
-    preamble: `${cwd}> ${commandLine}\r\n`,
+    preamble: { prompt: `${cwd}> `, command: commandLine },
   });
 
   const steps: CliStepResult[] = [];

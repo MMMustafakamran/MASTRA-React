@@ -145,6 +145,7 @@ export function generateTerminalHtml(opts: TerminalRenderOptions): string {
   #term-host { padding: 10px 12px 14px 12px; }
   .xterm .xterm-viewport { overflow: hidden !important; }
 </style>
+<style>@keyframes __arWinIn{from{opacity:0;transform:scale(.992)}to{opacity:1;transform:none}}body{animation:__arWinIn .18s ease-out both}</style>
 </head>
 <body>
   <div id="desktop">

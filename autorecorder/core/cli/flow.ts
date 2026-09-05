@@ -289,6 +289,40 @@ export interface CliVideoDefinition {
    * re-recording the voice, and vice versa.
    */
   audio?: string;
+
+  /**
+   * What the third clip of this set is when the capture behind this video
+   * FAILED: a finding, filmed from the same cast.
+   *
+   * The deliverable per package manager is three clips — the CLI, the
+   * install, and then *either* the app running *or* the reason it does not.
+   * Which of the two is not a choice anyone makes by hand; it is what the
+   * install report says. When the report says the install failed, this
+   * describes the finding clip: the files that pin installed against declared
+   * versions, and a written explanation. The explanation is optional — with
+   * none given, the note is built from the report itself (the command, the
+   * exit code, what was missing, the last lines on screen), so a failure that
+   * nobody has analysed yet still produces a clip that names the error.
+   */
+  onFailure?: {
+    id: string;
+    name: string;
+    videoName: string;
+    ideTabs?: { filePath: string; startLine: number; endLine: number }[];
+    ideDwellMs?: number;
+    /** Hand-written analysis, appended under the generated error summary. */
+    analysis?: string;
+    notepadFile?: string;
+    charDelayMs?: number;
+    audio?: string;
+  };
+
+  /**
+   * What the third clip is when the capture SUCCEEDED: a page recording of
+   * the scaffolded app, by id from `pages.config.ts`. `npm run cli:videos`
+   * records it after rendering; `npm run record -- --<id>` does it alone.
+   */
+  onSuccess?: { recordPage: string };
 }
 
 export interface CliVideoConfig extends CliVideoDefinition {
@@ -296,6 +330,8 @@ export interface CliVideoConfig extends CliVideoDefinition {
   /** Video filename stem, without extension. */
   videoFile: string;
   docUrl?: string;
+  /** Finding clip filename stem, when `onFailure` is set. */
+  failureVideoFile?: string;
 }
 
 export function defineCliVideos(defs: CliVideoDefinition[]): CliVideoConfig[] {
@@ -305,6 +341,9 @@ export function defineCliVideos(defs: CliVideoDefinition[]): CliVideoConfig[] {
       ...def,
       order,
       videoFile: `${PROJECT.videoPrefix}-${def.videoName}`,
+      failureVideoFile: def.onFailure
+        ? `${PROJECT.videoPrefix}-${def.onFailure.videoName}`
+        : undefined,
       docUrl: def.docPath
         ? `${PROJECT.docBaseUrl.replace(/\/$/, '')}/${def.docPath.replace(/^\//, '')}`
         : undefined,

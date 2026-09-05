@@ -37,8 +37,22 @@ const ANSI_PATTERN = new RegExp(
   'g',
 );
 
+/**
+ * OSC sequences on their own: `ESC ] ... BEL` or `ESC ] ... ESC \`.
+ *
+ * The combined pattern above only allows a narrow character set inside an
+ * OSC, so a window title with a space in it -- `Windows PowerShell`, which
+ * ConPTY sets on every prompt -- was left half-stripped as `;Windows
+ * PowerShell<BEL>` in the middle of matched text. Found by the unit test, not
+ * by a run: the leak happened to land between prompts often enough to miss.
+ */
+const OSC_PATTERN = new RegExp(
+  ESC + '\\][^' + BEL + ESC + ']*(?:' + BEL + '|' + ESC + '\\\\)',
+  'g',
+);
+
 export function stripAnsi(input: string): string {
-  return input.replace(ANSI_PATTERN, '');
+  return input.replace(OSC_PATTERN, '').replace(ANSI_PATTERN, '');
 }
 
 /**

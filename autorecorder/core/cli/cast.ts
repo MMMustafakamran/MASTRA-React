@@ -54,6 +54,8 @@ export class CastRecorder {
   private readonly events: CastEvent[] = [];
   private readonly startedAt: number;
   private readonly header: CastHeader;
+  /** Seconds of synthetic lead-in (the typed prompt line) before real time. */
+  private offset = 0;
 
   constructor(opts: { width: number; height: number; title?: string }) {
     this.startedAt = Date.now();
@@ -68,12 +70,37 @@ export class CastRecorder {
   }
 
   private elapsed(): number {
-    return Number(((Date.now() - this.startedAt) / 1000).toFixed(6));
+    return Number(((Date.now() - this.startedAt) / 1000 + this.offset).toFixed(6));
   }
 
   /** Terminal output, exactly as the PTY emitted it — escape sequences included. */
   output(data: string): void {
     this.events.push([this.elapsed(), 'o', data]);
+  }
+
+  /**
+   * A prompt line typed in, one character at a time, ahead of the real output.
+   *
+   * The preamble used to be one event: `C:\...> npm install` painted whole
+   * in the first frame, as if the terminal had opened with the command
+   * already in it. Nobody's does. The characters are given their own
+   * timestamps at a typing rhythm, and every real event after them is
+   * shifted by the time that took, so the replay types the command, pauses,
+   * and then the command's output starts — in that order, on the clock.
+   *
+   * @param delays per-character delays in ms, one per character of `line`
+   *   (the caller owns the rhythm so this file stays free of the human layer).
+   */
+  typedPreamble(prompt: string, command: string, delays: number[], enterPauseMs = 350): void {
+    let t = 0;
+    this.events.push([0, 'o', prompt]);
+    for (let i = 0; i < command.length; i++) {
+      t += (delays[i] ?? 60) / 1000;
+      this.events.push([Number(t.toFixed(6)), 'o', command[i]]);
+    }
+    t += enterPauseMs / 1000;
+    this.events.push([Number(t.toFixed(6)), 'o', '\r\n']);
+    this.offset = t;
   }
 
   /**

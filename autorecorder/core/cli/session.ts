@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import pty from 'node-pty';
+import { keystrokeDelay } from '../overlays/human';
 import { CastRecorder } from './cast';
 import { highlightedLabel, lastLines, tailMatches } from './screen';
 
@@ -53,13 +54,15 @@ export interface SessionOptions {
   /** Title recorded in the cast header. */
   title?: string;
   /**
-   * Prompt line written into the cast before the child starts.
+   * Prompt line written into the cast before the child starts, as
+   * `{ prompt, command }` — e.g. `C:\repo> ` and `npm install`.
    *
    * Nothing is fabricated: it is the command actually being run. It exists so a
    * replayed session opens on a terminal that looks like someone typed into it,
-   * rather than on bare program output.
+   * rather than on bare program output. The command is typed character by
+   * character in the replay; see `CastRecorder.typedPreamble`.
    */
-  preamble?: string;
+  preamble?: { prompt: string; command: string };
 }
 
 export class PtySession {
@@ -77,7 +80,14 @@ export class PtySession {
     const rows = opts.rows ?? 32;
 
     this.cast = new CastRecorder({ width: cols, height: rows, title: opts.title });
-    if (opts.preamble) this.cast.output(opts.preamble);
+    if (opts.preamble) {
+      const { prompt, command } = opts.preamble;
+      this.cast.typedPreamble(
+        prompt,
+        command,
+        [...command].map((ch) => keystrokeDelay(ch, { charDelayMs: 70 })),
+      );
+    }
 
     this.proc = pty.spawn(resolveExecutable(opts.command), opts.args ?? [], {
       name: 'xterm-256color',

@@ -6,6 +6,8 @@ import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 export const runToolRenderingAction: PageActionHandler = async (
   page: Page,
   config: PageRecordConfig,
+  _rootPath,
+  ctx,
 ) => {
   console.log(`   [Tool Rendering] Prompting for weather to trigger custom renderer...`);
   const msgCount = await sendPrompt(page, config.prompt, { timeoutMs: 12000 });

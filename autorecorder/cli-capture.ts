@@ -19,7 +19,6 @@ import { CLI_DISTRIBUTION, CLI_FLOWS } from './config/cli.config';
 import { distribute } from './core/cli/distribute';
 import { refuseInCi } from './core/cli/ci-guard';
 import { runCliFlow, type CliRunResult } from './core/cli/driver';
-import { runSelfTest } from './core/cli/selftest';
 import { hasInstalledTree, writeVersionsFile } from './core/cli/versions';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -50,18 +49,17 @@ function printList(): void {
   console.log(`
   npm run capture -- --all         every non-manual flow, in order
   npm run capture -- --login       sign in first; do this once before --scaffold
-  npm run capture -- --selftest    prove the driver works here, against a fixture
   npm run capture -- --distribute  copy the scaffold into the four package-manager
                                    directories and seed the model key into each
                                    (add --force to replace directories that exist)
   npm run capture -- --versions    regenerate VERSIONS.md from installed trees
                                    (done automatically after each install)
 
-  The three videos, in order:
-    1. CLI      --login -> --scaffold           then  npm run render -- --cli
-    2. Install  --distribute -> --install-npm   then  npm run render -- --install
-                (…--install-pnpm, --install-yarn, --install-bun)
-    3. Demo                                     then  npm run record -- --demo-app
+  Then film everything:   npm run cli:videos
+    1. one CLI video (the scaffold, shared by every package manager)
+    2. one install video per package manager, pass or fail
+    3. per package manager: the finding clip if its install failed,
+       or the live demo of the scaffolded app if it succeeded
 `);
 }
 
@@ -87,25 +85,6 @@ async function main(): Promise<void> {
   }
 
   mkdirSync(OUT_DIR, { recursive: true });
-
-  if (args.includes('--selftest')) {
-    const outcome = await runSelfTest(ROOT, OUT_DIR);
-    if (outcome.ok) {
-      console.log(`\n✅ CLI driver self-test passed.`);
-      console.log(`   Prompt waiting, text entry, select-by-label and single-keypress`);
-      console.log(`   answers all behave, and a long-running dev server is detected`);
-      console.log(`   ready and stopped cleanly. The PTY works on this machine.\n`);
-      finish(0);
-    }
-    console.error(`\n❌ CLI driver self-test failed: ${outcome.reason}`);
-    console.error(`   This is the recorder, not the CLI under test. Nothing else here`);
-    console.error(`   will work until it passes.`);
-    if (outcome.result.tail) {
-      console.error(`   Last screen:\n${outcome.result.tail}`);
-    }
-    console.error('');
-    finish(1);
-  }
 
   // Regenerating versions on their own, for a tree installed outside this
   // pipeline — or when an install succeeded and the demo is being re-recorded

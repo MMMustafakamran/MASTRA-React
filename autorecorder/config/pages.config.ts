@@ -130,7 +130,7 @@ const DEMO_PAGES: PageDefinition[] = [
     // (`src/mastra/tools/index.ts`, a real open-meteo lookup) on a gpt-4o
     // agent, and `src/components/weather.tsx` renders the result — so the
     // answer is a rendered card, not just streamed text.
-    prompt: 'Get the weather in San Francisco.',
+    prompt: 'The install just finished. What is the weather like in San Francisco?',
     waitAfterPromptMs: 5000,
 
     devServer: {
@@ -193,7 +193,7 @@ export const PAGES = definePages([
       { filePath: "frontend/src/app/api/copilotkit/[[...slug]]/route.ts", startLine: 1, endLine: 35 },
       { filePath: "frontend/src/mastra/index.ts", startLine: 1, endLine: 35 },
     ],
-    prompt: "Can you tell me a joke?",
+    prompt: "Hey, are you connected? Tell me a quick fun fact about kites.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -205,7 +205,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/prebuilt-components/demo-chat/page.tsx",
     startLine: 34,
     endLine: 68,
-    prompt: "Can you tell me a joke?",
+    prompt: "In two sentences, what does CopilotKit do?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -217,7 +217,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/prebuilt-components/copilot-threads-drawer/demo-chat/page.tsx",
     startLine: 7,
     endLine: 26,
-    prompt: "Can you tell me a joke?",
+    prompt: "Tell me a short joke about programmers.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -229,7 +229,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/threads/demo-chat/page.tsx",
     startLine: 7,
     endLine: 26,
-    prompt: "Can you tell me a joke?",
+    prompt: "Give me a one-line joke, then I will start a new thread.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -241,7 +241,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/headless-threads/demo-chat/page.tsx",
     startLine: 7,
     endLine: 26,
-    prompt: "Can you tell me a joke?",
+    prompt: "Summarize what an AG-UI agent is, in one line.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -253,7 +253,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/custom-look-and-feel/slots/demo-chat/page.tsx",
     startLine: 42,
     endLine: 76,
-    prompt: "Can you tell me a joke?",
+    prompt: "Testing the customized slots. Say hi back.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -265,7 +265,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/custom-look-and-feel/headless-ui/demo-chat/page.tsx",
     startLine: 10,
     endLine: 14,
-    prompt: "Can you tell me a joke?",
+    prompt: "Suggest one good name for a headless chat UI.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -277,7 +277,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/programmatic-control/demo-chat/page.tsx",
     startLine: 28,
     endLine: 80,
-    prompt: "Can you tell me a joke?",
+    prompt: "Is it raining in Tokyo right now?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -289,7 +289,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/inspector/demo-chat/page.tsx",
     startLine: 15,
     endLine: 31,
-    prompt: "Can you tell me a joke?",
+    prompt: "Quick check: what is 17 times 23?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -301,7 +301,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/generative-ui/your-components/display-only/demo-chat/page.tsx",
     startLine: 44,
     endLine: 52,
-    prompt: "Show the weather card for London: 64 degrees, cloudy.",
+    prompt: "Show me a weather card for London. It is 64 degrees and cloudy today.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -313,7 +313,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/generative-ui/your-components/interactive/demo-chat/page.tsx",
     startLine: 23,
     endLine: 58,
-    prompt: "Run the command rm -rf /tmp/cache",
+    prompt: "Clear the temp cache for me by running rm -rf /tmp/cache",
     waitAfterPromptMs: 4000,
   },
   {
@@ -325,7 +325,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/generative-ui/tool-rendering/demo-chat/page.tsx",
     startLine: 21,
     endLine: 54,
-    prompt: "What's the weather in Tokyo?",
+    prompt: "Check the weather in Tokyo for me.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -337,7 +337,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/generative-ui/state-rendering/demo-chat/page.tsx",
     startLine: 23,
     endLine: 27,
-    prompt: "Switch to Spanish",
+    prompt: "Please switch the language to Spanish.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -349,7 +349,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/frontend-tools/demo-chat/page.tsx",
     startLine: 17,
     endLine: 27,
-    prompt: "Say hello to the user.",
+    prompt: "Can you say hello to me?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -361,7 +361,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/human-in-the-loop/tool-based/demo-chat/page.tsx",
     startLine: 20,
     endLine: 49,
-    prompt: "Run the command rm -rf /tmp/cache",
+    prompt: "Clear the temp cache for me by running rm -rf /tmp/cache",
     waitAfterPromptMs: 4000,
   },
   {
@@ -375,7 +375,7 @@ export const PAGES = definePages([
     startLine: 102,
     endLine: 148,
     prompt:
-      "Send an invoice reminder to acme@example.com. Ask me to approve it first.",
+      "Please send an invoice reminder to acme@example.com, but check with me before it goes out.",
     waitAfterPromptMs: 6000,
   },
   {
@@ -400,7 +400,7 @@ export const PAGES = definePages([
     // Must actually dispatch the background tool. The old "tell me a joke"
     // never queued anything, so the activity card never rendered and the video
     // showed a plain chat reply on a page about background work.
-    prompt: "Research the history of the Dutch East India Company",
+    prompt: "Research the history of the Dutch East India Company for me, and let me know when you are done.",
     // Longer than the usual 4s: the handler holds on the card after returning
     // from the Inspector, and that shot is the finding.
     waitAfterPromptMs: 6000,
@@ -414,7 +414,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/shared-state/in-app-agent-read/demo-chat/page.tsx",
     startLine: 47,
     endLine: 57,
-    prompt: "Switch to Spanish",
+    prompt: "Please switch the language to Spanish.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -426,7 +426,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/shared-state/in-app-agent-write/demo-chat/page.tsx",
     startLine: 20,
     endLine: 24,
-    prompt: "Switch to Spanish",
+    prompt: "Please switch the language to Spanish.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -438,7 +438,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/shared-state/predictive-state-updates/demo-chat/page.tsx",
     startLine: 20,
     endLine: 24,
-    prompt: "Switch to Spanish",
+    prompt: "Please switch the language to Spanish.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -450,7 +450,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/agent-app-context/demo-chat/page.tsx",
     startLine: 24,
     endLine: 28,
-    prompt: "Can you tell me a joke?",
+    prompt: "What do you know about me from the app context?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -462,7 +462,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/copilot-runtime/demo-chat/page.tsx",
     startLine: 29,
     endLine: 63,
-    prompt: "Can you tell me a joke?",
+    prompt: "What is the weather in Berlin today?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -474,7 +474,7 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/ag-ui/demo-chat/page.tsx",
     startLine: 37,
     endLine: 41,
-    prompt: "Can you tell me a joke?",
+    prompt: "Any rain expected in Tokyo this week?",
     waitAfterPromptMs: 4000,
   },
 
