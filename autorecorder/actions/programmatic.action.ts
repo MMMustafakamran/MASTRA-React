@@ -27,6 +27,11 @@ export const runProgrammaticAction: PageActionHandler = async (
     submitSelector: 'button:has-text("Run agent")',
     clearFirst: true,
     timeoutMs: 12000,
+    // run() never clears the draft box -- it is a controlled input the page
+    // keeps so you can fire the same message again. The composer-emptied
+    // check would therefore never pass, and the retries would re-run the
+    // agent. The transcript wait below is the real proof the run happened.
+    expectInputToEmpty: false,
   });
 
   console.log(`   Waiting for the run to stream into the transcript...`);
