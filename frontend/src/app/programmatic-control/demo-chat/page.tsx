@@ -1,7 +1,7 @@
 "use client";
 
 import { useAgent, useCopilotKit } from "@copilotkit/react-core/v2";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { DemoFrame } from "@/components/demo-frame";
 
@@ -80,6 +80,13 @@ export default function Page() {
   const { copilotkit } = useCopilotKit();
   const [draft, setDraft] = useState("What's the weather in Tokyo?");
 
+  // The thread id is a UUID minted when the agent is constructed, so the server
+  // pass and the browser pass produce different ones and hydration fails on the
+  // text. Hold it back until after mount — this panel is harness diagnostics,
+  // not part of the doc's snippet.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+
   const run = async () => {
     agent.addMessage({
       id: crypto.randomUUID(),
@@ -106,7 +113,7 @@ export default function Page() {
             </dd>
             <dt className="text-slate-500">Thread ID</dt>
             <dd className="break-all">
-              <code>{agent.threadId ?? "—"}</code>
+              <code>{hydrated ? (agent.threadId ?? "—") : "—"}</code>
             </dd>
             <dt className="text-slate-500">Status</dt>
             <dd>
