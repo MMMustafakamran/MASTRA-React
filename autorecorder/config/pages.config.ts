@@ -133,16 +133,60 @@ const DEMO_PAGES: PageDefinition[] = [
     prompt: 'The install just finished. What is the weather like in San Francisco?',
     waitAfterPromptMs: 5000,
 
+    // `demoNavMs` only, and measured rather than guessed.
+    //
+    // Next reports `✓ Ready in 2s` and means it — but Turbopack compiles routes
+    // on demand, so the first request to `/` is what actually builds the app. On
+    // the pnpm copy that took **184.6s** (recorder's own readiness step,
+    // 2026-09-08), while the default `demoNavMs` aborts `page.goto` at 45s. The
+    // navigation was being killed a full two minutes before the page could
+    // exist. pnpm's symlinked `node_modules` resolves far slower here than npm's
+    // flat tree, which is why npm cleared 45s and pnpm never could.
+    //
+    // 240s matches `readyTimeoutMs` below: the same budget for "this app is
+    // still compiling" in both places.
+    //
+    // `replyStartMs` is deliberately NOT raised. 90s was tried on 2026-09-07 and
+    // changed nothing — this starter's agent does not answer slowly, it fails
+    // outright (see the Demo section of ../../1-cli-testing/CLI-FLOW.md), and a
+    // generous ceiling would only lengthen each failing run.
+    timeouts: { demoNavMs: 240_000 },
+
     devServer: {
       cwd: app,
       command,
+      // `dev:ui`, not `dev` — observed 2026-09-07, and the reason every demo
+      // here failed with "Agent never produced a response".
+      //
+      // `dev` is `dev:infra && concurrently "npm run dev:ui" "npm run dev:agent"`,
+      // and `dev:agent` is `mastra dev`. The Mastra CLI reads its port from
+      // `process.env.PORT` and nothing else (9 references in node_modules/mastra,
+      // no MASTRA_PORT) — the same variable set below to move Next off 3000. So
+      // both servers try to bind this port, `mastra dev` loses with EADDRINUSE,
+      // and `concurrently --kill-others` takes the UI down with it, mid-demo.
+      //
+      // Nobody hits this running the starter normally: with PORT unset Next
+      // takes 3000 and Mastra takes its own default. It is relocating the port
+      // that collides them, which is this harness's doing, not the starter's.
+      //
+      // Dropping `dev:agent` costs the demo nothing. The chat agent runs
+      // **in-process** inside the Next route — `src/app/api/copilotkit/[[...slug]]/route.ts`
+      // builds it from `createLocalAgents()` in `src/agent.ts`, which imports
+      // `src/mastra` directly. `mastra dev` only serves the separate Mastra
+      // playground, which this demo never opens.
+      // `dev`, as the quickstart documents it. NOT `dev:ui`.
+      //
+      // This ran `dev:ui` for one day (2026-09-07) to dodge the `mastra dev`
+      // port collision described above, and that was a mistake worth naming:
+      // dropping `dev:agent` also dropped the only process that fails. The
+      // agent crashes on startup under pnpm and yarn — see the finding in
+      // cli.config.ts — and running just the UI hid it behind a green-looking
+      // recorder while the real command died in seconds for anyone who typed it.
+      //
+      // Never quiet the process under test to make the harness proceed. If the
+      // port collision bites again, relocate the port; do not remove the agent.
       args,
       env: { PORT: String(port), BROWSER: 'none' },
-      // This starter's `dev` is not a bare `next dev`. It is
-      //   dev:infra && concurrently "npm run dev:ui" "npm run dev:agent"
-      // with `dev:ui` = `next dev --turbopack` and `dev:agent` = `mastra dev`,
-      // so two servers boot into one stream and concurrently tags every line
-      // with `[ui]` or `[agent]`.
       //
       // The pattern is left UNANCHORED on purpose — that is what tolerates the
       // prefix. `[ui]  ✓ Ready in 766ms` contains `Ready in`, so it matches
@@ -162,6 +206,7 @@ const DEMO_PAGES: PageDefinition[] = [
       readyTimeoutMs: 240_000,
       originUrl: `http://localhost:${port}`,
       demoPath: '/',
+      // Says what actually runs — and now that is the documented command.
       title: `${command} run dev`,
     },
   };

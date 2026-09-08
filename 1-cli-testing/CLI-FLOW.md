@@ -8,22 +8,34 @@ The CLI is entirely keyboard-driven — no mouse anywhere in the flow.
 
 ---
 
-## ⚠ Status of this document: PREDICTED, NOT OBSERVED
+## Status of this document: OBSERVED — 2026-09-07
 
-**The CLI has not been run in this repo. Nothing below was watched happening.**
+The CLI has been run in this repo and recorded. Screen text below is read off
+that recording.
 
-Every prompt here is a *prediction*, derived from two things:
+**Evidence:** [`autorecorder/casts/MASTRA-react-cli-02-Scaffold.cast`](../autorecorder/casts/MASTRA-react-cli-02-Scaffold.cast)
+— a driven run of `npx copilotkit@latest create --project 2`, 142s, all eight
+steps answered, `🪁🤝🌑 App "app" created successfully!`.
 
-1. the reference repo's real, frame-by-frame run
-   (`MsPy-react/1-cli-testing/CLI-FLOW.md`, CLI **4.9.24**, Microsoft Agent
-   Framework (Python)), and
-2. what `npx copilotkit@latest framework list` reports for the `mastra` row,
-   run in this repo on **2026-09-04** against CLI **4.9.37**.
+The open question this file carried — *does a TypeScript/Node starter take the
+same path as a Python one?* — is answered: **yes, prompt for prompt.** The Agno
+(Python) run of the same day hit the same screens in the same order; the only
+difference is the emoji in the success banner and that Mastra's starter has no
+`agent/` directory.
 
-The `create` command is the same entrypoint for every framework, so the *shape*
-of the flow is expected to carry over. What is genuinely unknown is whether a
-TypeScript/Node starter takes exactly the same path as a Python one, and whether
-4.9.37 changed any wording since 4.9.24.
+### What the real run corrected
+
+Two predictions were wrong, and both had been encoded into
+[cli.config.ts](../autorecorder/config/cli.config.ts):
+
+1. **Steps 9 and 10 were in the wrong order.** The key prompt comes *first*, then
+   the install question. Caught on the Agno run, where a driver waiting for the
+   install prompt hung behind an unanswered key prompt and failed the flow after
+   300s. Mastra's own run was driven with the corrected order and passed first
+   time.
+2. **The key prompt does not contain the string "API key".** It reads
+   `Set OPENAI_API_KEY now, or press Enter to skip and add it later.` — the old
+   `/API key/i` pattern could never have matched it.
 
 Per-step status markers used below:
 
@@ -67,16 +79,20 @@ The whole run, in order. Details per step below. **All 🔵 unless marked.**
 
 | # | Prompt | Keys | Status |
 |---|---|---|---|
-| 1 | *(shell)* | `npx copilotkit@latest create --project 2` | 🔵 |
+| 1 | *(shell)* | `npx copilotkit@latest create --project 2` | 🟢 |
 | 2 | `Ok to proceed? (y)` | `y` `Enter` — only if not npx-cached | 🔵 |
-| 3 | banner | — | 🔵 |
-| 4 | `App name` | `app` `Enter` | 🔵 |
-| 5 | `Select agent framework` | **name the row** → `🌑 Mastra` `Enter` | 🟢 row exists |
-| 6 | sign-in | wait for auth to finish | 🔵 |
-| 7 | `Select a project` | normally skipped by `--project 2` | 🔵 |
-| 8 | `Connect this project to a chat platform?` | → `Not now` `Enter` | 🔵 prompt expected 🟢 |
-| 9 | `Want me to install the dependencies…? [Y/n]` | `n` — **no Enter** | 🔵 |
-| 10 | OpenAI API key | `Enter` — leave empty, CLI exits | 🟡 |
+| 3 | banner | — | 🟢 |
+| 4 | `App name` | `app` `Enter` | 🟢 |
+| 5 | `Select agent framework` | **name the row** → `🌑 Mastra` `Enter` | 🟢 |
+| 6 | `A free CopilotKit account is required to link this app.` | nothing — the saved session carried it | 🟢 |
+| 7 | `Select a project` | never shown — `--project 2` was passed | 🟢 |
+| 8 | `Connect this project to a chat platform?` | → `3. Not now` `Enter` | 🟢 |
+| 9 | `Set OPENAI_API_KEY now, or press Enter to skip and add it later.` | `Enter` — leave empty | 🟢 |
+| 10 | `Want me to install the dependencies for you now? (npm install) [Y/n]` | `n` — **no Enter** | 🟢 |
+| 11 | `🪁🤝🌑 App "app" created successfully!` | — the CLI holds the terminal open | 🟢 |
+
+**9 before 10**, and the CLI does not exit after the last answer — the flow ends
+on `doneWhen: /created successfully/i`.
 
 The model key is **not** supplied through the CLI. It is seeded into the copies
 afterwards by `CLI_DISTRIBUTION` in `autorecorder/config/cli.config.ts`, from the
@@ -191,27 +207,47 @@ template is cloned between the account link and this prompt, and a 45s window
 expired mid-clone — so the prompt arrived after the step had already given up,
 then sat unanswered while the next step waited for something behind it.
 
-### 9 · Install dependencies 🔵
+### 9 · OpenAI API key 🟢
 
 ```
-Want me to install the dependencies for you? [Y/n]
+Set OPENAI_API_KEY now, or press Enter to skip and add it later.
+Required by the agent runtime.
+Create a key:  https://platform.openai.com/api-keys
+>
+```
+
+Answered with `Enter` — left empty, so no secret is ever on camera. The key is
+seeded into the four copies afterwards by `npm run capture -- --distribute`.
+
+This was the weakest step in the file and it was wrong twice over: it comes
+*before* the install question, and its text has no spaced "API key" in it. Match
+`/_API_KEY now|press Enter to skip/i`.
+
+### 10 · Install dependencies 🟢
+
+```
+Want me to install the dependencies for you now? (npm install) [Y/n]
 ```
 
 Answered `n`, as a **single keypress with no Enter** — this prompt acts on the
-character. Sending an Enter would leak into the key prompt below and answer it
-before it had painted.
+character.
 
 Declined because the whole point of this harness is to install four times, once
 per package manager, from one identical scaffold.
 
-### 10 · OpenAI API key 🟡
+Match the question form, not `/install the dependencies/i`: the success banner
+that follows prints `Install the dependencies:  npm install` in its next-steps
+list, and a loose pattern matches that instead.
 
-Wording unconfirmed anywhere — this is the weakest step in the file. Mastra reads
-`OPENAI_API_KEY` 🟢, so a key prompt is expected, but its exact text is a guess and
-`cli.config.ts` matches it loosely (`/API key/i`) and marks it `optional`.
+### 11 · Success banner 🟢
 
-Answered with `Enter` — left empty, so the CLI exits and no secret is ever on
-camera.
+```
+🪁🤝🌑 App "app" created successfully!
+```
+
+No input, and **no exit** — the CLI holds the terminal. It also writes
+`.copilotkit/project.json` at the repository root, not in the app folder, binding
+every directory in Mastra-react to project `2`.
 
 ---
 
@@ -248,16 +284,104 @@ they are what confirms the no-`agent/` finding above.
 
 ---
 
+## `npm run dev` dies on a logger export — yarn and pnpm 🟢
+
+**The documented command does not start this starter under yarn or pnpm.** On
+film in `videos/cli/MASTRA-react-yarn-3-Demo.webm` (2026-09-08), during the
+terminal replay:
+
+```
+[agent] import { LogLevel, MastraLogger, buildLogRecordData, exportTrackedException } from "@mastra/core/logger";
+[agent] SyntaxError: The requested module '@mastra/core/logger' does not provide an export named 'buildLogRecordData'
+[agent] npm run dev:agent exited with code 1
+[ui]    npm run dev:ui exited with code 1
+```
+
+`dev` is `dev:infra && concurrently "npm run dev:ui" "npm run dev:agent"`, and
+`dev:agent` is `mastra dev`. When it dies, `--kill-others` takes the UI with it,
+so the browser then gets `ERR_CONNECTION_REFUSED` — the app is simply not there.
+
+**Cause: a version mismatch, not a package manager bug.** `@mastra/loggers@1.3.1`
+imports `buildLogRecordData` from `@mastra/core/logger`, and `@mastra/core@1.41.0`
+does not export it — `node_modules/@mastra/core/dist/logger/index.js` contains
+zero occurrences of the name. Which managers break is decided by which logger
+version they resolve:
+
+| Manager | `@mastra/loggers` | `@mastra/core` | `mastra dev` |
+|---|---|---|---|
+| yarn | **1.3.1** | 1.41.0 | dies at startup |
+| pnpm | **1.3.1** | 1.41.0 | dies at startup |
+| bun | 1.1.2 | 1.41.0 | starts |
+| npm | not hoisted to the top level | 1.41.0 | starts |
+
+**Do not record `dev:ui` to get around this.** It was tried for one day
+(2026-09-07) and it is the wrong call: it hides a starter that does not run
+behind a green recorder, while anyone typing the documented command gets a dead
+app in seconds. The clip is supposed to show that.
+
+---
+
+## Demo: the scaffolded app cannot answer 🟢
+
+**Blocks every demo clip in this repo, and it is not the recorder's fault.**
+Observed 2026-09-07 on the npm copy, reproduced outside the recorder entirely —
+headless Playwright, clean browser context, no overlays:
+
+```
+POST /api/copilotkit/agent/default/run   ->  200
+     data: {"type":"RUN_STARTED","threadId":"899cebb0-...","runId":"5540879c-..."}
+     then: Thread 899cebb0-... not found      (runtimeErrorCode: INCOMPLETE_STREAM)
+```
+
+The run starts, the stream breaks, and the UI prints `Thread <id> not found`. No
+assistant message ever gets content, so `demo-npm` and `demo-bun` fail on
+`replyStartMs` — correctly.
+
+Ruled out, each by a separate run:
+
+| Suspect | Verdict |
+|---|---|
+| Recorder overlays / driving | Reproduces in a bare Playwright script |
+| Missing `OPENAI_API_KEY` | Present in the copy's `.env`; a wrong key gives a different error |
+| Hosted Intelligence | With `CPK_INTELLIGENCE_API_KEY` set the failure only *changes*, to `502 Failed to start runner: Timed out joining channel` |
+| Local runner | With the key removed (`InMemoryAgentRunner`), back to `Thread not found` |
+| Missing `mastra dev` | Ran `next dev --port 3141` and `mastra dev` side by side, as `npm run dev` does when 3000 is free — identical failure |
+| A slow first response | `replyStartMs` raised to 90s; no answer ever arrives, so it was reverted |
+| `localhost:3000` CORS in the console | A red herring. A clean context makes every CopilotKit request to its own origin; this line comes from the doc tab the recorder warms first |
+
+**Both runner paths are broken**, which is what makes this a starter bug rather
+than a configuration mistake: hosted Intelligence times out joining its channel,
+and the local in-memory runner loses the thread the client just opened.
+
+### `npm run dev` cannot be used to record
+
+`dev` is `dev:infra && concurrently "npm run dev:ui" "npm run dev:agent"`, and
+`dev:agent` is `mastra dev`. The Mastra CLI takes its port from
+**`process.env.PORT` and nothing else** — the same variable the recorder sets to
+move Next off 3000. Both bind it, `mastra dev` loses with `EADDRINUSE`, and
+`concurrently --kill-others` takes the UI down mid-demo.
+
+Nobody meets this running the starter normally: with `PORT` unset Next takes 3000
+and Mastra its own default. `pages.config.ts` therefore records `dev:ui`, whose
+Next route hosts the agent in-process anyway (`createLocalAgents()` in
+`src/agent.ts`); `mastra dev` only serves the playground, which no clip opens.
+
+---
+
 ## Open questions
 
-Each of these should be resolved by watching the first real run:
+Answered by the 2026-09-07 run — kept with their answers rather than deleted, so
+the next reader sees what was uncertain and what settled it:
 
-1. Does the Mastra path ask **exactly** these prompts, in this order? Only the
-   Python flow has ever been watched.
-2. What is the real wording of the API-key prompt (step 10)?
-3. Did anything change between CLI 4.9.24 (observed in the reference) and 4.9.37
-   (what runs here)?
-4. Does the chat-platform prompt offer the same `Not now` option label for a
-   TypeScript starter?
-5. Does `--project 2` actually suppress the project picker, or does a numeric
-   slug behave differently from a named one like `myapp`?
+1. ~~Does the Mastra path ask exactly these prompts, in this order?~~ Yes, and it
+   is the same order the Agno (Python) run produced. Steps 9 and 10 were
+   predicted the wrong way round.
+2. ~~What is the real wording of the API-key prompt?~~
+   `Set OPENAI_API_KEY now, or press Enter to skip and add it later.`
+3. Did anything change between CLI 4.9.24 and what runs now? **Still open** — the
+   version was not printed in the cast. The install prompt sits *after* the key
+   prompt here, where 4.9.24's notes put it before, so something did move.
+4. ~~Does the chat-platform prompt offer `Not now`?~~ Yes: `1. Slack`,
+   `2. Microsoft Teams`, `3. Not now`.
+5. ~~Does `--project 2` suppress the project picker?~~ Yes. The picker never
+   appeared; the CLI printed `Selecting your Intelligence project…` and moved on.

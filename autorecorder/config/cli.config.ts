@@ -246,24 +246,43 @@ export const CLI_FLOWS = defineCliFlows([
         settleMs: 600,
       },
       {
-        // Single keypress: this prompt acts on the character, with no Enter.
-        // Sending one would leak a stray Enter into the key prompt below and
-        // answer it before it had painted.
-        label: 'Decline dependency install',
-        waitFor: /install the dependencies/i,
-        timeoutMs: 5 * 60_000,
-        type: 'n',
-      },
-      {
         // Mastra reads OPENAI_API_KEY. The key is placed into the project
         // afterwards, deliberately, so it never appears in a recording — Enter
-        // leaves it empty and the CLI exits. Optional because the exact wording
-        // is unconfirmed for this starter.
+        // leaves it empty and the CLI exits.
+        //
+        // This comes *before* the install question, not after: the Agno run of
+        // 2026-09-07 (same CLI, same day) went straight from the chat-platform
+        // prompt to this one. The pattern matches the literal screen there —
+        // `Set OPENAI_API_KEY now, or press Enter to skip and add it later.`
+        // An earlier `/API key/i` could not match it: the variable is
+        // underscored, and the only spaced "a key" on screen is the
+        // platform.openai.com/api-keys URL.
         label: 'Skip model API key',
-        waitFor: /API key/i,
-        optional: true,
-        timeoutMs: 60_000,
+        waitFor: /_API_KEY now|press Enter to skip/i,
+        timeoutMs: 5 * 60_000,
         keys: ['Enter'],
+      },
+      {
+        // Single keypress: this prompt acts on the character, with no Enter.
+        //
+        // Optional, and after the key step. In the Agno run of 2026-09-07 this
+        // prompt never appeared at all — the CLI asked for the key instead, and
+        // a required step here spent its full window waiting for a screen that
+        // was never coming while the key prompt sat unanswered behind it.
+        // Kept so a CLI version that does ask still gets a driven answer.
+        //
+        // The pattern must not match the success banner, whose next-steps list
+        // prints `Install the dependencies:  npm install`. A bare
+        // /install the dependencies/i matched *that* in the Agno run, reported
+        // ok, and typed a stray `n` at a CLI that had already finished.
+        label: 'Decline dependency install',
+        waitFor: /Want me to install the dependencies|install the dependencies\?/i,
+        optional: true,
+        // Short: this runs after the success banner, so its wait is dead air in
+        // the video. Long enough to catch a prompt that paints right after the
+        // previous answer, short enough not to pad the recording.
+        timeoutMs: 10_000,
+        type: 'n',
       },
     ],
     // The CLI prints its success banner and then holds the terminal open rather
@@ -345,6 +364,56 @@ export const CLI_FLOWS = defineCliFlows([
     expectFiles: [`${SCAFFOLD_DIR}/pnpm/${APP_NAME}/pnpm-workspace.yaml`],
     render: { maxGapSec: 0.4, speed: 2, title: 'pnpm approve-builds' },
   },
+
+  {
+    // The second half of pnpm's story, and the half that was missed.
+    //
+    // Approving the builds gets `pnpm install` to exit 0, which looks like the
+    // problem is solved. It is not: `pnpm run dev` then dies immediately, and a
+    // clip that stops at a green install tells the reader the opposite of the
+    // truth. This flow exists so the crash is on film rather than described.
+    //
+    // Runs the documented command, both halves of it. `dev` is
+    // `dev:infra && concurrently "npm run dev:ui" "npm run dev:agent"`, and it
+    // is `dev:agent` (`mastra dev`) that throws. `--kill-others` then takes the
+    // UI down too, so the whole command exits 1 — which is exactly what a reader
+    // following the quickstart sees.
+    id: 'dev-pnpm',
+    name: 'pnpm — the scaffolded app fails to start',
+    castName: 'Dev-pnpm',
+    cwd: `${SCAFFOLD_DIR}/pnpm/${APP_NAME}`,
+    command: 'pnpm',
+    args: ['run', 'dev'],
+    // The crash lands in seconds; this only has to outlast Next's boot banner.
+    timeoutMs: 3 * 60_000,
+    // Stop on the SyntaxError rather than waiting out the timeout: the failure
+    // has already happened and everything after it is concurrently's teardown.
+    doneWhen: /does not provide an export named 'buildLogRecordData'|dev:agent exited with code 1/,
+    // The run is *expected* to fail, so no exit-code assertion and no files to
+    // check. The cast is the artifact.
+    expectFiles: [],
+    render: { maxGapSec: 0.6, speed: 1.5, title: 'pnpm run dev' },
+  },
+
+  // Same crash, different manager. yarn's install exits 0, so without this
+  // flow yarn would take the onSuccess branch and be filmed as a working demo
+  // — a green clip for a copy that cannot start. The install passing is not
+  // evidence the app runs, and this is the flow that says so.
+  //
+  // Appended last for the same reason approve-pnpm is: casts are numbered by
+  // position, so inserting this anywhere earlier renames every cast after it.
+  {
+    id: 'dev-yarn',
+    name: 'yarn — the scaffolded app fails to start',
+    castName: 'Dev-yarn',
+    cwd: `${SCAFFOLD_DIR}/yarn/${APP_NAME}`,
+    command: 'yarn',
+    args: ['run', 'dev'],
+    timeoutMs: 3 * 60_000,
+    doneWhen: /does not provide an export named 'buildLogRecordData'|dev:agent exited with code 1/,
+    expectFiles: [],
+    render: { maxGapSec: 0.6, speed: 1.5, title: 'yarn run dev' },
+  },
 ]);
 
 /**
@@ -398,7 +467,130 @@ export const CLI_FLOWS = defineCliFlows([
  * starter's `install:agent` script; whether this starter has anything like
  * it is exactly what the first run will say.
  */
-const INSTALL_ANALYSIS: Partial<Record<string, string>> = {};
+const INSTALL_ANALYSIS: Partial<Record<string, string>> = {
+  pnpm: [
+    'pnpm fails twice. the second one is the one that matters.',
+    '',
+    '1. install exits 1 - ignored build scripts',
+    '',
+    '  [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @scarf/scarf@1.4.0,',
+    '  esbuild@0.28.2, sharp@0.34.5',
+    '',
+    'pnpm 10 will not run a dependency build script unless it has been',
+    'approved, and it exits 1 rather than warning. sharp and esbuild are the',
+    'ones that matter - both unpack a platform binary in that script, so the',
+    'package lands on disk with no binary behind it.',
+    '',
+    'the list varies by scaffold version: this run (2026-09-08) named three,',
+    'an operator on scaffold 1.70.1 saw two - @scarf/scarf and sharp, no',
+    'esbuild. the failure is the same either way.',
+    '',
+    'approve them with pnpm approve-builds, and install exits 0. the quickstart',
+    'never mentions this step.',
+    '',
+    '2. then pnpm run dev dies on startup',
+    '',
+    '  import { LogLevel, MastraLogger, buildLogRecordData, ... }',
+    '    from "@mastra/core/logger";',
+    '                ^^^^^^^^^^^^^^^^^^',
+    '  SyntaxError: The requested module\'s @mastra/core/logger does not',
+    '  provide an export named \'buildLogRecordData\'',
+    '',
+    'the starter pins @mastra/core exactly at 1.41.0. the mastra cli it also',
+    'depends on drags in @mastra/loggers 1.3.1, which imports a symbol that',
+    'version of core does not export - grep dist/logger/index.js for',
+    'buildLogRecordData and there are zero hits. a broken pair, shipped',
+    'together by the scaffold.',
+    '',
+    'dev:agent is what throws, and concurrently --kill-others takes the ui',
+    'down with it, so pnpm run dev exits 1 with nothing serving. the app is',
+    'installed and cannot start.',
+    '',
+    'yarn fails identically. npm and bun resolve a working pair, so this is a',
+    'resolution difference, not a mastra bug in the ordinary sense.',
+  ].join('\n'),
+
+  yarn: [
+    'yarn install exits 0. the app still cannot start.',
+    '',
+    '  yarn run dev',
+    '  [agent] import { LogLevel, MastraLogger, buildLogRecordData, ... }',
+    '  [agent]   from "@mastra/core/logger";',
+    '  [agent] SyntaxError: The requested module \'@mastra/core/logger\' does',
+    '  [agent]   not provide an export named \'buildLogRecordData\'',
+    '  [agent] npm run dev:agent exited with code 1',
+    '  [ui]    npm run dev:ui exited with code 1',
+    '',
+    'same defect pnpm hits, reached by a shorter route - there is no',
+    'approve-builds step in the way, so yarn goes straight from a clean',
+    'install to a dead app.',
+    '',
+    'what resolved, checked on disk in all four copies:',
+    '',
+    '  npm    @mastra/loggers 1.1.2   nested under mastra/    runs',
+    '  bun    @mastra/loggers 1.1.2   hoisted                 runs',
+    '  yarn   @mastra/loggers 1.3.1   hoisted                 crashes',
+    '  pnpm   @mastra/loggers 1.3.1   .pnpm store             crashes',
+    '',
+    '@mastra/core is 1.41.0 in all four. grep its dist/logger/index.js for',
+    'buildLogRecordData and there are zero hits. loggers 1.3.1 imports it;',
+    'loggers 1.1.2 does not mention it.',
+    '',
+    'the app never imports @mastra/loggers itself. it arrives through the',
+    'mastra cli - the thing dev:agent runs - which declares it as',
+    '"^1.0.1-alpha.0" while the starter pins "@mastra/core": "1.41.0" exactly.',
+    'an open caret against a hard pin. yarn and pnpm take the caret to',
+    'current-latest 1.3.1; npm and bun happen to sit on 1.1.2.',
+    '',
+    'so npm and bun are not passing by design, they are passing by resolution',
+    'date. a fresh npm install can start failing without anything in the',
+    'starter changing.',
+    '',
+    'do not record dev:ui alone to get a green clip. the ui builds fine on its',
+    'own and the recording would show a working app that nobody typing the',
+    'documented command can reach.',
+  ].join('\n'),
+};
+
+/**
+ * Managers whose install succeeds but whose app cannot start, and so are filmed
+ * as findings rather than demos.
+ *
+ * yarn and pnpm both resolve `@mastra/loggers` 1.3.1 against the exactly-pinned
+ * `@mastra/core` 1.41.0, which does not export the symbol 1.3.1 imports. npm
+ * and bun resolve 1.1.2 and run, so this is a resolution difference and the
+ * two passing managers are passing by luck of resolution date. Re-check this
+ * set after any scaffold bump rather than trusting it — if npm starts
+ * resolving 1.3.1 it belongs here too.
+ *
+ * A manager listed here needs a matching `dev-<id>` flow in CLI_FLOWS.
+ */
+const BROKEN_DEV = new Set(['pnpm', 'yarn']);
+
+/**
+ * Flow ids whose failure the video goes on to fix, and so must not decide the
+ * third clip.
+ *
+ * Empty here: Mastra's pnpm install failure is not remediated. Approving the build scripts gets the install to exit 0, but the app still will not start, so the finding stands.
+ *
+ * Read by cli-render.ts. A flow listed here is still filmed — the failure is
+ * part of the story — it just does not file a finding on its own.
+ */
+export const REMEDIATED_FLOWS = new Set<string>([]);
+
+/**
+ * Flow ids that prove the installed app does not work, whatever the capture
+ * report says about them.
+ *
+ * A `dev-<pm>` flow is *expected* to crash, so the harness grades it a pass for
+ * crashing on cue. That grade is about the capture, not the software. Listing
+ * it here is what routes its manager to a finding instead of a demo — without
+ * it, an install that exits 0 gets filmed as a working app that in fact cannot
+ * start.
+ *
+ * Read by cli-render.ts. Every id here needs a matching flow in CLI_FLOWS.
+ */
+export const PROVES_BROKEN = new Set<string>(['dev-pnpm', 'dev-yarn']);
 
 /** Narration for a finding that has been recorded, relative to this folder. */
 const FINDING_AUDIO: Partial<Record<string, string>> = {};
@@ -416,10 +608,22 @@ export const CLI_VIDEOS = defineCliVideos([
     const app = `${SCAFFOLD_DIR}/${id}/${APP_NAME}`;
     return {
       id: `install-video-${id}`,
-      name: `${id} · 2 · Installing dependencies`,
+      name: BROKEN_DEV.has(id)
+        ? `${id} · 2 · Installing dependencies, then failing to start`
+        : `${id} · 2 · Installing dependencies`,
       videoName: `${id}-2-Install`,
       docPath: 'quickstart?agent=bring-your-own',
-      flows: [`install-${id}`],
+
+      // A manager in BROKEN_DEV carries a second flow, because for those the
+      // install exiting 0 is not the end of the story and stopping the clip
+      // there would read as a pass. `dev-<pm>` shows what the reader actually
+      // hits next — the agent throws on an import and concurrently takes the
+      // UI down with it — so the clip ends where they would end up.
+      //
+      // This is also what routes them to the finding rather than the demo:
+      // the third clip is chosen by whether any flow in this list failed, not
+      // by whether the install did.
+      flows: BROKEN_DEV.has(id) ? [`install-${id}`, `dev-${id}`] : [`install-${id}`],
 
       // Video 3 when the install worked: the app, live. `demo-<pm>` in
       // pages.config.ts boots that copy's dev server and drives it.
@@ -428,7 +632,9 @@ export const CLI_VIDEOS = defineCliVideos([
       // Video 3 when it did not: the finding.
       onFailure: {
         id: `finding-${id}`,
-        name: `${id} · 3 · Finding — install failed`,
+        name: BROKEN_DEV.has(id)
+          ? `${id} · 3 · Finding — installs, then will not start`
+          : `${id} · 3 · Finding — install failed`,
         videoName: `${id}-3-Finding`,
         ideTabs: [
           // Installed, not declared: what this run actually resolved to.

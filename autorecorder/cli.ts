@@ -2,7 +2,7 @@
  * Automated Screen Recording & Demonstration Pipeline
  * Entrypoint & CLI runner
  */
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -17,6 +17,40 @@ import { parseShard, selectPages } from './core/select';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
 const VIDEOS_DIR = join(__dirname, 'videos');
+
+/** Where the CLI pipeline's clips live, mirroring `cli-render.ts`. */
+const CLI_VIDEO_SUBDIR = 'cli';
+
+/**
+ * Moves a finished `demo-<pm>` clip into `videos/cli/`.
+ *
+ * A demo is the *third* clip of a package manager's CLI set — the CLI run, the
+ * install, then the app it produced — so it belongs beside the other two rather
+ * than among the per-doc-page recordings. `cli-render.ts` writes its own clips
+ * straight into that folder, but it records a demo by spawning this file with
+ * `--pages=demo-<pm>`, and `recordPage` has nowhere to put a subdir: only
+ * `recordCliFlow` takes one, and widening `PageRecordConfig` means editing
+ * manifest-covered `core/types.ts`. Moving the finished file keeps the whole
+ * set together without forking core.
+ *
+ * Returns the filename either way, so a page that is not a demo, or whose
+ * recording produced no file, passes through untouched.
+ */
+function placeDemoWithCliClips(pageId: string, filename: string): string {
+  if (!pageId.startsWith('demo-') || !filename) return filename;
+
+  const from = join(VIDEOS_DIR, filename);
+  if (!existsSync(from)) return filename;
+
+  const targetDir = join(VIDEOS_DIR, CLI_VIDEO_SUBDIR);
+  mkdirSync(targetDir, { recursive: true });
+  const to = join(targetDir, filename);
+  if (existsSync(to)) unlinkSync(to);
+  renameSync(from, to);
+  console.log(`   ↪ ${filename} -> videos/${CLI_VIDEO_SUBDIR}/`);
+
+  return filename;
+}
 
 /**
  * Per-run results, next to the videos.
@@ -279,7 +313,7 @@ async function main(): Promise<void> {
     results.push({
       id: pageConfig.id,
       name: pageConfig.name,
-      filename: res.filename,
+      filename: placeDemoWithCliClips(pageConfig.id, res.filename),
       success: res.success,
       durationSec,
       error: res.error,
@@ -326,9 +360,19 @@ async function main(): Promise<void> {
   console.log(`📁 Video files saved to: ${VIDEOS_DIR}`);
   console.log(`📄 Results: ${join(VIDEOS_DIR, RESULTS_FILE)}\n`);
 
-  if (failedCount > 0) {
-    process.exit(1);
-  }
+  // Both paths exit explicitly, and the success path is the one that matters.
+  //
+  // Returning from `main` leaves the process alive for as long as anything still
+  // holds a handle — a dev server's pipe, a Playwright transport — with the work
+  // finished, the summary printed and the results file written. It looks exactly
+  // like a recorder that froze, and on 2026-09-08 a passing demo sat like that
+  // for 24 minutes before anyone looked at the results file and saw it had
+  // finished in 153s. `cli-capture.ts` documents the same trap and guards it the
+  // same way.
+  //
+  // Failures never showed this, because `exit(1)` below was already explicit —
+  // which is why only *passing* runs appeared to hang.
+  process.exit(failedCount > 0 ? 1 : 0);
 }
 
 main().catch((err) => {

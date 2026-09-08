@@ -24,7 +24,7 @@ import { copyFileSync, existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CLI_FLOWS, CLI_VIDEOS } from './config/cli.config';
+import { CLI_FLOWS, CLI_VIDEOS, PROVES_BROKEN, REMEDIATED_FLOWS } from './config/cli.config';
 import { PAGES } from './config/pages.config';
 import { muxAudio } from './core/cli/audio';
 import { refuseInCi } from './core/cli/ci-guard';
@@ -53,6 +53,35 @@ function flowById(id: string): CliFlowConfig {
 
 type Report = Pick<CliRunResult, 'success' | 'exitCode' | 'error' | 'missingFiles' | 'tail' | 'durationSec'>;
 
+/**
+ * The flows in a video that say the thing under test is broken.
+ *
+ * A capture report grades the *capture* — did the command behave the way its
+ * flow said it would. That is not the same question as "does this work", and
+ * the third clip turns on the second question. Two corrections, both declared
+ * in cli.config.ts beside the flows they name:
+ *
+ *   REMEDIATED_FLOWS  a failure the same video goes on to fix. pnpm's first
+ *                     install exits 1 on ignored build scripts; the clip then
+ *                     approves them and installs again. Letting that first
+ *                     exit decide would file a finding against a problem the
+ *                     viewer just watched get resolved.
+ *
+ *   PROVES_BROKEN     a flow the capture graded a pass that is a failure of
+ *                     the software. `dev-<pm>` is *expected* to die, so dying
+ *                     on cue is a successful capture — while what it proves is
+ *                     that the installed app cannot start. Without this, a
+ *                     manager whose install exits 0 gets filmed as a working
+ *                     demo when nothing it installed can run.
+ */
+function outcomeFailures<T extends { flow: CliFlowConfig; report: Report | null }>(reports: T[]): T[] {
+  return reports.filter(
+    (r) =>
+      !REMEDIATED_FLOWS.has(r.flow.id) &&
+      (r.report?.success === false || (PROVES_BROKEN.has(r.flow.id) && r.report != null)),
+  );
+}
+
 /** The capture report for a flow, or null when it has not been captured. */
 function reportFor(flow: CliFlowConfig): Report | null {
   const file = join(CAST_DIR, flow.reportFile);
@@ -78,10 +107,10 @@ function describe(video: CliVideoConfig): string {
   const flows = video.flows.map(flowById);
   const missing = flows.filter((f) => !existsSync(join(CAST_DIR, f.castFile))).map((f) => f.id);
   if (missing.length) return `⬜ needs capture: ${missing.join(', ')}`;
-  const failed = flows.filter((f) => reportFor(f)?.success === false).map((f) => f.id);
+  const failed = outcomeFailures(flows.map((f) => ({ flow: f, report: reportFor(f) }))).map((r) => r.flow.id);
   if (failed.length) {
     return video.onFailure
-      ? `❌ install failed → will also film ${video.onFailure.videoName}`
+      ? `❌ ${failed.join(', ')} failed → will also film ${video.onFailure.videoName}`
       : `❌ capture failed (${failed.join(', ')}); no onFailure clip declared`;
   }
   return video.onSuccess
@@ -223,7 +252,7 @@ async function main(): Promise<void> {
     }
 
     const reports = flows.map((f) => ({ flow: f, report: reportFor(f) }));
-    const failed = reports.filter((r) => r.report?.success === false);
+    const failed = outcomeFailures(reports);
 
     // A failed capture with nothing declared for it must not be filmed and
     // handed over as a finished clip: the video would look complete while

@@ -3,7 +3,7 @@
   "cli/audio.ts": "08a138e8b7ebd46e",
   "cli/cast.ts": "a46ec141b8c7cace",
   "cli/ci-guard.ts": "939cf1f2e8ea153d",
-  "cli/distribute.ts": "d6ce3b01445efc48",
+  "cli/distribute.ts": "e19afa43814cda49",
   "cli/driver.ts": "fa39842c18edf2f4",
   "cli/finding.ts": "ca659990527820cd",
   "cli/flow.ts": "1b91bfecf9e892fb",

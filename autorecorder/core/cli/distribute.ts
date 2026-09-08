@@ -14,8 +14,66 @@
  * Placing it once before the copy also means it cannot be typo'd into three of
  * four directories.
  */
-import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
+
+/** `KEY` out of a `KEY=value` line, ignoring comments and blanks. */
+function envKeyOf(line: string): string | null {
+  const match = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/.exec(line);
+  return match ? match[1] : null;
+}
+
+/**
+ * Merges a seed env file into one the CLI already wrote, instead of replacing it.
+ *
+ * `copilotkit create` writes a `.env` of its own — Intelligence credentials,
+ * and for agent starters an `AGENT_URL`. Copying the repo-root `.env` over that
+ * file destroys those values, and both losses are silent until a demo fails:
+ *
+ *   - Mastra lost `CPK_INTELLIGENCE_API_KEY`, so the runtime dropped to its
+ *     in-memory runner.
+ *   - MsPy lost `AGENT_URL=http://localhost:8000`, so `src/agent.ts` fell back
+ *     to `"http://localhost:8000/"` — with a trailing slash — and POSTed to the
+ *     AgentOS root, which answers `405 Method Not Allowed`.
+ *
+ * Merging is also what the CLI's own success banner tells a reader to do: "Set
+ * OPENAI_API_KEY in .env — **add the line**". Generated values are kept, the
+ * seed file's assignments win where both define a key (the seed is where the
+ * real secret lives), and anything the seed adds is appended under a comment
+ * saying where it came from.
+ */
+function mergeEnvInto(generatedPath: string, seedText: string): string {
+  const seedLines = seedText.split(/\r?\n/);
+  const seedKeys = new Set(seedLines.map(envKeyOf).filter((k): k is string => Boolean(k)));
+
+  // The seed's own comments are dropped: a documented .env.example-style file
+  // would otherwise bury the generated block under paragraphs of prose.
+  const seedAssignments = seedLines.filter((l) => envKeyOf(l));
+
+  const generated = existsSync(generatedPath)
+    ? readFileSync(generatedPath, 'utf8').replace(/^﻿/, '')
+    : '';
+
+  // A key the seed also defines is dropped here so the seed's value is the only
+  // one left, rather than relying on which duplicate the dotenv parser prefers.
+  const kept = generated
+    .split(/\r?\n/)
+    .filter((l) => {
+      const key = envKeyOf(l);
+      return !(key && seedKeys.has(key));
+    });
+
+  return [...kept, '', '# --- seeded by the recorder', ...seedAssignments, ''].join('\n');
+}
 
 export interface EnvSeed {
   /** Source file, relative to the repo root. */
@@ -129,7 +187,10 @@ export function distribute(
         }
         const toAbs = join(targetAbs, seed.to);
         mkdirSync(dirname(toAbs), { recursive: true });
-        copyFileSync(fromAbs, toAbs);
+        // Merge, never overwrite — the destination is the CLI's own .env, and
+        // replacing it silently drops the credentials it generated. See
+        // mergeEnvInto.
+        writeFileSync(toAbs, mergeEnvInto(toAbs, readFileSync(fromAbs, 'utf8')), 'utf8');
         result.seeded.push(seed.to);
       }
 
