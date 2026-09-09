@@ -52,7 +52,7 @@ export const PAGE_GROUPS = {
     'shared-state-predictive-state-updates',
     'agent-app-context',
   ],
-  threads: ['prebuilt-components-copilot-threads-drawer', 'threads', 'headless-threads'],
+  threads: ['prebuilt-components-copilot-threads-drawer', 'threads', 'headless-threads', 'intelligence-quickstart'],
   backend: ['copilot-runtime', 'ag-ui'],
 };
 

@@ -55,7 +55,7 @@ on:
         type: boolean
         default: false
       group_threads:
-        description: 'Rich Threads — Drawer, Threads, Headless Threads'
+        description: 'Rich Threads & Intelligence — Drawer, Threads, Headless Threads, Intelligence Quickstart'
         type: boolean
         default: false
       group_backend:
