@@ -140,6 +140,33 @@ export const searchAgent = new Agent({
 });
 // #endregion
 
+// #region a2ui-agent
+// A2UI — docs.copilotkit.ai/mastra/generative-ui/a2ui
+//
+// Nothing here mentions A2UI, and that is the point the page makes: "any A2UI
+// output returned from your agent will automatically be rendered in the chat
+// interface -- no additional frontend code required." The capability is added
+// by `A2UIMiddleware`, which the runtime applies from its `a2ui` option
+// (`api/copilotkit/[[...slug]]/route.ts`), so the agent is an ordinary Mastra
+// agent that has simply been told to prefer showing over telling.
+//
+// It exists as its own agent purely so the middleware can be SCOPED to it.
+// `a2ui: {}` would apply to every agent on the instance and change what the
+// other twenty-three demos record; `a2ui: { agents: [...] }` is the doc's own
+// escape hatch for exactly that.
+export const a2uiAgent = new Agent({
+  id: "a2uiAgent",
+  name: "A2UI Agent",
+  model: model(),
+  instructions:
+    "You are a UI-generating assistant. When the user asks to see, compare, " +
+    "or choose between things, respond by building an interface for them " +
+    "rather than describing one in prose: lay the options out as cards in a " +
+    "column or row, with a heading and a button on each. Keep any text you " +
+    "do write to a single short sentence.",
+});
+// #endregion
+
 // #region colleagues-agent
 // Readables — docs.copilotkit.ai/mastra/agent-app-context
 //

@@ -2,6 +2,7 @@ import { Mastra } from "@mastra/core";
 import { LibSQLStore } from "@mastra/libsql";
 
 import {
+  a2uiAgent,
   backgroundAgentsAgent,
   colleaguesContactAgent,
   languageAgent,
@@ -26,6 +27,7 @@ import {
 export const mastra = new Mastra({
   agents: {
     myAgent,
+    a2uiAgent,
     weatherAgent,
     languageAgent,
     streamingAgent,

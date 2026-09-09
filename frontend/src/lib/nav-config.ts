@@ -186,6 +186,17 @@ export const NAV: NavGroup[] = [
           "A searches list held in working memory and rendered live as the agent updates it.",
         status: "working",
       },
+      {
+        path: "/generative-ui/a2ui",
+        hasDemo: true,
+        title: "A2UI",
+        docPath: "/mastra/generative-ui/a2ui",
+        summary:
+          "Google's declarative Generative UI spec: the agent streams a JSONL component tree and CopilotKit renders it, with no per-component React registered on the frontend.",
+        status: "broken",
+        statusNote:
+          "Implemented exactly as the page publishes it and it renders nothing. The Backend section says A2UI output is rendered automatically with “no additional frontend code required”, but with no A2UI catalog on the client the runtime leaves `injectA2UITool` undefined, @ag-ui/a2ui-middleware injects no rendering tool, and the agent answers in prose. Adding `injectA2UITool: true` renders a surface — verified 2026-09-09 — but that option is never named on this page.",
+      },
     ],
   },
   {

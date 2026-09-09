@@ -164,6 +164,8 @@ Code on a page is never a re-typed approximation: each page reads real files via
 
 **`/generative-ui/state-rendering`** — `searches` working memory. **Try:** `Add a search for the tallest mountains`, then another. **Pass:** items accumulate in the left pane.
 
+**`/generative-ui/a2ui`** — A2UI, Google's declarative Generative UI spec. No React component is registered on this route; `A2UIMiddleware` is switched on server-side via the runtime's `a2ui` option, scoped to `a2uiAgent`. **Try:** `Show me three pricing plans as cards: Free, Pro and Team.` **Pass:** a laid-out group of cards appears in the thread. **Fail:** prose (the tool was never offered) or raw JSON (it was called, but nothing rendered it).
+
 ### App Control
 
 **`/frontend-tools`** — `sayHello` executing in the browser. **Try:** `Say hello to Malaika`. **Pass:** a browser alert appears, then the agent confirms.
@@ -218,6 +220,7 @@ Code on a page is never a re-typed approximation: each page reads real files via
 | `/mastra/generative-ui/your-components/interactive` | `/generative-ui/your-components/interactive` | ✅ Working | `useHumanInTheLoop` approval gate. Code is in the rendered page, not the raw markdown. |
 | `/mastra/generative-ui/tool-rendering` | `/generative-ui/tool-rendering` | ✅ Working | |
 | `/mastra/generative-ui/state-rendering` | `/generative-ui/state-rendering` | ✅ Working | |
+| `/mastra/generative-ui/a2ui` | `/generative-ui/a2ui` | ❌ Broken | The published setup renders nothing — see Known issues. Scoped with `a2ui: { agents: ["a2uiAgent"] }` rather than the doc's bare `a2ui: {}`, which would have altered every other route on the shared runtime. |
 | `/mastra/frontend-tools` | `/frontend-tools` | ✅ Working | |
 | `/mastra/shared-state/in-app-agent-read` | `/shared-state/in-app-agent-read` | ✅ Working | |
 | `/mastra/shared-state/in-app-agent-write` | `/shared-state/in-app-agent-write` | ✅ Working | |
@@ -278,6 +281,13 @@ Unlike `useRenderTool`, it defaults to `Record<string, unknown>`, so the HITL pa
 
 **12. `@copilotkit/react-ui` in the install line**
 The Quickstart installs it; it is the v1 package and nothing on that page uses it. Not a dependency here.
+
+**13. A2UI's published setup renders nothing**
+The A2UI page's Backend section shows `a2ui: {}` on `CopilotRuntime` and states that "any A2UI output returned from your agent will automatically be rendered in the chat interface — no additional frontend code required", with a Frontend section that adds only an optional theme. Implemented exactly that way, no UI appears — the agent describes the layout in prose.
+
+The chain, traced in `@copilotkit/runtime` 1.66.2 and `@ag-ui/a2ui-middleware` 0.0.10: `v2/runtime/handlers/shared/agent-utils.mjs` attaches the middleware with `injectA2UITool: injectA2UITool ?? (providerA2UIHasCatalog ? true : undefined)`. `providerA2UIHasCatalog` is set only by a client that registered an A2UI catalog — which this page tells you not to write — so the flag stays `undefined`, and the middleware documents that case as "no tool is injected; the middleware relies on the agent producing A2UI JSON through its own means." An ordinary agent has no such means.
+
+Verified 2026-09-09 by probe: with `injectA2UITool: true` added, a `div.a2ui-surface` renders; with the published config, no element carrying an `a2ui` class exists on the page. The working option is never named on this page — it appears only on the `a2ui/fixed-schema` sub-page, and there only in its `false` form, for agents that already own the tool. `/generative-ui/a2ui` is left in the published state so the clip shows the gap.
 
 ---
 
@@ -369,7 +379,7 @@ mastra/
 
 **Custom Look and Feel** — [Slots](https://docs.copilotkit.ai/mastra/custom-look-and-feel/slots) † · [Headless UI](https://docs.copilotkit.ai/mastra/custom-look-and-feel/headless-ui) † · [Programmatic Control](https://docs.copilotkit.ai/mastra/programmatic-control) · [Inspector](https://docs.copilotkit.ai/mastra/inspector)
 
-**Generative UI** — [Display-only](https://docs.copilotkit.ai/mastra/generative-ui/your-components/display-only) · [Interactive](https://docs.copilotkit.ai/mastra/generative-ui/your-components/interactive) · [Tool Rendering](https://docs.copilotkit.ai/mastra/generative-ui/tool-rendering) · [State Rendering](https://docs.copilotkit.ai/mastra/generative-ui/state-rendering)
+**Generative UI** — [Display-only](https://docs.copilotkit.ai/mastra/generative-ui/your-components/display-only) · [Interactive](https://docs.copilotkit.ai/mastra/generative-ui/your-components/interactive) · [Tool Rendering](https://docs.copilotkit.ai/mastra/generative-ui/tool-rendering) · [State Rendering](https://docs.copilotkit.ai/mastra/generative-ui/state-rendering) · [A2UI](https://docs.copilotkit.ai/mastra/generative-ui/a2ui)
 
 **App Control** — [Frontend Tools](https://docs.copilotkit.ai/mastra/frontend-tools) · [Human in the Loop](https://docs.copilotkit.ai/mastra/human-in-the-loop/tool-based) · [Governed Actions](https://docs.copilotkit.ai/mastra/human-in-the-loop/governed-actions) · [Background Tasks](https://docs.copilotkit.ai/mastra/background-tasks) · [WebMCP](https://docs.copilotkit.ai/mastra/webmcp) ‡
 

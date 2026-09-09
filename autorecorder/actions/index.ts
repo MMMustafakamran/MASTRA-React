@@ -49,17 +49,24 @@ import { READY_INPUT_OVERRIDES, waitForPageReady } from './page-ready';
 
 import {
   runSharedStateReadAction,
+  runSharedStateWriteAction,
 } from './shared-state.action';
+import { runA2uiAction } from './a2ui.action';
 import { runAgUiAction } from './ag-ui.action';
 import { runBackgroundTasksAction } from './background-tasks.action';
 import { runDisplayOnlyAction } from './display-only.action';
 import { runFrontendToolsAction } from './frontend-tools.action';
 import { runGovernedActionsAction } from './governed-actions.action';
 import { runHeadlessUiAction } from './headless-ui.action';
+import { runHitlAction } from './hitl.action';
 import { runInspectorAction } from './inspector.action';
+import { runInteractiveAction } from './interactive.action';
+import { runPredictiveStateAction } from './predictive-state.action';
 import { runPrebuiltAction } from './prebuilt.action';
 import { runProgrammaticAction } from './programmatic.action';
+import { runRuntimeAction } from './runtime.action';
 import { runSlotsAction } from './slots.action';
+import { runStateRenderingAction } from './state-rendering.action';
 import { runToolRenderingAction } from './tool-rendering.action';
 
 /** Keys are page ids from `config/pages.config.ts`. Doctor flags any orphans. */
@@ -70,11 +77,39 @@ export const ACTION_MAP: Record<string, PageActionHandler> = {
   "programmatic-control": runProgrammaticAction,
   "inspector": runInspectorAction,
   "generative-ui-your-components-display-only": runDisplayOnlyAction,
+  // Registered 2026-09-09. The page renders an approval card and SUSPENDS the
+  // run on it; on `runStandardAction` nobody ever clicked Approve, so the take
+  // filmed a turn that never finished on the page about finishing it.
+  "generative-ui-your-components-interactive": runInteractiveAction,
   "generative-ui-tool-rendering": runToolRenderingAction,
+  // Registered 2026-09-09 alongside the two-search prompt pair. The handler it
+  // replaces asserted the list stays EMPTY -- true of a sibling repo whose doc
+  // shipped React in a Python block, never of this one.
+  "generative-ui-state-rendering": runStateRenderingAction,
+  // Added 2026-09-09. This page is EXPECTED TO FAIL: the doc's published
+  // a2ui setup renders nothing, and a prose answer would satisfy the shared
+  // reply detector. The handler reads the surface so the take reports the
+  // defect instead of passing on it.
+  "generative-ui-a2ui": runA2uiAction,
   "frontend-tools": runFrontendToolsAction,
+  // Registered 2026-09-09. Same reason as Interactive: `offerOptions` parks the
+  // run until `respond` fires, and the two labels are model-authored so they
+  // need the structural matcher in hitl.action.ts rather than Interactive's
+  // fixed "Approve"/"Reject".
+  "human-in-the-loop-tool-based": runHitlAction,
   "human-in-the-loop-governed-actions": runGovernedActionsAction,
   "shared-state-in-app-agent-read": runSharedStateReadAction,
+  // Registered 2026-09-09. Writing is the app -> agent direction and it starts
+  // with a button click; a chat prompt alone re-tests the Read page.
+  "shared-state-in-app-agent-write": runSharedStateWriteAction,
+  // Registered 2026-09-09. The chat is the one surface this page keeps
+  // nearly empty, so the shared reply detector can pass on "Sure, I've
+  // drafted that" while the document pane never fills. Read the pane.
+  "shared-state-predictive-state-updates": runPredictiveStateAction,
   "ag-ui": runAgUiAction,
+  // Registered 2026-09-09 with this app's camelCase agent ids. Unwired, the
+  // page recorded one turn on the default agent and never clicked a route.
+  "copilot-runtime": runRuntimeAction,
   "background-tasks": runBackgroundTasksAction,
 };
 

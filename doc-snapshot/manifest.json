@@ -315,6 +315,18 @@
       "status": "ok",
       "age": 0,
       "date": "Wed, 09 Sep 2026 07:58:57 GMT"
+    },
+    "/mastra/generative-ui/a2ui": {
+      "file": "mastra__generative-ui__a2ui.md",
+      "sha256": "8a6e9ffed141ace2a86d74e639e7d2dc23bbb61725682a4d7cbf14119841af34",
+      "bytes": 4004,
+      "lines": 111,
+      "routes": [
+        "/generative-ui/a2ui"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Wed, 09 Sep 2026 13:31:50 GMT"
     }
   },
   "sitemap": {
@@ -366,7 +378,6 @@
       "https://docs.copilotkit.ai/mastra/examples",
       "https://docs.copilotkit.ai/mastra/faq",
       "https://docs.copilotkit.ai/mastra/generative-ui",
-      "https://docs.copilotkit.ai/mastra/generative-ui/a2ui",
       "https://docs.copilotkit.ai/mastra/generative-ui/a2ui/dynamic-schema",
       "https://docs.copilotkit.ai/mastra/generative-ui/a2ui/fixed-schema",
       "https://docs.copilotkit.ai/mastra/generative-ui/display",

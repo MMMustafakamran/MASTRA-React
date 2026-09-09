@@ -322,7 +322,13 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/programmatic-control/demo-chat/page.tsx",
     startLine: 28,
     endLine: 80,
-    prompt: "Is it raining in Tokyo right now?",
+    // Was "Is it raining in Tokyo right now?", which this page cannot answer:
+    // it drives `myAgent`, and `myAgent` carries no tools (agents.ts,
+    // #region my-agent). The clip showed a run firing correctly and the agent
+    // replying that it has no access to live weather -- a real refusal filmed
+    // on a page about `copilotkit.runAgent`. The mechanism is the subject here,
+    // so the message is one this agent can actually complete.
+    prompt: "In one sentence, what is an AG-UI run?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -382,7 +388,23 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/generative-ui/state-rendering/demo-chat/page.tsx",
     startLine: 23,
     endLine: 27,
-    prompt: "Please switch the language to Spanish.",
+    // Was "Please switch the language to Spanish." -- the Shared State prompt,
+    // pasted onto a page that drives `searchAgent`. That agent has no
+    // `language` in its working memory at all: its schema is `searches`
+    // (agents.ts, #region search-agent) and its only tool is `addSearch`. The
+    // clip therefore showed the searches panel sitting empty on a page whose
+    // entire subject is that panel filling.
+    //
+    // These two are the page's own suggestions -- `TryIt` in
+    // `state-rendering/page.tsx` lists them verbatim -- and they are a PAIR on
+    // purpose. One search proves the list renders; the second proves state
+    // *accumulates* across turns, which is what separates state rendering from
+    // tool rendering one page earlier.
+    prompts: [
+      "Add a search for the tallest mountains",
+      "Now add one for the deepest oceans",
+    ],
+    prompt: "Add a search for the tallest mountains",
     waitAfterPromptMs: 4000,
   },
   {
@@ -394,7 +416,15 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/frontend-tools/demo-chat/page.tsx",
     startLine: 17,
     endLine: 27,
-    prompt: "Can you say hello to me?",
+    // Was "Can you say hello to me?" -- and `sayHello` takes a REQUIRED `name`
+    // (`parameters: z.object({ name: z.string() })`). Asked that way the model
+    // has no value to fill it with, so it asks "what should I call you?" in
+    // prose instead of calling the tool, the browser alert never fires, and
+    // the handler's dialog assertion turns a page that works into a red take.
+    //
+    // Naming someone supplies the argument. This is the page's own welcome
+    // suggestion ("Try \"Say hello to Damien\"") rather than one invented here.
+    prompt: "Say hello to Damien",
     waitAfterPromptMs: 4000,
   },
   {
@@ -406,8 +436,19 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/human-in-the-loop/tool-based/demo-chat/page.tsx",
     startLine: 20,
     endLine: 49,
-    prompt: "Clear the temp cache for me by running rm -rf /tmp/cache",
-    waitAfterPromptMs: 4000,
+    // Was "Clear the temp cache for me by running rm -rf /tmp/cache" -- which
+    // is the *Interactive* page's prompt, aimed at its `humanApprovedCommand`
+    // tool. This page registers `offerOptions` instead: two labelled choices,
+    // no command anywhere in its schema. A shell request gives the model
+    // nothing to offer, so it answered in prose, the two buttons never
+    // rendered, and the run never suspended -- on the page whose whole subject
+    // is the suspend.
+    //
+    // Verbatim from the doc: doc-snapshot/pages/mastra__human-in-the-loop__tool-based.md:87.
+    prompt: "Can you show me two good options for a restaurant name?",
+    // The run halts on the tool call and only resumes when `respond` fires, so
+    // the reply this waits on arrives after the click, not after the prompt.
+    waitAfterPromptMs: 5000,
   },
   {
     id: "human-in-the-loop-governed-actions",
@@ -421,6 +462,14 @@ export const PAGES = definePages([
     endLine: 148,
     prompt:
       "Please send an invoice reminder to acme@example.com, but check with me before it goes out.",
+    // Two turns, because the card has two answers and only one of them was
+    // ever filmed. The first request is harmless and gets approved; the second
+    // is destructive and gets rejected, which is the half that shows the
+    // policy actually stopping something.
+    prompts: [
+      "Please send an invoice reminder to acme@example.com, but check with me before it goes out.",
+      "Now permanently delete the acme@example.com customer record, but check with me before it goes through.",
+    ],
     waitAfterPromptMs: 6000,
   },
   {
@@ -471,7 +520,18 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/shared-state/in-app-agent-write/demo-chat/page.tsx",
     startLine: 20,
     endLine: 24,
-    prompt: "Please switch the language to Spanish.",
+    // Was "Please switch the language to Spanish." -- the READ page's prompt,
+    // and on this page it tests the wrong direction. Read is the agent writing
+    // state the app displays; write is the app writing state the AGENT reads,
+    // and the doc says so plainly: "Try toggling the language button"
+    // (doc-snapshot/pages/mastra__shared-state__in-app-agent-write.md:134).
+    // Asking the chat to switch languages proves nothing about
+    // `agent.setState` -- the same clip would pass with the button deleted.
+    //
+    // So the handler clicks `Toggle Language` first and this prompt is
+    // deliberately NEUTRAL: it never names a language, so the only thing that
+    // can make the answer come back in Spanish is the state the button wrote.
+    prompt: "In one sentence, what is working memory?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -483,8 +543,22 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/shared-state/predictive-state-updates/demo-chat/page.tsx",
     startLine: 20,
     endLine: 24,
-    prompt: "Please switch the language to Spanish.",
-    waitAfterPromptMs: 4000,
+    // Was "Please switch the language to Spanish." again -- and this page does
+    // not drive `languageAgent` at all. It drives `streamingAgent`, whose
+    // working memory is a single `document` string (agents.ts, #region
+    // streaming-agent) and whose instructions tell it to write into that field
+    // whenever asked to write, draft or revise. A language request matches none
+    // of those verbs, so the document pane stayed on its placeholder for the
+    // whole take and the LIVE badge never appeared.
+    //
+    // The doc's own suggestion is "a poem, draft an email, or explain a topic"
+    // (.../mastra__shared-state__predictive-state-updates.md:121); the page's
+    // welcome text picks the blog post. Long enough to watch stream in, short
+    // enough to finish inside the take.
+    prompt: "Write a short blog post about sea otters.",
+    // The point of the clip is the document filling token by token, so hold on
+    // the finished pane rather than cutting the moment the reply settles.
+    waitAfterPromptMs: 6000,
   },
   {
     id: "agent-app-context",
@@ -495,7 +569,17 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/agent-app-context/demo-chat/page.tsx",
     startLine: 24,
     endLine: 28,
-    prompt: "What do you know about me from the app context?",
+    // Was "What do you know about me from the app context?" -- a question about
+    // the plumbing, which invites the agent to describe its own instructions
+    // rather than use them. It also asks about the wrong subject: the only
+    // thing `useAgentContext` publishes here is "The current user's
+    // colleagues", so the agent knows nothing "about me".
+    //
+    // Naming the three people is what makes the clip evidence. John Doe, Jane
+    // Smith and Bob Wilson are rendered in the left pane and were never sent as
+    // a chat message -- an answer that reproduces their roles could only have
+    // come through `requestContext.get('ag-ui')`.
+    prompt: "Who are my colleagues, and what does each of them do?",
     waitAfterPromptMs: 4000,
   },
   {
@@ -507,6 +591,25 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/copilot-runtime/demo-chat/page.tsx",
     startLine: 29,
     endLine: 63,
+    // Was a single "What is the weather in Berlin today?" on a page that opens
+    // selected on `myAgent`. That agent has no tools, so the weather question
+    // went to the one agent on the page that cannot answer it -- confirmed in
+    // the 2026-09-09 frontend log, which shows exactly one
+    // `POST /api/copilotkit/agent/myAgent/run` for this route and no others.
+    //
+    // Worse, a single prompt cannot test this page at all. The subject is
+    // ROUTING: seven ids, `<CopilotChat key={agentId}>` remounting on each
+    // switch. One turn on the default id never touches a button, so the clip
+    // was indistinguishable from the Quickstart recording.
+    //
+    // Two turns, and the same *kind* of question asked of two agents, is what
+    // makes routing visible: `myAgent` can only answer in prose, `weatherAgent`
+    // carries `weatherInfo` and calls it. The handler clicks between them and
+    // the remount also shows each id keeping its own conversation.
+    prompts: [
+      "What is the weather in Berlin today?",
+      "What is the weather in Berlin today?",
+    ],
     prompt: "What is the weather in Berlin today?",
     waitAfterPromptMs: 4000,
   },
@@ -519,7 +622,17 @@ export const PAGES = definePages([
     ideFile: "frontend/src/app/ag-ui/demo-chat/page.tsx",
     startLine: 37,
     endLine: 41,
-    prompt: "Any rain expected in Tokyo this week?",
+    // Was "Any rain expected in Tokyo this week?", which reads like it is there
+    // to produce TOOL_CALL_* rows in the event pane -- but this page is wired
+    // to `myAgent`, which has no tools, so it never could. What it produced was
+    // a refusal, and a refusal streams the same RUN_STARTED /
+    // TEXT_MESSAGE_CONTENT / RUN_FINISHED sequence as anything else while
+    // looking like the page failed.
+    //
+    // The event stream is the subject, and a multi-sentence answer is what
+    // fills it: TEXT_MESSAGE_CONTENT is emitted per chunk, so a longer reply is
+    // literally more of the thing being demonstrated.
+    prompt: "Explain the AG-UI protocol in three short sentences.",
     waitAfterPromptMs: 4000,
   },
   {
@@ -550,6 +663,58 @@ export const PAGES = definePages([
     // legitimately slow page should say so here; this is that page.
     timeouts: { replyStartMs: 90_000 },
     waitAfterPromptMs: 4000,
+  },
+
+  {
+    id: "generative-ui-a2ui",
+    name: "Generative UI - A2UI",
+    videoName: "A2UI",
+    docPath: "generative-ui/a2ui",
+    route: "generative-ui/a2ui",
+    // ── Why this sits at the END rather than in doc-nav order ──────────────
+    // The doc nav puts A2UI inside Generative UI, which by this file's usual
+    // rule would place it fourth and renumber the eleven pages after it. That
+    // is the same trade-off the DEMO_PAGES block below already resolved the
+    // same way ("LAST on purpose: order determines the NN in every derived
+    // filename"). Renaming eleven existing clips to insert one is a worse
+    // outcome for anyone diffing a run against yesterday's, so the new page
+    // takes the next free number instead. Move it up if the numbering is ever
+    // rebased deliberately.
+    //
+    // ── What the IDE tab shows ──────────────────────────────────────────────
+    // The runtime route, not the demo page -- and that IS the finding this
+    // clip carries. Every other Generative UI take opens on a page full of
+    // registered React; this one's demo page has none, so showing it would
+    // display a bare `<CopilotChat>` and explain nothing. The `a2ui` option is
+    // where the whole feature lives.
+    ideFile: "frontend/src/app/api/copilotkit/[[...slug]]/route.ts",
+    startLine: 26,
+    endLine: 51,
+    extraTabs: [
+      // The `a2ui-agent` region: an ordinary Mastra agent with no mention of
+      // A2UI anywhere in it, which is the point — the capability is
+      // middleware, not agent code.
+      {
+        filePath: "frontend/src/mastra/agents.ts",
+        startLine: 143,
+        endLine: 168,
+      },
+      // The demo page, precisely because there is nothing in it.
+      {
+        filePath: "frontend/src/app/generative-ui/a2ui/demo-chat/page.tsx",
+        startLine: 30,
+        endLine: 43,
+      },
+    ],
+    // Asks for a LAYOUT, not a fact. "Three pricing plans as cards" is the
+    // kind of request that has an obviously better answer as an interface than
+    // as a paragraph, so a prose reply is a visible failure rather than an
+    // acceptable alternative -- which is what makes the take a test.
+    prompt: "Show me three pricing plans as cards: Free, Pro and Team.",
+    // A2UI streams a component tree, not a sentence. It has more to emit than
+    // a chat reply and the layout paints progressively, so the take holds
+    // longer than the 4s standard.
+    waitAfterPromptMs: 7000,
   },
 
   // The scaffolded app, once per package manager — video 3 of each set.

@@ -41,6 +41,7 @@ export const PAGE_GROUPS = {
     'generative-ui-your-components-interactive',
     'generative-ui-tool-rendering',
     'generative-ui-state-rendering',
+    'generative-ui-a2ui',
   ],
   app_control: [
     'frontend-tools',
