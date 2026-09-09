@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "docsRoot": "https://docs.copilotkit.ai/mastra",
-  "syncedAt": "2026-09-04T10:51:17.370Z",
+  "syncedAt": "2026-09-09T07:58:57.267Z",
   "pages": {
     "/mastra": {
       "file": "mastra.md",
@@ -30,15 +30,15 @@
     },
     "/mastra/agent-app-context": {
       "file": "mastra__agent-app-context.md",
-      "sha256": "7283323b9072f18b562839a9874c0fa358021e8f826b2b2b407175c8a9beaf7f",
-      "bytes": 3351,
-      "lines": 85,
+      "sha256": "cb23f37ddf0f66285459985219a759eff98769b3d15259e7fb82f5b35e4ea632",
+      "bytes": 4396,
+      "lines": 108,
       "routes": [
         "/agent-app-context"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Sun, 30 Aug 2026 13:45:26 GMT"
+      "date": "Wed, 09 Sep 2026 07:58:57 GMT"
     },
     "/mastra/background-tasks": {
       "file": "mastra__background-tasks.md",
@@ -198,15 +198,15 @@
     },
     "/mastra/intelligence/quickstart": {
       "file": "mastra__intelligence__quickstart.md",
-      "sha256": "a6e54b3f838fb9b0446e29f2586657e503e26565c45a91e6b062f71bb316e18e",
-      "bytes": 7233,
-      "lines": 160,
+      "sha256": "fda083c305f985492c26a2c2215a94c85bc5a3dd8b345cc4766e96350082edc8",
+      "bytes": 7195,
+      "lines": 159,
       "routes": [
         "/intelligence/quickstart"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 04 Sep 2026 13:40:34 GMT"
+      "date": "Wed, 09 Sep 2026 07:58:57 GMT"
     },
     "/mastra/prebuilt-components": {
       "file": "mastra__prebuilt-components.md",
@@ -306,15 +306,15 @@
     },
     "/mastra/webmcp": {
       "file": "mastra__webmcp.md",
-      "sha256": "fb1990ba3635580c715618e9294ba814c79fa723b007ac8f42e49924c5780156",
-      "bytes": 7479,
-      "lines": 153,
+      "sha256": "a3af3b675ede558c367845fe2f52548a334142d994f0b21de394b6152101935b",
+      "bytes": 7482,
+      "lines": 165,
       "routes": [
         "/webmcp"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 04 Sep 2026 13:40:34 GMT"
+      "date": "Wed, 09 Sep 2026 07:58:57 GMT"
     }
   },
   "sitemap": {

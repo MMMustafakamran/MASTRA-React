@@ -2,6 +2,7 @@
 
 > Share app specific context with your agent.
 
+
 ## What is this?
 
 One of the most common use cases for CopilotKit is to register app state and context using `useAgentContext`.
@@ -15,6 +16,23 @@ state updates, you can reflect these updates natively in your application.
 Some examples might be: the current user, the current page, etc. This can be shared with your agent in real time.
 
 ## Implementation
+
+<Callout type="warn" title="Context values arrive as JSON strings">
+  The AG-UI protocol defines a context value as a string. Therefore
+  `useAgentContext` calls `JSON.stringify` on any `value` that is not already a
+  string, and your agent receives the JSON text instead of the object or the
+  array.
+
+  Parse the value before you read a field from it. Use `json.loads(item["value"])`
+  in Python, or `JSON.parse(item.value)` in TypeScript. If you skip the parse
+  step, an index such as `colleagues[0]` returns a single character, and a shape
+  check such as `isinstance(value, list)` can never pass.
+
+  Do not stringify the value again, because that produces double encoding. A
+  `value` that is already a string is sent unchanged, so no parse step is needed
+  for it.
+</Callout>
+
 <Steps>
     <Step>
         ### Share data with your agent
@@ -64,13 +82,18 @@ Some examples might be: the current user, the current page, etc. This can be sha
             name: "Colleagues contact Agent",
             model: openai("gpt-4o"),
             // Use the injected runtime context
-            // [!code highlight:8]
+            // [!code highlight:13]
             instructions: ({ requestContext }) => {
                 const aguiContext = requestContext.get('ag-ui')?.context;
                 const colleaguesContextItem = aguiContext?.find(contextItem => contextItem.description === "The current user's colleagues")
+
+                // The value is already a JSON string, so parse it instead of stringifying it
+                const colleagues = colleaguesContextItem ? JSON.parse(colleaguesContextItem.value) : [];
+                const colleagueList = colleagues.map((c) => `${c.name} (${c.role})`).join(", ");
+
                 return `
                     You are a helpful assistant that can help emailing colleagues.
-                    The user's colleagues are: ${JSON.stringify(colleaguesContextItem?.value, null, 2)}
+                    The user's colleagues are: ${colleagueList}
                 `
             },
             // ... Everything else used to configure your agent

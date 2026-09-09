@@ -50,7 +50,9 @@ The WebMCP call stays in the browser unless your handler deliberately calls an A
 
 ## Add WebMCP manually
 
-### Existing React frontend tool
+
+
+### React frontend tool
 
 Add `webmcp` to the tool you already register. This code must run inside your existing `CopilotKitProvider`.
 
@@ -83,6 +85,12 @@ export function OrderSearch() {
 ```
 
 Use the equivalent option with [`useFrontendTool` for Vue](/reference/vue/hooks/useFrontendTool) or [`registerFrontendTool` for Angular](/reference/angular/functions/registerFrontendTool). The React API is documented in [`useFrontendTool`](/reference/hooks/useFrontendTool).
+
+
+
+
+
+
 
 ### WebMCP only, with no agent
 
@@ -147,6 +155,10 @@ If the tool does not appear, check the browser setup first, then verify that the
 ## Related
 
 - [Frontend tools](/mastra/frontend-tools)
+
 - [React `useFrontendTool` reference](/reference/hooks/useFrontendTool)
+
+
+
 - [WebMCP specification](https://webmachinelearning.github.io/webmcp/)
 - [Chrome WebMCP best practices](https://developer.chrome.com/docs/ai/webmcp/best-practices)
