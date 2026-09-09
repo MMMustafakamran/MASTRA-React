@@ -146,6 +146,32 @@ export const searchAgent = new Agent({
 // Note how context arrives: `instructions` is a function reading
 // `requestContext.get('ag-ui')?.context`. Mastra injects what the frontend
 // registered with `useAgentContext` there, so no tool is involved.
+
+/**
+ * Undo the `JSON.stringify` `useAgentContext` applies on the way out.
+ *
+ * The AG-UI protocol types a context value as a string, so the hook stringifies
+ * anything that is not already one and the agent receives JSON text rather than
+ * the object or the array. The page spells this out as of the 2026-09-09 sync,
+ * and names this exact mistake: stringifying the value a second time produces
+ * double encoding, which is what the prompt below used to contain — an escaped
+ * blob rather than a list.
+ *
+ * A value that was already a string is sent unchanged and has to survive
+ * untouched, so a decode is only accepted when it produces a container.
+ * `JSON.parse` succeeds on plain text like `123` or `true` that was never
+ * encoded in the first place, and taking those results would corrupt them.
+ */
+function parseAgentContextValue(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  try {
+    const decoded: unknown = JSON.parse(value);
+    return typeof decoded === "object" && decoded !== null ? decoded : value;
+  } catch {
+    return value;
+  }
+}
+
 export const colleaguesContactAgent = new Agent({
   id: "colleague-agent",
   name: "Colleagues contact Agent",
@@ -162,9 +188,10 @@ export const colleaguesContactAgent = new Agent({
       (contextItem) =>
         contextItem.description === "The current user's colleagues",
     );
+    const colleagues = parseAgentContextValue(colleaguesContextItem?.value);
     return `
         You are a helpful assistant that can help emailing colleagues.
-        The user's colleagues are: ${JSON.stringify(colleaguesContextItem?.value, null, 2)}
+        The user's colleagues are: ${JSON.stringify(colleagues, null, 2)}
     `;
   },
 });

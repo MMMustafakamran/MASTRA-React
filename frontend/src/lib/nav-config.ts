@@ -310,10 +310,11 @@ export const NAV: NavGroup[] = [
         title: "Intelligence · Quickstart",
         docPath: "/mastra/intelligence/quickstart",
         summary:
-          "Connecting an existing app to a hosted CopilotKit Intelligence project so threads persist.",
-        status: "not-started",
+          "The single-route runtime transport this page switched to: one POST mount plus `useSingleEndpoint` on the provider.",
+        status: "partial",
         statusNote:
-          "Tracked for drift only — no demo yet. Setup starts at `npx copilotkit login` and a `CPK_INTELLIGENCE_API_KEY` from a hosted Intelligence project, which is an account-scoped resource this harness does not have.",
+          "Steps 3 and 4 are implemented against a third runtime mount at `/api/copilotkit-single`. Steps 1, 2 and 5 need a `CPK_INTELLIGENCE_API_KEY` from a hosted Intelligence project, which is an account-scoped resource this harness does not have.",
+        hasDemo: true,
       },
     ],
   },
