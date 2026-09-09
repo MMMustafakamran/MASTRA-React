@@ -542,6 +542,13 @@ export const PAGES = definePages([
       },
     ],
     prompt: "Tell me a one-line joke.",
+    // The only page in this suite whose runtime route is never touched by any
+    // other take, so its first request is also the first time `next dev`
+    // compiles `/api/copilotkit-single`. On a cold CI runner that lands past
+    // the 30s default and the take fails with the agent apparently silent.
+    // `core/timeouts.ts` says the defaults suit a warm dev server and that a
+    // legitimately slow page should say so here; this is that page.
+    timeouts: { replyStartMs: 90_000 },
     waitAfterPromptMs: 4000,
   },
 
