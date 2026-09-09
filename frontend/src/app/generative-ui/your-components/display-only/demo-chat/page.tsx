@@ -30,7 +30,7 @@ function WeatherCard({
   condition,
 }: z.infer<typeof weatherSchema>) {
   return (
-    <div className="my-2 max-w-xs rounded-lg border border-[var(--accent)] bg-white p-4 dark:bg-slate-900">
+    <div className="my-2 max-w-xs rounded-lg border border-[var(--harness-accent)] bg-white p-4 dark:bg-slate-900">
       <h3 className="font-semibold text-slate-900 dark:text-slate-50">{city}</h3>
       <p className="mt-1 text-2xl text-slate-900 dark:text-slate-50">
         {temperature}°F

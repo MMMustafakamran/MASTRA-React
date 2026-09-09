@@ -32,18 +32,18 @@ export default function Page() {
     render: ({ args, respond }) => {
       if (!respond) return <></>;
       return (
-        <div className="my-2 flex flex-wrap gap-2 text-white rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+        <div className="my-2 flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-3 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
           <button
             type="button"
             onClick={() => respond(`${args.option_1} was selected`)}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-[var(--accent)] hover:text-[var(--accent)] dark:border-slate-600"
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-[var(--harness-accent)] hover:text-[var(--harness-accent)] dark:border-slate-600"
           >
             {args.option_1}
           </button>
           <button
             type="button"
             onClick={() => respond(`${args.option_2} was selected`)}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-[var(--accent)] hover:text-[var(--accent)] dark:border-slate-600"
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-[var(--harness-accent)] hover:text-[var(--harness-accent)] dark:border-slate-600"
           >
             {args.option_2}
           </button>

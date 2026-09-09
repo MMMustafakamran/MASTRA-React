@@ -40,7 +40,7 @@ export default function Page() {
             <button
               type="button"
               onClick={() => respond?.(`Tell the user the command ran`)}
-              className="rounded-md px-3 py-1.5 rounded-md border border-white text-sm text-white font-medium"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-900 hover:border-[var(--harness-accent)] hover:text-[var(--harness-accent)] dark:border-slate-600 dark:text-slate-100"
             >
               Approve
             </button>

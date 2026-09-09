@@ -3,6 +3,34 @@
 :root {
   /* Rewritten at runtime by the setThemeColor frontend tool. */
   --accent: #10b981;
+
+  /*
+   * The same colour under a name CopilotKit does not use.
+   *
+   * `--accent` is not ours alone: @copilotkit/react-core v2 ships a shadcn
+   * token set on `[data-copilotkit]`, and one of those tokens is
+   * `--accent: oklch(97% 0 0)` -- a near-white hover surface. Any element of
+   * ours rendered INSIDE a CopilotKit surface (a `useHumanInTheLoop` card, a
+   * tool renderer) sits under that selector, so `var(--accent)` there resolves
+   * to their near-white, not our emerald. `bg-[var(--accent)]` with
+   * `text-white` on top then paints white on white.
+   *
+   * That is not hypothetical: it is what made the Governed Actions
+   * "Approve and run" button invisible on camera until 2026-09-09. Measured on
+   * the live page, the button's background computed to lab(96.52 …) -- their
+   * value -- while `:root` still held #10b981.
+   *
+   * The indirection is what fixes it. `var(--accent)` is substituted at
+   * computed-value time HERE, at `:root`, so `--harness-accent` computes to the
+   * emerald and inherits that computed colour everywhere, including under
+   * `[data-copilotkit]` where `--accent` itself has been reassigned. It also
+   * still tracks the setThemeColor tool, because that tool rewrites `--accent`
+   * on this same element.
+   *
+   * Use `--harness-accent` for anything that can render inside a chat.
+   * `--accent` remains correct for page chrome outside one.
+   */
+  --harness-accent: var(--accent);
 }
 
 @theme inline {
