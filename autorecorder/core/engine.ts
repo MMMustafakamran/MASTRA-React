@@ -461,7 +461,13 @@ export class RecordingEngine {
       await pause(opts.dwellMs);
     }
 
-    await page.unroute(ideUrl).catch(() => {});
+    // Bounded, because unbounded it can hang the whole run. `unroute` waits for
+    // in-flight handlers of the route it removes, and after some doc pages one
+    // never settles: seen 4/4 on the Learning page, whose Loom embed is the one
+    // thing it has that the others don't. The IDE window is finished with by
+    // now either way, and a leftover handler on a URL nothing else requests is
+    // harmless.
+    await Promise.race([page.unroute(ideUrl).catch(() => {}), sleep(3000)]);
   }
 
   /**
@@ -508,7 +514,8 @@ export class RecordingEngine {
     // The route stays registered for the life of the page; unrouting keeps a
     // second terminal segment on the same page from being served the first
     // one's HTML.
-    await page.unroute(terminalUrl).catch(() => {});
+    // Bounded for the same reason as the IDE route above.
+    await Promise.race([page.unroute(terminalUrl).catch(() => {}), sleep(3000)]);
   }
 
   /**
