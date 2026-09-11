@@ -36,13 +36,6 @@ export const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || 3000);
 export const FRONTEND_URL = `http://127.0.0.1:${FRONTEND_PORT}`;
 
 /**
- * Routes compiled before recording starts. Next.js builds routes on demand, so
- * the first hit of each is slow enough to blow the recorder's preflight
- * timeout. Warming them keeps that cost out of the recording itself.
- */
-export const WARMUP_ROUTES = ['/', '/quickstart/demo-chat'];
-
-/**
  * The paths the browser posts to for agent replies — the routes that carry
  * Mastra itself.
  *

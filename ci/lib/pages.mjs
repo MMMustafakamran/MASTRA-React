@@ -63,6 +63,10 @@ export const PAGE_GROUPS = {
     'learning',
   ],
   backend: ['copilot-runtime', 'ag-ui'],
+  // The generated CLI demo pages. No dispatch checkbox (the form is at
+  // GitHub's ten-input cap) and CI excludes them anyway -- they boot their
+  // own dev server -- but every id must belong to a group, and these are ids.
+  cli: ['demo-npm', 'demo-pnpm', 'demo-yarn', 'demo-bun'],
 };
 
 export function readPageIds() {
@@ -75,6 +79,15 @@ export function readPageIds() {
 
   // Both quote styles, because the config is hand-edited and has used each.
   const ids = [...src.matchAll(/^\s*id:\s*['"]([^'"]+)['"]/gm)].map((m) => m[1]);
+  // The generated per-package-manager pages write their id as a template,
+  // `demo-${pm}`, over the `{ pm: '...' }` table above it. Expand it the same
+  // way, or those pages are invisible here: unselectable from the dispatch
+  // form and missing from the coverage check that claims every page is grouped.
+  for (const tpl of src.matchAll(/^\s*id:\s*`([^`$]*)\$\{(\w+)\}([^`]*)`/gm)) {
+    const [, before, variable, after] = tpl;
+    const values = [...src.matchAll(new RegExp(`\\{\\s*${variable}:\\s*'([^']+)'`, 'g'))].map((m) => m[1]);
+    for (const v of values) ids.push(`${before}${v}${after}`);
+  }
   if (ids.length === 0) {
     throw new Error(`No page ids found in ${PAGES_CONFIG}`);
   }

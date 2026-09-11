@@ -14,7 +14,6 @@ import {
   FRONTEND_PORT,
   FRONTEND_URL,
   RUNTIME_WARM_PATHS,
-  WARMUP_ROUTES,
   isWindows,
 } from './config.mjs';
 
@@ -154,25 +153,6 @@ export async function assertModelCredentials() {
   } catch (err) {
     if (err instanceof Error && /no credits remaining/.test(err.message)) throw err;
     process.stdout.write('⚠️ could not probe; continuing.\n');
-  }
-}
-
-/**
- * Compile the heaviest routes before the recorder's own preflight runs, so a
- * cold Turbopack build is not mistaken for a dead frontend.
- */
-export async function warmFrontendRoutes(timeoutMs = 180000) {
-  for (const route of WARMUP_ROUTES) {
-    const url = `${FRONTEND_URL}${route}`;
-    process.stdout.write(`⏳ [Warmup] ${route} ... `);
-    const started = Date.now();
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-      const secs = ((Date.now() - started) / 1000).toFixed(1);
-      process.stdout.write(`${res.ok ? '✅' : `⚠️ HTTP ${res.status}`} (${secs}s)\n`);
-    } catch {
-      process.stdout.write('⚠️ timed out; recorder may hit a cold compile.\n');
-    }
   }
 }
 

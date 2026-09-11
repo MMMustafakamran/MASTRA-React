@@ -208,5 +208,4 @@ a real key at the root.
 uploaded with the CI artifacts.
 
 **Recorder aborts on preflight** — the app was still compiling. The warmup step
-covers the usual routes plus `/api/copilotkit`; a page added to `WARMUP_ROUTES`
 in `lib/config.mjs` gets the same treatment.
