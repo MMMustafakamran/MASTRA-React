@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { promptsFor, sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 import { waitForDomSettled } from './page-ready';
@@ -34,7 +34,7 @@ export const runMultiAgentFlowsAction: PageActionHandler = async (
     config.waitAfterPromptMs ?? 3000,
     routerCount,
   );
-  await sleep(1200);
+  await beat(1200);
 
   // ── Agent lock mode ───────────────────────────────────────────────────────
   console.log(`   [Multi-Agent Flows] 2/2: switching to agent lock mode...`);
@@ -77,5 +77,5 @@ export const runMultiAgentFlowsAction: PageActionHandler = async (
   );
 
   await humanGlide(page, 960, 300, 25);
-  await sleep(1500);
+  await beat(1500);
 };

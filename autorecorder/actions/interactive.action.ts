@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -42,7 +42,7 @@ export const runInteractiveAction: PageActionHandler = async (
   }
 
   // Let the proposed command sit on screen long enough to read before deciding.
-  await sleep(2500);
+  await beat(2500);
 
   const box = await approve.boundingBox();
   if (box) {

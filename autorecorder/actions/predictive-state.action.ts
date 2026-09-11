@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanGlide, sleep } from '../core/overlays/cursor';
 import { type ActionContext, type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -74,7 +74,7 @@ export const runPredictiveStateAction: PageActionHandler = async (
 
   // Working memory is reconciled at run end, so give the pane a beat past the
   // last token before reading it.
-  await sleep(1500);
+  await beat(1500);
   const document = ((await pane.textContent().catch(() => '')) ?? '').trim();
   console.log(`   Document pane holds ${document.length} characters.`);
 
@@ -99,5 +99,5 @@ export const runPredictiveStateAction: PageActionHandler = async (
   if (box) {
     await humanGlide(page, box.x + Math.min(box.width / 2, 260), box.y + 90, 20);
   }
-  await sleep(2500);
+  await beat(2500);
 };

@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type ActionContext, type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { promptsFor, sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 import { waitForDomSettled } from './page-ready';
@@ -129,5 +129,5 @@ export const runRuntimeAction: PageActionHandler = async (
   }
 
   await humanGlide(page, 960, 300, 25);
-  await sleep(1500);
+  await beat(1500);
 };

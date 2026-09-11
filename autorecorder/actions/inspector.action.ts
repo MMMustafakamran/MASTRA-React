@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt } from '../core/actions';
 
@@ -110,7 +110,7 @@ export async function openInspector(page: Page): Promise<boolean> {
 
   await humanGlide(page, triggerPos.x, triggerPos.y, 22);
   await humanClick(page);
-  await sleep(2500);
+  await beat(2500);
   return true;
 }
 
@@ -218,7 +218,7 @@ export async function openInspectorPanel(
   console.log(`   🎯 "${menuKey}" at (${Math.round(pos.x)}, ${Math.round(pos.y)})`);
   await humanGlide(page, pos.x, pos.y, 20);
   await humanClick(page);
-  await sleep(1200);
+  await beat(1200);
 
   const active = await page.evaluate((key) => {
     const stack: (Document | ShadowRoot)[] = [document];
@@ -259,7 +259,7 @@ export const runInspectorAction: PageActionHandler = async (
   await sendPrompt(page, config.prompt, { timeoutMs: 12000 });
 
   console.log(`   Waiting for initial agent response...`);
-  await sleep(4500);
+  await beat(4500);
 
   await openInspector(page);
 
@@ -267,7 +267,7 @@ export const runInspectorAction: PageActionHandler = async (
   // run's actual protocol traffic shows up.
   console.log(`   Selecting the AG-UI Events panel...`);
   await openInspectorPanel(page, 'ag-ui-events');
-  await sleep(4000);
+  await beat(4000);
 
   await humanGlide(page, 960, 500, 25);
   await sleep(config.waitAfterPromptMs ?? 4000);

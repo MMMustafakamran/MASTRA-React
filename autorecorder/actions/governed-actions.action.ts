@@ -6,7 +6,7 @@ import {
   sendPrompt,
   waitForAgentResponseCompletion,
 } from '../core/actions';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type ActionContext, type PageActionHandler, type PageRecordConfig } from '../core/types';
 
 /**
@@ -116,7 +116,7 @@ async function runVerdict(
     const box = await args.boundingBox();
     if (box) {
       await humanGlide(page, box.x + box.width / 2, box.y + box.height / 2, 22);
-      await sleep(1800);
+      await beat(1800);
     }
   }
 
@@ -172,7 +172,7 @@ export const runGovernedActionsAction: PageActionHandler = async (
 
   // A beat between the turns so the approved run visibly finishes before the
   // next request goes in, rather than the two answers running together.
-  await sleep(1500);
+  await beat(1500);
 
   await runVerdict(page, config, ctx, rejectPrompt ?? FALLBACK_REJECT_PROMPT, 'Reject');
 };

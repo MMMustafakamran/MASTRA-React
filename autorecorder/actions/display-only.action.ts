@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -35,7 +35,7 @@ export const runDisplayOnlyAction: PageActionHandler = async (
         `   🎯 Card rendered at (${Math.round(box.x)}, ${Math.round(box.y)})`,
       );
       await humanGlide(page, box.x + box.width / 2, box.y + box.height / 2, 22);
-      await sleep(1500);
+      await beat(1500);
     }
   } else {
     console.warn(`   ⚠️ No weather card found -- the reply may be plain text.`);

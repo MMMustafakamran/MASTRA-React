@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { promptsFor, sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 import { waitForDomSettled } from './page-ready';
@@ -38,7 +38,7 @@ export const runPrebuiltAction: PageActionHandler = async (
   }
   await humanGlide(page, 1650, 450, 25);
   console.log(`   Docked CopilotSidebar showcase...`);
-  await sleep(1500);
+  await beat(1500);
 
   // 3/3: CopilotPopup tab
   console.log(`   [Prebuilt] 3/3: Switching to CopilotPopup tab...`);
@@ -60,9 +60,9 @@ export const runPrebuiltAction: PageActionHandler = async (
     if (plBox) {
       await humanGlide(page, plBox.x + plBox.width / 2, plBox.y + plBox.height / 2, 20);
       await humanClick(page);
-      await sleep(1500);
+      await beat(1500);
     }
   }
   await humanGlide(page, 960, 540, 20);
-  await sleep(1500);
+  await beat(1500);
 };

@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { waitForAgentResponseCompletion } from '../core/actions';
 
@@ -40,7 +40,7 @@ export const runHeadlessUiAction: PageActionHandler = async (
   console.log(`   [Headless UI] Waiting for the hand-built interface to settle...`);
   const inputLocator = page.locator(INPUT).first();
   await inputLocator.waitFor({ state: 'visible', timeout: 15000 });
-  await sleep(800);
+  await beat(800);
 
   // Cursor goes to the input for the camera; focus is set programmatically
   // because the taskbar overlay covers this row.

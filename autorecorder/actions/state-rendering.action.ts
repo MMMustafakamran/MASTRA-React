@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanGlide, sleep } from '../core/overlays/cursor';
 import { type ActionContext, type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { promptsFor, sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -55,7 +55,7 @@ async function restOnPanel(page: Page): Promise<void> {
   } else {
     await humanGlide(page, 420, 260, 22);
   }
-  await sleep(2200);
+  await beat(2200);
 }
 
 export const runStateRenderingAction: PageActionHandler = async (
@@ -92,7 +92,7 @@ export const runStateRenderingAction: PageActionHandler = async (
 
     // Working memory is reconciled at run end, so the pane can lag the last
     // token by a beat. Give it one before reading, then show it.
-    await sleep(1200);
+    await beat(1200);
     counts.push(await countSearches(page));
     console.log(`   Searches in the panel after turn ${i + 1}: ${counts[i]}`);
     await restOnPanel(page);

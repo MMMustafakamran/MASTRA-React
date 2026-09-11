@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { promptsFor, sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -28,7 +28,7 @@ async function restOnStatePanel(page: Page): Promise<void> {
   } else {
     await humanGlide(page, 420, 220, 22);
   }
-  await sleep(2000);
+  await beat(2000);
 }
 
 /**
@@ -105,7 +105,7 @@ export const runSharedStateWriteAction: PageActionHandler = async (
   } else {
     await toggle.click();
   }
-  await sleep(1200);
+  await beat(1200);
 
   // Read the panel before prompting. `setState` is synchronous on the client,
   // so if the readout has not flipped by now the write never landed -- and the

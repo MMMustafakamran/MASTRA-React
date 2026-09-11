@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanGlide, sleep } from '../core/overlays/cursor';
 import { type ActionContext, type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -52,7 +52,7 @@ export const runA2uiAction: PageActionHandler = async (
 
   // A surface can be emitted after the last text token, so give the stream a
   // beat to settle before deciding it never arrived.
-  await sleep(2000);
+  await beat(2000);
   const surfaces = await page.locator(SURFACE).count().catch(() => 0);
   console.log(`   A2UI surfaces rendered: ${surfaces}`);
 
@@ -63,7 +63,7 @@ export const runA2uiAction: PageActionHandler = async (
   if (box) {
     await humanGlide(page, box.x + Math.min(box.width / 2, 240), box.y + 60, 22);
   }
-  await sleep(3000);
+  await beat(3000);
 
   if (surfaces === 0) {
     ctx.fail(

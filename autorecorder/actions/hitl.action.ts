@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type ActionContext, type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -65,7 +65,7 @@ export const runHitlAction: PageActionHandler = async (
 
   // Let both choices sit on screen long enough to read before deciding --
   // a chooser nobody looks at is not a human in the loop.
-  await sleep(2500);
+  await beat(2500);
 
   const chosen = options.first();
   const box = await chosen.boundingBox();

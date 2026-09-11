@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -15,7 +15,7 @@ export const runProgrammaticAction: PageActionHandler = async (
       await humanGlide(page, dmBox.x + dmBox.width / 2, dmBox.y + dmBox.height / 2, 20);
       await humanClick(page);
       console.log(`   Clicked Dark Mode!`);
-      await sleep(1500);
+      await beat(1500);
     }
   }
 

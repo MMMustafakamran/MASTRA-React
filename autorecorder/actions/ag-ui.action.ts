@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -14,9 +14,9 @@ export const runAgUiAction: PageActionHandler = async (
     `   Showcasing live AG-UI event log stream (RUN_STARTED -> TEXT_MESSAGE_CONTENT -> TOOL_CALL -> RUN_FINISHED)...`,
   );
   // Move cursor over event log panel on the left while events stream
-  await sleep(1500);
+  await beat(1500);
   await humanGlide(page, 450, 300, 22);
-  await sleep(1500);
+  await beat(1500);
   await humanGlide(page, 450, 550, 22);
 
   await waitForAgentResponseCompletion(page, config.waitAfterPromptMs ?? 4000, msgCount);

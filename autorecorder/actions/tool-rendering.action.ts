@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt, waitForAgentResponseCompletion } from '../core/actions';
 
@@ -18,14 +18,14 @@ export const runToolRenderingAction: PageActionHandler = async (
     .locator('p:has-text("weather API"), div:has-text("Tokyo"), .copilotKitAssistantMessage')
     .first();
   await weatherElement.waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
-  await sleep(1500);
+  await beat(1500);
 
   if (await weatherElement.isVisible({ timeout: 5000 }).catch(() => false)) {
     const weBox = await weatherElement.boundingBox();
     if (weBox) {
       console.log(`   🎯 Detected rendered weather tool call at (${Math.round(weBox.x)}, ${Math.round(weBox.y)})`);
       await humanGlide(page, weBox.x + Math.min(weBox.width / 2, 250), weBox.y + weBox.height / 2, 22);
-      await sleep(2500);
+      await beat(2500);
     }
   }
 

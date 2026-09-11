@@ -1,5 +1,5 @@
 import { type Page } from 'playwright';
-import { humanClick, humanGlide, sleep } from '../core/overlays/cursor';
+import { beat, humanClick, humanGlide, sleep } from '../core/overlays/cursor';
 import { type PageActionHandler, type PageRecordConfig } from '../core/types';
 import { sendPrompt } from '../core/actions';
 import { openInspector, openInspectorPanel } from './inspector.action';
@@ -214,7 +214,7 @@ async function expandEvent(
   }
 
   await row.scrollIntoViewIfNeeded().catch(() => {});
-  await sleep(900);
+  await beat(900);
 
   const toggle = row
     .locator('button[aria-expanded], button:has-text("Show details")')
@@ -234,11 +234,11 @@ async function expandEvent(
   } else {
     await toggle.click().catch(() => {});
   }
-  await sleep(1200);
+  await beat(1200);
 
   if ((await toggle.getAttribute('aria-expanded').catch(() => null)) !== 'true') {
     await toggle.click({ force: true }).catch(() => {});
-    await sleep(1200);
+    await beat(1200);
   }
 
   const expanded =
@@ -313,7 +313,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
     1550,
     280,
   );
-  await sleep(2500);
+  await beat(2500);
   await closeNotepadNote(page);
 
   // Give the queued work time to actually finish before we go looking for
@@ -326,7 +326,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
   // and the card being unresolved proved nothing there. Outwaiting the ceiling
   // is what makes "still running" a finding rather than an artefact.
   console.log(`   ⏳ Letting the background job run past its declared timeout...`);
-  await sleep(45000);
+  await beat(45000);
 
   const statusBeforeInspector = await readCardStatus(page);
   const badgeText =
@@ -347,13 +347,13 @@ export const runBackgroundTasksAction: PageActionHandler = async (
 
   console.log(`   Navigating to Threads...`);
   await openInspectorPanel(page, 'threads');
-  await sleep(2000);
+  await beat(2000);
 
   const tabStrip = page.locator('button[role="tab"]').first();
   if (!(await tabStrip.isVisible({ timeout: 4000 }).catch(() => false))) {
     console.log(`   No thread auto-selected; picking the first row...`);
     if (await clickIfVisible(page, '.cpk-tl__item', 6000)) {
-      await sleep(2500);
+      await beat(2500);
     }
   }
 
@@ -374,7 +374,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
   } else {
     console.log(`   Opening the AG-UI Events tab...`);
     await clickIfVisible(page, 'button[role="tab"]:has-text("AG-UI Events")', 6000);
-    await sleep(2000);
+    await beat(2000);
 
     // The tab label is the contract with a specific Inspector release. If it
     // was renamed, drive the component's own API instead of failing the shot --
@@ -390,7 +390,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
           details?.selectTab?.(tabId);
         }, RAW_EVENTS_TAB_ID)
         .catch(() => {});
-      await sleep(2000);
+      await beat(2000);
     }
 
     const active = await activeTabLabel(page);
@@ -407,7 +407,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
   // evidence on screen.
   if (onRawEvents) {
     await clickIfVisible(page, 'button:has-text("Expand all")', 4000);
-    await sleep(2000);
+    await beat(2000);
   }
 
   // Diagnostics, kept rather than deleted after the bug was chased.
@@ -471,14 +471,14 @@ export const runBackgroundTasksAction: PageActionHandler = async (
         } else {
           await toggle.click().catch(() => {});
         }
-        await sleep(1500);
+        await beat(1500);
         // A glide-and-click lands on screen coordinates, so anything overlaying
         // the row swallows it silently. Verify, and fall back to a direct DOM
         // click that cannot be intercepted.
         if ((await toggle.getAttribute('aria-expanded').catch(() => null)) !== 'true') {
           console.log(`   🔬 cursor click did not expand it; clicking directly...`);
           await toggle.click({ force: true }).catch(() => {});
-          await sleep(1500);
+          await beat(1500);
         }
         console.log(
           `   🔬 aria-expanded after clicking: ${await toggle
@@ -525,12 +525,12 @@ export const runBackgroundTasksAction: PageActionHandler = async (
       console.log(`   Opening the terminal events' payloads...`);
       await expandEvent(page, TEXT_FINISHED_LABEL, 'Text message end');
       await nudgeScroll(page);
-      await sleep(2500);
+      await beat(2500);
 
       await expandEvent(page, RUN_FINISHED_LABEL, 'Run finished');
       await nudgeScroll(page);
       console.log(`   🎯 Resting on the expanded "Run finished" payload.`);
-      await sleep(4500);
+      await beat(4500);
 
       if (evidenceShown) {
         console.log(
@@ -548,7 +548,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
             'The details toggle expanded but the payload is not a <pre> in this build.',
         );
       }
-      await sleep(4000);
+      await beat(4000);
     } else {
       console.warn(
         '   ⚠ No activity event listed at all. The terminal event never reached ' +
@@ -561,7 +561,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
   // ── Half 3: back to the card. This is the finding ────────────────────────
   console.log(`   Closing the Inspector to re-check the card...`);
   await clickIfVisible(page, '[aria-label="Close Web Inspector"]', 4000);
-  await sleep(2000);
+  await beat(2000);
 
   const finalStatus = await readCardStatus(page);
   const finalText =
@@ -632,7 +632,7 @@ export const runBackgroundTasksAction: PageActionHandler = async (
     height: '460px',
   });
   await typeInNotepad(page, verdict, 1550, 280);
-  await sleep(6000);
+  await beat(6000);
   await closeNotepadNote(page);
 
   await restOn(page, ACTIVITY_CARD, config.waitAfterPromptMs ?? 4000);
