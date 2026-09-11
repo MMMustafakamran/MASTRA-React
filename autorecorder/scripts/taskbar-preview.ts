@@ -5,7 +5,9 @@
  *   npx tsx scripts/taskbar-preview.ts [out.png] [chrome|vscode|terminal]
  */
 import { chromium } from 'playwright';
-import { ensureOverlays, type TaskbarApp } from '../core/overlays/taskbar';
+import { ensureOverlays } from '../core/overlays/taskbar';
+
+type TaskbarApp = Parameters<typeof ensureOverlays>[1];
 
 const [out = 'taskbar-preview.png', app = 'vscode'] = process.argv.slice(2);
 const browser = await chromium.launch();
