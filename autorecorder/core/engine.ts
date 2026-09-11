@@ -13,6 +13,13 @@ import {
 } from './cli/service';
 import { generateTerminalHtml } from './cli/terminal';
 import { captureConsole, type ConsoleEntry } from './console-capture';
+import {
+  buildFailureEvidence,
+  evidenceCast,
+  snapshotLogOffsets,
+  writeFailureLog,
+  type LogSource,
+} from './failure-evidence';
 import { generateIdeHtml, type IdeTabConfig } from './ide/generator';
 import { closeNotepad, openNotepad, typeInNotepad } from './overlays/notepad';
 import { humanClick, humanGlide, humanScrollDown, restCursorSomewhere, sleep } from './overlays/cursor';
@@ -519,6 +526,47 @@ export class RecordingEngine {
   }
 
   /**
+   * Closes a failed take on the evidence: the log file always, the terminal
+   * window when the page can still be driven. Bounded, so a wedged page cannot
+   * turn a 60-second failure into a 5-minute one.
+   */
+  private async showFailureEvidence(
+    page: Page,
+    pageId: string,
+    error: string,
+    consoleEntries: ConsoleEntry[],
+    logs: LogSource[],
+    logsDir: string,
+  ): Promise<void> {
+    let evidence;
+    try {
+      evidence = buildFailureEvidence({ pageId, error, consoleEntries, logs });
+      const file = writeFailureLog(logsDir, evidence);
+      console.log(`   📝 Failure evidence: ${file}`);
+    } catch (e) {
+      console.warn(`   Evidence note: could not write the error log: ${e}`);
+      return;
+    }
+    if (page.isClosed()) return;
+    try {
+      await Promise.race([
+        (async () => {
+          await sleep(800);
+          await this.playCastInTerminal(page, {
+            cast: evidenceCast(evidence),
+            title: `Error console — ${pageId}`,
+          });
+        })(),
+        sleep(45_000).then(() => {
+          throw new Error('evidence terminal did not finish in 45s');
+        }),
+      ]);
+    } catch (e) {
+      console.warn(`   Evidence note: terminal not shown on camera: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
+  /**
    * Films a captured CLI session: the doc page it belongs to, then a terminal
    * window replaying the cast.
    *
@@ -630,6 +678,11 @@ export class RecordingEngine {
     let finalSavedFilename = '';
     const warnings: string[] = [];
 
+    // Where the server logs stand as this take begins. If it fails, the
+    // evidence shown is this page's slice of the logs, not the whole run's.
+    const logsDir = join(this.videosDir, 'logs');
+    const logSources: LogSource[] = snapshotLogOffsets(logsDir);
+
     /** A step that renders the thing under test failed -- the video is not usable. */
     const fail = (message: string): void => {
       if (!recordError) recordError = message;
@@ -675,12 +728,12 @@ export class RecordingEngine {
         );
       } catch (e) {
         const detail = e instanceof ServiceStartError ? `\n${e.tail}` : '';
-        return {
-          success: false,
-          filename: '',
-          error: `Dev server failed to start: ${e instanceof Error ? e.message : String(e)}${detail}`,
-          warnings: [],
-        };
+        const error = `Dev server failed to start: ${e instanceof Error ? e.message : String(e)}${detail}`;
+        // No browser to film this in; the log file is the only evidence.
+        try {
+          writeFailureLog(logsDir, buildFailureEvidence({ pageId: config.id, error, logs: logSources }));
+        } catch {}
+        return { success: false, filename: '', error, warnings: [] };
       }
     }
 
@@ -851,6 +904,16 @@ export class RecordingEngine {
       console.error(`❌ Recording error for ${config.id}:`, recordError);
     } finally {
       console_?.stop();
+
+      // A failed take ends with the person opening the terminal to read what
+      // went wrong: the diagnosed error, the browser console, and this page's
+      // slice of the server logs, scrolled to the line that explains it. The
+      // same text goes to videos/logs/<id>.error.log. Never lets an evidence
+      // problem hide the original failure.
+      if (recordError) {
+        await this.showFailureEvidence(page, config.id, recordError, console_?.entries ?? [], logSources, logsDir);
+      }
+
       finalSavedFilename = await this.closeStage(
         browser,
         context,

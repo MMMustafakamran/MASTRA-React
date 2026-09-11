@@ -1,0 +1,218 @@
+# CLI recorder: `npx copilotkit@latest create` and the four package-manager
+# installs, captured and filmed on a runner instead of by hand.
+#
+# What made this local-only, and what lifts each reason here:
+#
+#   sign-in is interactive   The CLI keeps its session in a plain file once a
+#                            person has signed in. That file is restored from
+#                            the COPILOTKIT_CLI_SESSION secret before the
+#                            scaffold runs, so no browser ever opens. Refresh it
+#                            when the scaffold starts stopping at the sign-in
+#                            prompt (see "Refreshing the secret" below).
+#   needs a terminal         The driver already runs the CLI under node-pty; a
+#                            runner has no console but a pty is a pty.
+#   spends a real account    Yes, and this workflow is opt-in for that reason:
+#                            weekly by default, or by hand. It does not run on
+#                            every push.
+#   failure is misread       The step that restores the session is a separate
+#                            step with its own name. A scaffold that then waits
+#                            on "Sign in with your browser" fails on that prompt
+#                            text, which the cast records -- read as "the saved
+#                            session was rejected", not "the CLI is broken".
+#
+# Runner choice: `ubuntu-latest` by default. A self-hosted runner on a machine
+# whose browser is already signed in works too (pick it in the dispatch form);
+# it is the only option for the sign-up flows, which need a fresh browser by
+# definition and stay manual.
+#
+# Refreshing the secret (once, then whenever sign-in stops being cached):
+#   1. locally: npx copilotkit@latest login
+#   2. Windows:  base64 -w0 "$APPDATA/copilotkit-auth-nodejs/Config/config.json"
+#      macOS:    base64 -i ~/Library/Preferences/copilotkit-auth-nodejs/config.json
+#      Linux:    base64 -w0 ~/.config/copilotkit-auth-nodejs/config.json
+#   3. gh secret set COPILOTKIT_CLI_SESSION -R <owner>/<repo> < that output
+#   The file is the CLI's own; nothing here parses it. If the CLI binds the
+#   session to the machine it was created on, the scaffold stops at the sign-in
+#   prompt and the cast says so -- switch the dispatch to the self-hosted runner.
+
+name: CLI recorder
+
+on:
+  schedule:
+    - cron: '17 4 * * 1' # Mondays; the CLI moves under @latest, weekly is enough
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Where to run
+        type: choice
+        default: ubuntu-latest
+        options: [ubuntu-latest, self-hosted]
+      managers:
+        description: Package managers (comma-separated subset of npm,pnpm,yarn,bun)
+        type: string
+        default: npm,pnpm,yarn,bun
+      demos:
+        description: Also boot each scaffolded app and film it answering (needs OPENAI_API_KEY)
+        type: boolean
+        default: true
+
+concurrency:
+  group: cli-recorder-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  # Lifts the local-only guard in cli-capture / cli-render / record.
+  AUTORECORD_ALLOW_CI: '1'
+
+jobs:
+  cli:
+    name: Scaffold, install ×4, film
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Enable yarn via corepack
+        run: corepack enable
+
+      - name: Install the recorder
+        run: npm --prefix autorecorder ci --no-audit --no-fund || npm --prefix autorecorder install --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        run: npx --prefix autorecorder playwright install --with-deps chromium
+
+      # The CLI's saved session, byte for byte, where the CLI looks for it on
+      # this OS. Missing secret = fail here, with this step's name, rather
+      # than 15 minutes later on a sign-in prompt nobody can answer.
+      - name: Restore the CopilotKit CLI session
+        env:
+          SESSION_B64: ${{ secrets.COPILOTKIT_CLI_SESSION }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SESSION_B64:-}" ]; then
+            echo "::error title=No CLI session::Set the COPILOTKIT_CLI_SESSION secret (see the header of this workflow)."
+            exit 1
+          fi
+          case "$RUNNER_OS" in
+            Linux)   dir="$HOME/.config/copilotkit-auth-nodejs" ;;
+            macOS)   dir="$HOME/Library/Preferences/copilotkit-auth-nodejs" ;;
+            Windows) dir="$APPDATA/copilotkit-auth-nodejs/Config" ;;
+          esac
+          mkdir -p "$dir"
+          echo "$SESSION_B64" | base64 -d > "$dir/config.json"
+          chmod 600 "$dir/config.json"
+          echo "restored to $dir/config.json ($(wc -c < "$dir/config.json") bytes)"
+
+      - name: Pin the CLI version this run resolves
+        run: |
+          v=$(npm view copilotkit version)
+          echo "copilotkit@$v" | tee autorecorder/casts-cli-version.txt
+          echo "- CLI under test: \`copilotkit@$v\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Scaffold (npx copilotkit@latest create)
+        working-directory: autorecorder
+        run: npm run capture -- --scaffold
+
+      - name: Distribute the scaffold to each package manager
+        working-directory: autorecorder
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # --distribute seeds the model key from the repo .env into each copy;
+          # on a runner that file is the secret.
+          [ -n "${OPENAI_API_KEY:-}" ] && printf 'OPENAI_API_KEY=%s\n' "$OPENAI_API_KEY" > ../.env || true
+          npm run capture -- --distribute --force
+
+      - name: Install with each package manager
+        working-directory: autorecorder
+        run: |
+          set +e
+          IFS=',' read -ra PMS <<< "${{ inputs.managers || 'npm,pnpm,yarn,bun' }}"
+          for pm in "${PMS[@]}"; do
+            pm=$(echo "$pm" | xargs)
+            echo "::group::install-$pm"
+            npm run capture -- "--install-$pm"
+            echo "install-$pm exit $?"
+            [ "$pm" = "pnpm" ] && npm run capture -- --approve-pnpm
+            echo "::endgroup::"
+          done
+          exit 0
+
+      - name: Render the CLI clips
+        working-directory: autorecorder
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" npm run render -- --all
+
+      - name: Film each scaffolded app answering
+        if: ${{ inputs.demos != false }}
+        working-directory: autorecorder
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set +e
+          IFS=',' read -ra PMS <<< "${{ inputs.managers || 'npm,pnpm,yarn,bun' }}"
+          for pm in "${PMS[@]}"; do
+            pm=$(echo "$pm" | xargs)
+            xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" npm run record -- "--demo-$pm" --allow-ci
+          done
+          exit 0
+
+      # Cast reports are compared like page results, keyed cli:<flow>. A
+      # bun install that has always failed on the backslash bug is
+      # "unchanged"; a pnpm install that starts failing is "new-error".
+      - name: Compare with the reviewed baseline
+        id: compare
+        run: |
+          set +e
+          node ci/compare-results.mjs --dir autorecorder/casts > /dev/null
+          code=$?
+          set -e
+          echo "verdict=$([ $code = 0 ] && echo unchanged || ([ $code = 3 ] && echo changed || echo error))" >> "$GITHUB_OUTPUT"
+          [ -f autorecorder/casts/RESULT_DIFF.md ] && cat autorecorder/casts/RESULT_DIFF.md >> "$GITHUB_STEP_SUMMARY"
+          for r in autorecorder/casts/*.report.json; do
+            echo "- $(basename "$r"): $(node -e "const j=require('./$r');console.log(j.success?'✅':'❌', j.error||'')")" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Open or update the results issue
+        if: steps.compare.outputs.verdict == 'changed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const md = fs.readFileSync('autorecorder/casts/RESULT_DIFF.md', 'utf8').replace(/^# .*\n/, '');
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [`CLI run differs from the reviewed baseline.`, '', md, '', `_Run: ${runUrl}_`].join('\n');
+            const title = 'Results changed: CLI flows differ from the reviewed baseline';
+            const { data: open } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: 'results-changed' });
+            const existing = open.find((i) => i.title === title);
+            if (existing) await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: existing.number, body });
+            else await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['results-changed'] });
+
+      - name: Upload casts, reports and clips
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-cli-${{ github.run_id }}
+          path: |
+            autorecorder/casts/*.cast
+            autorecorder/casts/*.report.json
+            autorecorder/casts/RESULT_DIFF.*
+            autorecorder/casts-cli-version.txt
+            autorecorder/videos/cli/*.webm
+            autorecorder/videos/logs/*.error.log
+            1-cli-testing/*/app/VERSIONS.md
+          if-no-files-found: warn
+          retention-days: 14

@@ -161,6 +161,22 @@ reads it, so the CI report lists what *this run* recorded rather than every
 
 ---
 
+## When a take fails
+
+A failed take no longer ends on the broken page. Before the browser closes,
+the recorder opens the simulated terminal and prints what it saw: the
+diagnosed verdict, the browser console errors, and this page's slice of
+`videos/logs/frontend.log` (from where it stood when the take began; Mastra
+runs in-process, so there is no backend log). Each section is windowed around the line most worth reading --
+a traceback, an `Error`, a 4xx/5xx -- and that line is painted red, so the
+clip itself shows the cause. The same text is written to
+`videos/logs/<page-id>.error.log`, which CI uploads with the run, so an agent
+can diagnose from the log without re-running anything locally.
+
+Passing takes are untouched: the terminal appears only on failure, which is
+what a person who hit an error would do. `core/failure-evidence.ts` holds
+the logic; the engine calls it from the `finally` of `recordPage`.
+
 ## Layout
 
 The split between what you edit and what you don't is the point of this folder.
@@ -271,6 +287,19 @@ npm run capture -- --distribute   # copies the scaffold into the four folders
 npm run capture -- --install-npm  # and pnpm, yarn, bun
 npm run cli:videos                # films everything the reports say to film
 ```
+
+### On a runner: `.github/workflows/cli-recorder.yml`
+
+The guard above still stands for an ordinary CI job. The CLI workflow lifts it
+deliberately, one reason at a time: it restores the CLI's saved session from
+the `COPILOTKIT_CLI_SESSION` secret (so no browser opens), runs the driver
+under node-pty (so there is a terminal), is weekly and opt-in (so the account
+is spent knowingly), and restores the session in its own named step (so a
+scaffold that still stops at the sign-in prompt reads as "session rejected",
+not "CLI broken"). Cast reports are compared against
+`autorecorder/expected-results.json` under `cli:<flow>` keys, the same way
+pages are. The sign-up flows stay manual: they need a browser nobody has
+signed into. The workflow header says how to create and refresh the secret.
 
 ### The videos
 

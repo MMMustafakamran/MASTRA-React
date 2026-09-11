@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "project": "Mastra-react",
+  "updatedAt": "2026-09-11",
+  "source": "Seeded from the 2026-09-11 CI package; reasons from C:/Users/QS/Desktop/Fiqros/Tested-Report.md (React Guides table, 2026-09-11)",
+  "ignoreNotes": [
+    "net::ERR_ABORTED",
+    "Browser console: \\d+ distinct error\\(s\\), first: Failed to load resource: the server responded with a status of 404 \\(Not Found\\) \\(copilotkit:0\\)"
+  ],
+  "pages": {
+    "ag-ui": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11: ✅"
+    },
+    "agent-app-context": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11: ✅"
+    },
+    "background-tasks": {
+      "status": "pass",
+      "reason": "DISAGREES with Tested-Report (❌ Activity card doesn't update as deep research completes) — review"
+    },
+    "cli:approve-pnpm": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7 (Mastra row): `pnpm approve-builds` itself succeeds; the export mismatch shows up afterwards, not here"
+    },
+    "cli:dev-pnpm": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7 (Mastra row): pnpm ❌ `@mastra/core/logger` export mismatch after approving builds — this capture booted the dev server anyway; status follows the capture, re-check when it changes"
+    },
+    "cli:dev-yarn": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7 (Mastra row): yarn ❌ `@mastra/core/logger` export mismatch — this capture booted the dev server anyway; status follows the capture, re-check when it changes"
+    },
+    "cli:install-bun": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7 (Mastra row): bun ✅"
+    },
+    "cli:install-npm": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7 (Mastra row): npm ✅"
+    },
+    "cli:install-pnpm": {
+      "status": "fail",
+      "reason": "Tested-Report 2026-09-11 §7 (Mastra row): pnpm ❌ — install exits 1 on ignored build scripts; after approving builds, `@mastra/core/logger` has no export `buildLogRecordData`",
+      "errorClass": "CLI Exit 1",
+      "message": "[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @scarf/scarf@1.4.0, esbuild@0.<n>.2, sharp@0.<n>.5"
+    },
+    "cli:install-yarn": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7 (Mastra row): yarn ❌ same `@mastra/core/logger` import error — this capture's install exited 0; status follows the capture, re-check when it changes"
+    },
+    "cli:login": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7 (CLI auth state): login ✅"
+    },
+    "cli:project-select": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7: `copilotkit create` project selection ✅"
+    },
+    "cli:scaffold": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11 §7: `copilotkit create` (Mastra, existing agent) ✅"
+    },
+    "copilot-runtime": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11: ✅"
+    },
+    "intelligence-quickstart": {
+      "status": "fail",
+      "reason": "Not in Tested-Report; CI 2026-09-11: fail [Agent Silent] agent never produced a response within 90s; console shows 4 distinct errors starting with a 404 on /api/copilotkit. Review and confirm.",
+      "errorClass": "Agent Silent",
+      "message": "Agent never produced a response within <n> -- no assistant message ever received content. Check the backend and the browser console output above."
+    },
+    "shared-state-in-app-agent-read": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11: ✅"
+    },
+    "shared-state-in-app-agent-write": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11: ✅"
+    },
+    "shared-state-predictive-state-updates": {
+      "status": "pass",
+      "reason": "Tested-Report 2026-09-11: ✅ (Shared State – Streaming)"
+    }
+  }
+}
