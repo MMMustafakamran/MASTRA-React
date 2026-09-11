@@ -59,6 +59,16 @@ const INTELLIGENCE_PROJECT = '2';
 const SCAFFOLD_DIR = '1-cli-testing';
 
 /**
+ * This repo's own Next app, relative to the repo root.
+ *
+ * Where `project select` is run for the Intelligence quickstart, because that
+ * command writes its key into the current directory and this is the directory
+ * whose dev server reads it. `.env` here is covered by `frontend/.gitignore`
+ * (`.env*`), so the provisioned key is not committable by accident.
+ */
+const INTELLIGENCE_APP_DIR = 'frontend';
+
+/**
  * Sign-in can take minutes when the CLI session has expired: the operator has
  * to complete a browser round trip before the project picker appears. Waiting
  * that long for one step is correct; it is the only step a human touches.
@@ -130,11 +140,32 @@ export const CLI_FLOWS = defineCliFlows([
     stepTimeoutMs: LOGIN_TIMEOUT_MS,
     steps: [
       {
+        // npx's own prompt, not CopilotKit's, and the same conditional as in
+        // the scaffold flow below: it appears only when `copilotkit@latest` is
+        // not already in the npx cache.
+        //
+        // Optional matters for more than tolerance: an unmatched optional step
+        // sends nothing at all, so a warm run cannot leak a stray `y` into the
+        // browser hand-off prompt sitting behind it.
+        label: 'npx package install',
+        waitFor: /Ok to proceed/i,
+        optional: true,
+        timeoutMs: 45_000,
+        type: 'y',
+        keys: ['Enter'],
+      },
+      {
         // `login` does not open the browser until this is acknowledged. Without
         // the keypress it sits on the prompt until the timeout, which reads as
         // "sign-in never completed" when in fact it never started.
         label: 'Acknowledge browser hand-off',
         waitFor: /Press Enter to continue/i,
+        // Optional because the prompt only appears when there is no cached CLI
+        // session. Signed in already, `login` reports the existing account and
+        // exits without ever asking — and a required step would then sit here
+        // for its full minute and fail a command that did nothing wrong.
+        // Optional still answers the prompt whenever it does appear.
+        optional: true,
         keys: ['Enter'],
         timeoutMs: 60_000,
       },
@@ -414,6 +445,94 @@ export const CLI_FLOWS = defineCliFlows([
     expectFiles: [],
     render: { maxGapSec: 0.6, speed: 1.5, title: 'yarn run dev' },
   },
+
+  // ── Intelligence quickstart, step 1 ──────────────────────────────────
+  //
+  // Appended rather than grouped with `login` above, and that is load-bearing
+  // rather than untidy: casts are numbered by position in this array
+  // (`defineCliFlows`), so a flow placed any earlier renames every cast after
+  // it and orphans what is already captured. New flows go at the end, always.
+  //
+  // The doc's step 1 is two commands, and they are two flows because a flow is
+  // one spawned process. `login` above is the first; this is the second. The
+  // video below stitches them back into one clip.
+  {
+    id: 'project-select',
+    name: 'CopilotKit CLI — select the Intelligence project',
+    castName: 'Project-Select',
+    docPath: 'intelligence/quickstart',
+
+    // Run inside the Next app, not at the repo root.
+    //
+    // `project select` provisions its key into `<cwd>/.env`, and the process
+    // that has to read it is the frontend dev server. `intelligence-runtime.ts`
+    // resolves `CPK_INTELLIGENCE_API_KEY` first — the exact name the CLI
+    // writes — so landing the file in `frontend/` closes the loop with no copy
+    // step. Point this at the repo root instead and the command still reports
+    // success while the app goes on using `InMemoryAgentRunner`, which is the
+    // failure this whole recording exists to rule out.
+    cwd: INTELLIGENCE_APP_DIR,
+    command: 'npx',
+    args: ['copilotkit@latest', 'project', 'select'],
+
+    // Manual for the same reason as `login`: it needs a CLI session that only
+    // exists once a human has finished a browser round trip. Excluded from
+    // `capture --all`; addressed by id.
+    manual: true,
+    timeoutMs: 5 * 60_000,
+
+    // `create` was seen to sit on "Verifying authentication…" until its step
+    // timed out on a network where the API answered instantly, which is why
+    // the scaffold flow names the project with `--project` instead of driving
+    // this picker. This flow drives it deliberately, because the picker is
+    // what the doc's step 1 actually shows. If it hangs here, that is the same
+    // defect reproduced against the documented command, and the cast is the
+    // evidence.
+    abortOn: [/not (?:logged|signed) in/i, /session (?:has )?expired/i],
+    steps: [
+      {
+        label: 'npx package install',
+        waitFor: /Ok to proceed/i,
+        optional: true,
+        timeoutMs: 45_000,
+        type: 'y',
+        keys: ['Enter'],
+      },
+      {
+        // Rendered as "Select a project (↑/↓ to move, Enter to choose, Esc to
+        // cancel):" with `❯ ` on the highlighted row and `- ` on the rest.
+        //
+        // `markers` is pinned instead of left to DEFAULT_SELECTION_MARKERS
+        // because `>` is one of those defaults, and this CLI prints
+        // `> paste code and press Enter` as a plain hint line — which would
+        // read as a highlighted row and make the walk chase a target that
+        // never moves.
+        //
+        // `exact` because this account carries both `myapp` and `myapp1`, and
+        // the default substring match would bind whichever the list orders
+        // first while reporting success — a wrong-project key, a green run,
+        // and nothing on camera to show which backend answered.
+        label: 'Pick the Intelligence project',
+        waitFor: /Select a project/i,
+        timeoutMs: 90_000,
+        select: { label: INTELLIGENCE_PROJECT, exact: true, markers: ['❯'] },
+        keys: ['Enter'],
+        settleMs: 600,
+      },
+    ],
+
+    // The real assertion. Every step can match and the key can still not have
+    // been provisioned — the CLI has a documented partial-success path that
+    // records the selection and writes no key. This is what tells the two
+    // apart, and it is why there is no `doneWhen`: the success notice is
+    // printed only when the key lands OUTSIDE the app directory, so running
+    // this correctly means the banner never appears.
+    expectFiles: [`${INTELLIGENCE_APP_DIR}/.env`],
+
+    // Same pacing as the scaffold: the pauses are someone reading a prompt
+    // before answering it, and cutting them makes the clip unreadable.
+    render: { maxGapSec: 1.6, speed: 1.15, title: 'Windows PowerShell' },
+  },
 ]);
 
 /**
@@ -602,6 +721,34 @@ export const CLI_VIDEOS = defineCliVideos([
     videoName: 'CLI-Create',
     docPath: 'quickstart?agent=bring-your-own',
     flows: ['scaffold'],
+  },
+
+  /**
+   * Step 1 of the Intelligence quickstart, which is the only step of that page
+   * that happens in a terminal.
+   *
+   * Two flows, one clip: `flows` is an ordered list of segments, so the sign-in
+   * and the project pick play back-to-back as two terminal windows. They stay
+   * separate casts because they are separate processes, and because separate
+   * casts can be paced separately — the sign-in is mostly a human reading a
+   * browser tab and compresses hard, while the picker has to run near real time
+   * to be readable.
+   *
+   * Steps 2-5 are not here and cannot be. They are the app itself, and a live
+   * browser take and a replayed cast are different recorders — `onSuccess`
+   * hands off to the page recording, which lands as its own file.
+   */
+  {
+    id: 'intelligence-cli',
+    name: 'Intelligence — connecting a project',
+    videoName: 'Intelligence-1-Connect',
+    docPath: 'intelligence/quickstart',
+    flows: ['login', 'project-select'],
+
+    // Only meaningful once the key is actually provisioned, which is what
+    // `project-select`'s `expectFiles` decides. A failed capture skips this
+    // and the page recording never runs against a fallback runtime.
+    onSuccess: { recordPage: 'intelligence-quickstart' },
   },
 
   ...PACKAGE_MANAGERS.map(({ id }) => {

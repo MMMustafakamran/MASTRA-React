@@ -44,3 +44,8 @@ next-env.d.ts
 # clip. Describes one run's resolved versions, so committing it would mean a
 # diff every morning for something that is derived data.
 VERSIONS.md
+
+# Added by CopilotKit CLI: credential files, which must never be committed.
+.env
+.env.*
+!.env.example
