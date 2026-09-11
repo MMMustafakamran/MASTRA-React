@@ -197,6 +197,17 @@ export const NAV: NavGroup[] = [
         statusNote:
           "Implemented exactly as the page publishes it and it renders nothing. The Backend section says A2UI output is rendered automatically with “no additional frontend code required”, but with no A2UI catalog on the client the runtime leaves `injectA2UITool` undefined, @ag-ui/a2ui-middleware injects no rendering tool, and the agent answers in prose. Adding `injectA2UITool: true` renders a surface — verified 2026-09-09 — but that option is never named on this page.",
       },
+      {
+        path: "/generative-ui/frontend-cards",
+        hasDemo: true,
+        title: "Frontend-Driven Cards",
+        docPath: "/mastra/generative-ui/frontend-cards",
+        summary:
+          "A card pushed into the transcript from frontend code as a `role: \"activity\"` message, which the agent never receives.",
+        status: "broken",
+        statusNote:
+          "The snippet's bare `useAgent()` and `<CopilotChat />` resolve to agent id `default`, which a Mastra runtime built with `getLocalAgents` (and this repo's `/api/copilotkit`) does not have: once `/info` answers, react-core 1.71.0 throws \"Agent 'default' not found after runtime sync\" and the route crashes. With an agent id named, the card renders and the run payload carries only `user`. Step 3's component is never mounted by step 2 — see the route page.",
+      },
     ],
   },
   {
@@ -326,6 +337,28 @@ export const NAV: NavGroup[] = [
         statusNote:
           "Steps 3 and 4 are implemented against a third runtime mount at `/api/copilotkit-single`. Steps 1, 2 and 5 need a `CPK_INTELLIGENCE_API_KEY` from a hosted Intelligence project, which is an account-scoped resource this harness does not have.",
         hasDemo: true,
+      },
+      {
+        path: "/intelligence/memories",
+        hasDemo: true,
+        title: "Memories & Recall",
+        docPath: "/mastra/intelligence/memories",
+        summary:
+          "Long-term memories per user or project, read and written from React with `useMemories`.",
+        status: "broken",
+        statusNote:
+          "The React snippet imports `useMemories` from the package root, which has no such export (TS2305). With the import fixed, every memory route 404s: the runtime hides them unless built with `memory: { access }`, which the page never mentions. With it, this project gets 403 MEMORY_NOT_ENTITLED and the hook reports `isAvailable: true` over an empty list.",
+      },
+      {
+        path: "/learning",
+        hasDemo: true,
+        title: "Learning",
+        docPath: "/mastra/learning",
+        summary:
+          "Routing selected Threads into a Learning container from the runtime, for Insights and reviewed Skills.",
+        status: "partial",
+        statusNote:
+          "The page's runtime snippet is mounted verbatim at `/api/copilotkit-learning`. Its example container `expense-review` does not exist here, and every run on `expense-agent` then fails silently (\"Failed to initialize thread\"); `default` answers. `agents` and `identifyUser` are undefined on the page, and `getLearningContainerId` does not exist on this repo's locked runtime 1.66.2; dashboard and CLI steps are not exercised.",
       },
     ],
   },

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "docsRoot": "https://docs.copilotkit.ai/mastra",
-  "syncedAt": "2026-09-09T07:58:57.267Z",
+  "syncedAt": "2026-09-11T10:16:57.933Z",
   "pages": {
     "/mastra": {
       "file": "mastra.md",
@@ -327,6 +327,42 @@
       "status": "ok",
       "age": 0,
       "date": "Wed, 09 Sep 2026 13:31:50 GMT"
+    },
+    "/mastra/generative-ui/frontend-cards": {
+      "file": "mastra__generative-ui__frontend-cards.md",
+      "sha256": "1fe70eb473b1620b7772f2c32594562bc4c9762a1e39120b9402036204efc480",
+      "bytes": 4413,
+      "lines": 139,
+      "routes": [
+        "/generative-ui/frontend-cards"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Fri, 11 Sep 2026 10:16:57 GMT"
+    },
+    "/mastra/intelligence/memories": {
+      "file": "mastra__intelligence__memories.md",
+      "sha256": "ca057d8bb00b821706633903f24a6bd541922dcfd8d6caa97c99ff60c3386d76",
+      "bytes": 11045,
+      "lines": 284,
+      "routes": [
+        "/intelligence/memories"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Fri, 11 Sep 2026 10:16:57 GMT"
+    },
+    "/mastra/learning": {
+      "file": "mastra__learning.md",
+      "sha256": "d393a394d292025adbe52352b571a20f42bd1b40b10075bbe1babf9fe3401c20",
+      "bytes": 7793,
+      "lines": 138,
+      "routes": [
+        "/learning"
+      ],
+      "status": "ok",
+      "age": 0,
+      "date": "Fri, 11 Sep 2026 10:16:57 GMT"
     }
   },
   "sitemap": {

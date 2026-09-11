@@ -17,7 +17,7 @@ A navigable, working test harness for the CopilotKit Mastra integration — each
 
 [Mastra](https://mastra.ai) is a TypeScript agent framework with native AG-UI support, which is what lets a React app drive it with streaming, tool calls, shared state, and generative UI.
 
-This repo covers a **scoped set of 19 doc pages** (§8). Each route implements what its page teaches and shows the exact source that makes it work.
+This repo covers a **scoped set of 30 doc pages** (§8). Each route implements what its page teaches and shows the exact source that makes it work.
 
 **Everything comes from the documentation.** No agent, tool, instruction, or working-memory schema was invented — the seven agents and three tools are exactly the ones the doc pages define.
 
@@ -166,6 +166,8 @@ Code on a page is never a re-typed approximation: each page reads real files via
 
 **`/generative-ui/a2ui`** — A2UI, Google's declarative Generative UI spec. No React component is registered on this route; `A2UIMiddleware` is switched on server-side via the runtime's `a2ui` option, scoped to `a2uiAgent`. **Try:** `Show me three pricing plans as cards: Free, Pro and Team.` **Pass:** a laid-out group of cards appears in the thread. **Fail:** prose (the tool was never offered) or raw JSON (it was called, but nothing rendered it).
 
+**`/generative-ui/frontend-cards`** — ❌ **Broken on Mastra.** New upstream 2026-09-11. A card pushed into the transcript from frontend code as a `role: "activity"` message, which is stripped from every run. **Try:** click **Simulate: deployment finished**, then ask `Have you been shown any deployment card?` **What happens:** about a second after load the route is replaced by "This page couldn't load" — react-core 1.71.0 throws `useAgent: Agent 'default' not found after runtime sync` from step 3's `useAgent()`. The page's bare `useAgent()` and `<CopilotChat />` resolve to `default`, and a Mastra runtime built with `getLocalAgents` (this repo's `/api/copilotkit` included) registers `myAgent` and friends, not `default`. **Pass would be:** the card renders, the probe row reads `agent.messages = activity, user, assistant` and `run payload = user`, and the agent says it saw no card — which is exactly what a throwaway control with `agentId: "myAgent"` showed. See §9 #14.
+
 ### App Control
 
 **`/frontend-tools`** — `sayHello` executing in the browser. **Try:** `Say hello to Malaika`. **Pass:** a browser alert appears, then the agent confirms.
@@ -200,6 +202,10 @@ Code on a page is never a re-typed approximation: each page reads real files via
 
 **`/intelligence/quickstart`** — ⚠️ **Partial.** Steps 3 and 4 are implemented; steps 1, 2 and 5 are not. The 2026-09-09 sync rewrote step 3 from the multi-route handler to `mode: "single-route"` with a single `POST` export, and step 4 from `runtimeUrl` alone to `runtimeUrl` plus `useSingleEndpoint`. Neither needs a hosted project, so both are mounted now: `/api/copilotkit-single` takes the same runtime object as the multi-route mount, and `/intelligence/quickstart/demo-chat` drives it. Steps 1, 2 and 5 still open with `npx copilotkit@latest login` plus `project select`, which writes a `CPK_INTELLIGENCE_API_KEY` — an account-scoped resource this harness does not have, so the confirmation step has nothing to assert against. Three findings came out of the half that is testable, all on the route's page: the single endpoint accepts seven envelope methods and no thread, memory or annotation method is among them; single-route mode reports `threadEndpointsEnabled: false` from `/info`, which locks the Inspector thread list the page's last step tells you to check; and the page's own coding-agent prompt still instructs the reader to do the opposite of its manual steps. Still tracked as new because it is a genuinely new page; the rest of `/mastra/intelligence/*` is the old `/mastra/premium/*` set renamed, and stays out of scope.
 
+**`/intelligence/memories`** — ❌ **Broken as documented.** New upstream 2026-09-11. **Try:** **Save**, then `Please remember that I prefer concise status updates.`, then switch to the second runtime and **Save** again. **What happens:** the first runtime is this repo's Intelligence Quickstart runtime (`/api/copilotkit-threads`); its memory routes answer `404 Not found` at the runtime, because they are off unless `CopilotRuntime` is built with `memory: { access }`, which the page never mentions. In a local run without `COPILOTKIT_LICENSE_TOKEN` that runtime is built without Intelligence, and the browser never even asks: the hook reports `isAvailable: true`, the list is empty, and Save fails with "Runtime URL is not configured". On the second runtime (`/api/copilotkit-memory`, the same plus that option) the platform answers `403 MEMORY_NOT_ENTITLED`, the hook still reports `isAvailable: true`, and the page's `MemoryList` renders an empty list. The agent replies "Got it! I'll keep the updates concise." either way. The page's React snippet itself does not compile — see §9 #15.
+
+**`/learning`** — ⚠️ **Partial.** New upstream 2026-09-11. The page's runtime snippet, verbatim, on its own mount at `/api/copilotkit-learning`, with `expense-agent` and `default` both mapped to `myAgent`. **Try:** on `expense-agent`, `Review this expense: $42 team lunch, receipt attached.`; then on `default`, `Say hello in five words.` **What happens:** `expense-agent` never answers — its Thread is assigned to the page's example container `expense-review`, which does not exist in this project, and the run fails with "Failed to initialize thread" while the chat shows nothing. `default` answers. The dashboard and CLI half of the page (create a container, Run Learning, approve a Skill, `copilotkit skills download`) is behind a login and not exercised. See §9 #16.
+
 ---
 
 ## 8. Testing checklist / current status
@@ -221,6 +227,7 @@ Code on a page is never a re-typed approximation: each page reads real files via
 | `/mastra/generative-ui/tool-rendering` | `/generative-ui/tool-rendering` | ✅ Working | |
 | `/mastra/generative-ui/state-rendering` | `/generative-ui/state-rendering` | ✅ Working | |
 | `/mastra/generative-ui/a2ui` | `/generative-ui/a2ui` | ❌ Broken | The published setup renders nothing — see Known issues. Scoped with `a2ui: { agents: ["a2uiAgent"] }` rather than the doc's bare `a2ui: {}`, which would have altered every other route on the shared runtime. |
+| `/mastra/generative-ui/frontend-cards` | `/generative-ui/frontend-cards` | ❌ Broken | New 2026-09-11. The snippet's bare `useAgent()`/`<CopilotChat />` target `default`, which a `getLocalAgents` runtime does not register; the route crashes on runtime sync — §9 #14. |
 | `/mastra/frontend-tools` | `/frontend-tools` | ✅ Working | |
 | `/mastra/shared-state/in-app-agent-read` | `/shared-state/in-app-agent-read` | ✅ Working | |
 | `/mastra/shared-state/in-app-agent-write` | `/shared-state/in-app-agent-write` | ✅ Working | |
@@ -233,6 +240,8 @@ Code on a page is never a re-typed approximation: each page reads real files via
 | `/mastra/ag-ui` | `/ag-ui` | ✅ Working | |
 | `/mastra/webmcp` | `/webmcp` | 🚧 Not started | Tracked for drift. Needs Chrome 149+ and the WebMCP origin trial. |
 | `/mastra/intelligence/quickstart` | `/intelligence/quickstart` | ⚠️ Partial | Single-route transport implemented and exercised; the hosted-project steps still need `CPK_INTELLIGENCE_API_KEY`. |
+| `/mastra/intelligence/memories` | `/intelligence/memories` | ❌ Broken | New 2026-09-11. Import path wrong; routes 404 without an undocumented runtime option; unentitled shows as an empty list — §9 #15. |
+| `/mastra/learning` | `/learning` | ⚠️ Partial | New 2026-09-11. A missing container ID makes every run on the assigned agent fail silently; `getLearningContainerId` absent on the locked 1.66.2; dashboard/CLI steps not exercised — §9 #16. |
 
 **Legend:** ✅ Working · ⚠️ Partial · 📖 Reference · 🚧 Not started · ❌ Broken
 
@@ -289,6 +298,17 @@ The chain, traced in `@copilotkit/runtime` 1.66.2 and `@ag-ui/a2ui-middleware` 0
 
 Verified 2026-09-09 by probe: with `injectA2UITool: true` added, a `div.a2ui-surface` renders; with the published config, no element carrying an `a2ui` class exists on the page. The working option is never named on this page — it appears only on the `a2ui/fixed-schema` sub-page, and there only in its `false` form, for agents that already own the tool. `/generative-ui/a2ui` is left in the published state so the clip shows the gap.
 
+The three entries below were found against `@copilotkit/react-core` / `@copilotkit/runtime` **1.71.0** — what CI resolves from `^1.66.2`, installed locally with `--no-save` — while the lockfile still pins 1.66.2.
+
+**14. Frontend-Driven Cards: the snippet targets an agent a Mastra runtime does not have**
+[Frontend-Driven Cards](https://docs.copilotkit.ai/mastra/generative-ui/frontend-cards) is byte-identical under every framework prefix. Its step 3 calls `useAgent()` and its step 2 renders `<CopilotChat />`, neither with an `agentId`, so both resolve to `"default"`. The Mastra Quickstart builds `new Mastra({ agents: { myAgent } })` and `MastraAgent.getLocalAgents` registers each agent under that key, so a reader who followed it has `myAgent` and no `default`; so does this repo's `/api/copilotkit`. Until `/info` answers, `useAgent()` returns a provisional agent and the page renders; once it answers, react-core 1.71.0 throws `useAgent: Agent 'default' not found after runtime sync (runtimeUrl=/api/copilotkit). Known agents: [myAgent, …]` at `deployment-watcher.tsx:17` and the route becomes "This page couldn't load". Reproduced with the page's two components alone on a scratch route, so the harness's probe is not the cause. The mechanism itself is sound on Mastra: a throwaway control with `agentId: "myAgent"` rendered the card, the run request that left the browser carried only `user`, and the agent answered that it had received no deployment card. Two smaller gaps: step 3's component is never mounted in step 2's page, and its `wss://example.com/deployments` placeholder 404s the handshake. (Sibling repos whose runtime registers `default` instead hit a silent-loss race when a card is added before the runtime connects; on this repo the provisional agent is replaced by a throw, so that race is unreachable with the page's code.)
+
+**15. Memories & Recall: the React snippet does not compile, and the runtime it runs on never exposes memory**
+[Memories & Recall](https://docs.copilotkit.ai/mastra/intelligence/memories) imports `useMemories` from `@copilotkit/react-core`, which has no such export (1.66.2 and 1.71.0); it ships from `/v2`. The import is TS2305 plus a knock-on TS7006, and under Next 16 a Turbopack compile error for any route importing it — the verbatim file is kept, imported by nothing. With the import fixed, every `/memories` call 404s at the runtime: the routes are hidden unless `CopilotRuntime` gets `memory: { access }` (or the deprecated `exposeMemoryRoutes`) — a gate already present on 1.66.2 — and the page mentions neither; it says memory "is not a feature flag" and reads `isAvailable: false` as lack of entitlement. With the option added (`/api/copilotkit-memory`), the platform answers `403 MEMORY_NOT_ENTITLED` ("Memory is not enabled for this organization or license.") for this project; the hook flips `isAvailable` only on 404/422/501, so it reports `true`, and the page's component, which never reads `error`, shows an empty list. The client also only calls memory routes when `/info` carries `intelligence.wsUrl`: on an Intelligence runtime without it (here, the threads runtime in a local run with no `COPILOTKIT_LICENSE_TOKEN`) the hook never sends a request, reports `isAvailable: true`, and `addMemory` rejects with "Runtime URL is not configured" although a runtime URL is configured. `realtimeStatus` stayed `connecting` on both runtimes. Saving from React (`addMemory`) is never shown; the REST examples post to "your-deployment" without naming the managed host.
+
+**16. Learning: a missing container breaks the chat, and the snippet leaves two identifiers undefined**
+[Learning](https://docs.copilotkit.ai/mastra/learning)'s runtime snippet returns `"expense-review"` for `expense-agent`. With no such container in the project, the platform refuses to create the Thread (`LEARNING_CONTAINER_NOT_FOUND`), the run returns 404 "Failed to initialize thread", and the chat shows the user's message and nothing else; `default` on the same runtime and the same Mastra agent answers. The troubleshooting table's row for this — "A Thread never appears in the container" — describes a far milder failure. The snippet's `agents` and `identifyUser` are never defined on the page (supplied in `lib/learning-runtime.ts`, marked); on Mastra `agents` normally comes from `getLocalAgents`, whose keys are the Mastra instance's, so an `expense-agent` id exists only if registered under that name. `getLearningContainerId` exists only from runtime 1.70, a floor the page does not state; on this repo's locked 1.66.2 it is absent from `CopilotKitIntelligence`'s typings entirely.
+
 ---
 
 ## 10. Troubleshooting
@@ -306,7 +326,7 @@ Verified 2026-09-09 by probe: with `injectA2UITool: true` added, a `div.a2ui-sur
 
 ## Doc drift detection
 
-`/doc-sync` keeps this repo honest about the docs it mirrors. Press **Sync docs now** (on the landing page or on `/doc-sync`) and it fetches the markdown source behind all 20 tracked doc pages, diffs each against the copy stored in `doc-snapshot/`, replaces that copy, and reports what moved — ranked by whether the change can actually break an implementation.
+`/doc-sync` keeps this repo honest about the docs it mirrors. Press **Sync docs now** (on the landing page or on `/doc-sync`) and it fetches the markdown source behind all 30 tracked doc pages, diffs each against the copy stored in `doc-snapshot/`, replaces that copy, and reports what moved — ranked by whether the change can actually break an implementation.
 
 Doc pages are fetched by appending `.md` to their URL, which returns the authored MDX rather than 250 KB of rendered HTML. Every response is checked for `text/markdown` before it is allowed near the snapshot: a URL that misses the markdown handler still answers `200` with the HTML app shell, and writing that in would destroy the baseline and report the whole corpus as rewritten on the next run. A run commits all pages or none.
 
@@ -379,7 +399,7 @@ mastra/
 
 **Custom Look and Feel** — [Slots](https://docs.copilotkit.ai/mastra/custom-look-and-feel/slots) † · [Headless UI](https://docs.copilotkit.ai/mastra/custom-look-and-feel/headless-ui) † · [Programmatic Control](https://docs.copilotkit.ai/mastra/programmatic-control) · [Inspector](https://docs.copilotkit.ai/mastra/inspector)
 
-**Generative UI** — [Display-only](https://docs.copilotkit.ai/mastra/generative-ui/your-components/display-only) · [Interactive](https://docs.copilotkit.ai/mastra/generative-ui/your-components/interactive) · [Tool Rendering](https://docs.copilotkit.ai/mastra/generative-ui/tool-rendering) · [State Rendering](https://docs.copilotkit.ai/mastra/generative-ui/state-rendering) · [A2UI](https://docs.copilotkit.ai/mastra/generative-ui/a2ui)
+**Generative UI** — [Display-only](https://docs.copilotkit.ai/mastra/generative-ui/your-components/display-only) · [Interactive](https://docs.copilotkit.ai/mastra/generative-ui/your-components/interactive) · [Tool Rendering](https://docs.copilotkit.ai/mastra/generative-ui/tool-rendering) · [State Rendering](https://docs.copilotkit.ai/mastra/generative-ui/state-rendering) · [A2UI](https://docs.copilotkit.ai/mastra/generative-ui/a2ui) · [Frontend-Driven Cards](https://docs.copilotkit.ai/mastra/generative-ui/frontend-cards)
 
 **App Control** — [Frontend Tools](https://docs.copilotkit.ai/mastra/frontend-tools) · [Human in the Loop](https://docs.copilotkit.ai/mastra/human-in-the-loop/tool-based) · [Governed Actions](https://docs.copilotkit.ai/mastra/human-in-the-loop/governed-actions) · [Background Tasks](https://docs.copilotkit.ai/mastra/background-tasks) · [WebMCP](https://docs.copilotkit.ai/mastra/webmcp) ‡
 
@@ -387,7 +407,7 @@ mastra/
 
 **Backend** — [Copilot Runtime](https://docs.copilotkit.ai/mastra/copilot-runtime) · [AG-UI](https://docs.copilotkit.ai/mastra/ag-ui)
 
-**Intelligence** — [Quickstart](https://docs.copilotkit.ai/mastra/intelligence/quickstart) ‡
+**Intelligence** — [Quickstart](https://docs.copilotkit.ai/mastra/intelligence/quickstart) ‡ · [Memories & Recall](https://docs.copilotkit.ai/mastra/intelligence/memories) · [Learning](https://docs.copilotkit.ai/mastra/learning)
 
 **External** — [Mastra docs](https://mastra.ai/en/docs) · [Mastra working memory](https://mastra.ai/en/docs/memory/working-memory) · [AG-UI protocol](https://ag-ui.com)
 

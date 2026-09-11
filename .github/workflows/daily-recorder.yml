@@ -47,7 +47,7 @@ on:
         type: boolean
         default: false
       group_generative_ui:
-        description: 'Generative UI — Display Only, Interactive, Tool Rendering, State Rendering'
+        description: 'Generative UI — Display Only, Interactive, Tool Rendering, State Rendering, Frontend-Driven Cards'
         type: boolean
         default: false
       group_app_control:
@@ -55,7 +55,7 @@ on:
         type: boolean
         default: false
       group_threads:
-        description: 'Rich Threads & Intelligence — Drawer, Threads, Headless Threads, Intelligence Quickstart'
+        description: 'Rich Threads & Intelligence — Drawer, Threads, Headless Threads, Intelligence Quickstart, Memories, Learning'
         type: boolean
         default: false
       group_backend:
@@ -385,7 +385,10 @@ jobs:
       # The docs renamed this to CPK_INTELLIGENCE_API_KEY; both are passed
       # through because a repo secret may still carry either name.
       INTELLIGENCE_API_KEY: ${{ secrets.INTELLIGENCE_API_KEY }}
-      CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
+      # The repo has no CPK_INTELLIGENCE_API_KEY secret, only INTELLIGENCE_API_KEY,
+      # so this fell through empty -- and the Learning page's runtime snippet
+      # reads this name alone and throws at load on a blank key.
+      CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY || secrets.INTELLIGENCE_API_KEY }}
 
     steps:
       - name: Checkout Code

@@ -55,12 +55,15 @@ import { runA2uiAction } from './a2ui.action';
 import { runAgUiAction } from './ag-ui.action';
 import { runBackgroundTasksAction } from './background-tasks.action';
 import { runDisplayOnlyAction } from './display-only.action';
+import { runFrontendCardsAction } from './frontend-cards.action';
 import { runFrontendToolsAction } from './frontend-tools.action';
 import { runGovernedActionsAction } from './governed-actions.action';
 import { runHeadlessUiAction } from './headless-ui.action';
 import { runHitlAction } from './hitl.action';
 import { runInspectorAction } from './inspector.action';
 import { runInteractiveAction } from './interactive.action';
+import { runLearningAction } from './learning.action';
+import { runMemoriesAction } from './memories.action';
 import { runPredictiveStateAction } from './predictive-state.action';
 import { runPrebuiltAction } from './prebuilt.action';
 import { runProgrammaticAction } from './programmatic.action';
@@ -111,6 +114,12 @@ export const ACTION_MAP: Record<string, PageActionHandler> = {
   // page recorded one turn on the default agent and never clicked a route.
   "copilot-runtime": runRuntimeAction,
   "background-tasks": runBackgroundTasksAction,
+  // Added 2026-09-11 with the three pages new upstream. Frontend-Cards is
+  // EXPECTED TO FAIL on this repo (no `default` agent -- the route crashes);
+  // Memories and Learning report their findings as warnings.
+  "frontend-cards": runFrontendCardsAction,
+  "intelligence-memories": runMemoriesAction,
+  learning: runLearningAction,
 };
 
 export async function executePageAction(

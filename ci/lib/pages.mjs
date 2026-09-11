@@ -42,6 +42,7 @@ export const PAGE_GROUPS = {
     'generative-ui-tool-rendering',
     'generative-ui-state-rendering',
     'generative-ui-a2ui',
+    'frontend-cards',
   ],
   app_control: [
     'frontend-tools',
@@ -53,7 +54,14 @@ export const PAGE_GROUPS = {
     'shared-state-predictive-state-updates',
     'agent-app-context',
   ],
-  threads: ['prebuilt-components-copilot-threads-drawer', 'threads', 'headless-threads', 'intelligence-quickstart'],
+  threads: [
+    'prebuilt-components-copilot-threads-drawer',
+    'threads',
+    'headless-threads',
+    'intelligence-quickstart',
+    'intelligence-memories',
+    'learning',
+  ],
   backend: ['copilot-runtime', 'ag-ui'],
 };
 
