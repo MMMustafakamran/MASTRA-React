@@ -296,9 +296,7 @@ the `COPILOTKIT_CLI_SESSION` secret (so no browser opens), runs the driver
 under node-pty (so there is a terminal), is weekly and opt-in (so the account
 is spent knowingly), and restores the session in its own named step (so a
 scaffold that still stops at the sign-in prompt reads as "session rejected",
-not "CLI broken"). Cast reports are compared against
-`autorecorder/expected-results.json` under `cli:<flow>` keys, the same way
-pages are. The sign-up flows stay manual: they need a browser nobody has
+not "CLI broken"). The sign-up flows stay manual: they need a browser nobody has
 signed into. The workflow header says how to create and refresh the secret.
 
 ### The videos
