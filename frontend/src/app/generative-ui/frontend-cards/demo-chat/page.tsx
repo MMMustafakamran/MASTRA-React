@@ -108,12 +108,6 @@ function CardControls() {
         >
           Simulate: deployment finished
         </button>
-        <p className="text-xs text-slate-500">
-          Adds a <code>role: &quot;activity&quot;</code> message with{" "}
-          <code>activityType: &quot;app-event-card&quot;</code>. Step 3&apos;s socket at{" "}
-          <code>wss://example.com/deployments</code> is mounted too, and never
-          delivers.
-        </p>
       </div>
 
       <table className="mt-3 w-full text-left text-xs">
@@ -147,7 +141,7 @@ function CardControls() {
               }`}
             >
               {payload
-                ? `${payload.roles.join(", ")}  (${payload.at})${leaked ? "  ← activity reached the agent" : ""}`
+                ? `${payload.roles.join(", ")}  (${payload.at})`
                 : "no run sent yet"}
             </td>
           </tr>
@@ -161,7 +155,7 @@ export default function Page() {
   return (
     <DemoFrame
       parentPath="/generative-ui/frontend-cards"
-      subtitle="activity messages · never sent to the agent"
+      subtitle="activity messages"
     >
       {/* [2] frontend cards: register the renderer on the provider */}
       <CopilotKit

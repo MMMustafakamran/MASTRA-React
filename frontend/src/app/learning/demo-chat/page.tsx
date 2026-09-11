@@ -8,15 +8,14 @@ import { DemoFrame } from "@/components/demo-frame";
 /**
  * Learning, against the page's runtime at `/api/copilotkit-learning`.
  *
- * The page's selector is `agentId === "expense-agent" ? "expense-review" :
- * undefined`, so which agent a run goes to is the whole experiment: one tab per
- * id, the same Mastra `myAgent` behind both. A run on `expense-agent` should bind its Thread
- * to the `expense-review` container; a run on `default` should bind nothing.
+ * The runtime's selector is `() => "firstlearningtest"` — the container created
+ * in this project's dashboard — so a run on either tab should bind its Thread
+ * there. One tab per agent id, the same Mastra `myAgent` behind both.
  *
- * What this route can and cannot show. Assignment happens server-side, inside
- * the runtime, and the page gives the client no way to read it back — the
- * check it prescribes is the dashboard. So the panel prints the Thread id each
- * tab is on, which is what you look up there. Everything after assignment
+ * Assignment happens server-side, inside the runtime. The page prescribes the
+ * dashboard as the check; the panel also reads the Thread back from the
+ * runtime's own threads route once it exists, and prints the container the
+ * platform recorded for it. Everything after assignment
  * (Run Learning, review Insights, approve a Skill, `copilotkit skills
  * download`) is dashboard and CLI work behind a login, and is not on this
  * route.
@@ -26,8 +25,8 @@ const AGENT_IDS = ["expense-agent", "default"] as const;
 type AgentId = (typeof AGENT_IDS)[number];
 
 const EXPECTED: Record<AgentId, string> = {
-  "expense-agent": '"expense-review"',
-  default: "undefined — not assigned",
+  "expense-agent": '"firstlearningtest"',
+  default: '"firstlearningtest"',
 };
 
 function AssignmentPanel({ agentId }: { agentId: AgentId }) {
@@ -38,6 +37,30 @@ function AssignmentPanel({ agentId }: { agentId: AgentId }) {
   useEffect(() => {
     setThreadId(agent.threadId ?? null);
   }, [agent, agent.threadId, agent.messages.length]);
+
+  // The container the platform bound this Thread to, read back from the
+  // runtime's threads route. The Thread exists only after its first run.
+  const [bound, setBound] = useState<string | null>(null);
+  const turns = agent.messages.length;
+  useEffect(() => {
+    if (!threadId || turns === 0) return;
+    let live = true;
+    const read = async (attempt: number) => {
+      const res = await fetch(`/api/copilotkit-learning/threads?agentId=${agentId}`, {
+        headers: { "x-copilotkit-user-id": "demo-user" },
+      }).catch(() => null);
+      const body = res?.ok ? await res.json().catch(() => null) : null;
+      const list: { id: string; learningContainerId?: string | null }[] = body?.threads ?? body ?? [];
+      const thread = Array.isArray(list) ? list.find((t) => t.id === threadId) : undefined;
+      if (!live) return;
+      if (thread) setBound(thread.learningContainerId ?? "null");
+      else if (attempt < 10) setTimeout(() => void read(attempt + 1), 1500);
+    };
+    void read(0);
+    return () => {
+      live = false;
+    };
+  }, [agentId, threadId, turns]);
   return (
     <table data-testid="learning-assignment" className="mt-2 w-full text-left text-xs">
       <tbody className="font-mono">
@@ -55,6 +78,12 @@ function AssignmentPanel({ agentId }: { agentId: AgentId }) {
           <th className="py-1 pr-3 font-medium text-slate-500">Thread</th>
           <td data-testid="learning-thread" className="py-1 break-all">
             {threadId ?? "—"}
+          </td>
+        </tr>
+        <tr className="border-t border-slate-200 dark:border-slate-800">
+          <th className="py-1 pr-3 font-medium text-slate-500">Thread container (platform)</th>
+          <td data-testid="learning-bound" className="py-1">
+            {bound ?? "—"}
           </td>
         </tr>
         <tr className="border-t border-slate-200 dark:border-slate-800">

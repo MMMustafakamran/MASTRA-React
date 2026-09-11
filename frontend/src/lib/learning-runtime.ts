@@ -51,8 +51,7 @@ const identifyUser = (request: Request) => {
 // [1] learning: assign Threads from your Runtime
 const intelligence = new CopilotKitIntelligence({
   apiKey: process.env.CPK_INTELLIGENCE_API_KEY!,
-  getLearningContainerId: ({ agentId }) =>
-    agentId === "expense-agent" ? "expense-review" : undefined,
+  getLearningContainerId: () => "firstlearningtest",
 });
 
 const runtime = new CopilotRuntime({

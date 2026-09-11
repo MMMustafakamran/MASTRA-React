@@ -114,9 +114,9 @@ export const ACTION_MAP: Record<string, PageActionHandler> = {
   // page recorded one turn on the default agent and never clicked a route.
   "copilot-runtime": runRuntimeAction,
   "background-tasks": runBackgroundTasksAction,
-  // Added 2026-09-11 with the three pages new upstream. Frontend-Cards is
-  // EXPECTED TO FAIL on this repo (no `default` agent -- the route crashes);
-  // Memories and Learning report their findings as warnings.
+  // Added 2026-09-11 with the three pages new upstream. All three report their
+  // doc defects as warnings (PASS*) -- Frontend-Cards films a route crash on
+  // this repo (no `default` agent) -- and end on overlay, terminal, Notepad.
   "frontend-cards": runFrontendCardsAction,
   "intelligence-memories": runMemoriesAction,
   learning: runLearningAction,

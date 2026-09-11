@@ -734,8 +734,8 @@ export const PAGES = definePages([
       // Step 2: registered on the provider, props as published.
       {
         filePath: "frontend/src/app/generative-ui/frontend-cards/demo-chat/page.tsx",
-        startLine: 160,
-        endLine: 181,
+        startLine: 154,
+        endLine: 175,
       },
       // Step 3: addMessage with role "activity", verbatim -- and the bare
       // `useAgent()` on its first line, which is what crashes this route:

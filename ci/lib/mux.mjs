@@ -29,6 +29,10 @@ const AUDIO_TRACKS = [
     audioFile: 'background-tasks-error.m4a',
     videoMatch: 'BackgroundTasks',
   },
+  {
+    audioFile: 'Memories.m4a',
+    videoMatch: 'Memories',
+  },
 ];
 
 function hasFfmpeg() {

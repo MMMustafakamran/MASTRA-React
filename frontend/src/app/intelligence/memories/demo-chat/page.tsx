@@ -123,12 +123,10 @@ const RUNTIMES = {
   documented: {
     label: "As documented · /api/copilotkit-threads",
     url: "/api/copilotkit-threads",
-    note: "The runtime the Intelligence Quickstart builds. The page adds nothing to it.",
   },
   "memory-access": {
     label: "With memory.access · /api/copilotkit-memory",
     url: "/api/copilotkit-memory",
-    note: "Same runtime plus the `memory: { access }` option the page never mentions.",
   },
 } as const;
 type RuntimeKey = keyof typeof RUNTIMES;
@@ -137,7 +135,7 @@ function Panels({ runtime }: { runtime: RuntimeKey }) {
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 border-b border-slate-200 px-3 pt-3 text-xs text-slate-500 dark:border-slate-800">
-        <p data-testid="memory-runtime">{RUNTIMES[runtime].note}</p>
+        <p data-testid="memory-runtime" className="font-mono">{RUNTIMES[runtime].url}</p>
         <div className="grid gap-4 py-3 text-sm md:grid-cols-2">
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
