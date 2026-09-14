@@ -284,10 +284,39 @@ export const PAGES = definePages([
     docPath: "headless-threads",
     route: "headless-threads",
     ideFile: "frontend/src/app/headless-threads/demo-chat/page.tsx",
-    startLine: 7,
-    endLine: 26,
+    // Shifted by the "one agent per thread" section added above the demo.
+    startLine: 135,
+    endLine: 152,
+    extraTabs: [
+      {
+        // "Driving one agent per thread": the three-prop useAgent call.
+        filePath: "frontend/src/app/headless-threads/demo-chat/page.tsx",
+        startLine: 9,
+        endLine: 35,
+      },
+    ],
     prompt: "Summarize what an AG-UI agent is, in one line.",
     waitAfterPromptMs: 4000,
+    demo: {
+      // The panel mounts one `useAgent({ agentId, runtimeAgentId, threadId })`
+      // per thread. Registering two private agents against one runtime agent is
+      // the whole claim of the section, so a panel that never paints is the
+      // defect.
+      render: {
+        selector: '[data-testid="per-thread-agents"]',
+        required:
+          "The per-thread agent panel never rendered — useAgent({ agentId, runtimeAgentId, threadId }) did not mount.",
+      },
+      checks: [
+        {
+          selector: '[data-testid="thread-agent-run"]',
+          enabled: true,
+          ok: "Thread-scoped agent is ready; runAgent() would address its own thread.",
+          message:
+            "The thread-scoped agent never became ready (isReady stayed false), so runAgent() could not address its thread.",
+        },
+      ],
+    },
   },
   {
     id: "custom-look-and-feel-slots",
