@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "docsRoot": "https://docs.copilotkit.ai/mastra",
-  "syncedAt": "2026-09-11T10:16:57.933Z",
+  "syncedAt": "2026-09-14T07:09:42.710Z",
   "pages": {
     "/mastra": {
       "file": "mastra.md",
@@ -150,15 +150,15 @@
     },
     "/mastra/headless-threads": {
       "file": "mastra__headless-threads.md",
-      "sha256": "fc4ed0735526202408df6ac3a2c9b9b2322c18d503d115dbdd75bdfaa8916d6a",
-      "bytes": 10503,
-      "lines": 222,
+      "sha256": "4e31b02acede694ac22153805b35827e8fc52233cc3fe2f7a6b9d21f5a6a72e1",
+      "bytes": 11699,
+      "lines": 249,
       "routes": [
         "/headless-threads"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
+      "date": "Mon, 14 Sep 2026 07:09:42 GMT"
     },
     "/mastra/human-in-the-loop/governed-actions": {
       "file": "mastra__human-in-the-loop__governed-actions.md",
@@ -186,27 +186,27 @@
     },
     "/mastra/inspector": {
       "file": "mastra__inspector.md",
-      "sha256": "7bd9075f585db80d987fbf31e38e34fc98a3c13e63fc28f60bd5d4852ca9869f",
-      "bytes": 5963,
-      "lines": 127,
+      "sha256": "4a05d3f81005cb760702097aebd25a68fe0920e50632754ba222d62cbec62564",
+      "bytes": 9544,
+      "lines": 188,
       "routes": [
         "/inspector"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 04 Sep 2026 07:58:29 GMT"
+      "date": "Mon, 14 Sep 2026 07:09:42 GMT"
     },
     "/mastra/intelligence/quickstart": {
       "file": "mastra__intelligence__quickstart.md",
-      "sha256": "fda083c305f985492c26a2c2215a94c85bc5a3dd8b345cc4766e96350082edc8",
-      "bytes": 7195,
-      "lines": 159,
+      "sha256": "601ae159f86c71867e60bbd9bf933a31d180b2a4ff48d4ce4e6fcc73de49781c",
+      "bytes": 5998,
+      "lines": 157,
       "routes": [
         "/intelligence/quickstart"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Wed, 09 Sep 2026 07:58:57 GMT"
+      "date": "Mon, 14 Sep 2026 07:09:42 GMT"
     },
     "/mastra/prebuilt-components": {
       "file": "mastra__prebuilt-components.md",
@@ -354,15 +354,15 @@
     },
     "/mastra/learning": {
       "file": "mastra__learning.md",
-      "sha256": "d393a394d292025adbe52352b571a20f42bd1b40b10075bbe1babf9fe3401c20",
-      "bytes": 7793,
-      "lines": 138,
+      "sha256": "39df095c976ccf54aa015328e0ae3b7031b27d16a05941148d688b5a59a1658e",
+      "bytes": 7020,
+      "lines": 152,
       "routes": [
         "/learning"
       ],
       "status": "ok",
       "age": 0,
-      "date": "Fri, 11 Sep 2026 10:16:57 GMT"
+      "date": "Mon, 14 Sep 2026 07:09:42 GMT"
     }
   },
   "sitemap": {

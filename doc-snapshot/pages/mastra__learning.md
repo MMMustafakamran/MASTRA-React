@@ -2,6 +2,7 @@
 
 > Turn real application use into evidence-backed Insights and reviewed, reusable Skills.
 
+
 ## Overview
 
 Learning turns patterns from real agent runs into reusable Skills. It looks at completed conversations and application interactions in [Rich Threads](/mastra/threads), produces evidence-backed Insights, and proposes instructions you can review before publishing.
@@ -37,22 +38,20 @@ When you are done, your Runtime will send selected Threads to a Learning contain
     #### Copy this prompt into your coding agent
 
 ```text
-Read https://docs.copilotkit.ai/learning and set up Automatic Learning in this repository.
+Help me set this up in my CopilotKit app. Run this command and follow the instructions:
 
-First inspect the repository's agent instructions, installed CopilotKit versions, Runtime adapter, existing CopilotKit Intelligence client, authentication, and tests. Preserve the current frontend, agent framework, deployment model, authentication, and unrelated behavior. Use the current CopilotKit v2 APIs; do not add the deprecated `ɵlearning` Runtime option.
+npx --yes copilotkit@latest onboard start --intent add-learning
 
-If CopilotKit Intelligence is not connected yet, follow https://docs.copilotkit.ai/intelligence/quickstart without inventing an API key, project, user identity, or access policy. Ask me which existing Intelligence project or trusted identity source to use if the repository does not make that clear.
-
-Choose one focused workflow that would benefit from repeated examples. Reuse an existing Learning container and stable ID when the repository already names one. Otherwise, propose a descriptive lowercase, hyphenated container ID and ask me to create or confirm that container in CopilotKit Intelligence. Configure `getLearningContainerId` on the existing `CopilotKitIntelligence` client so only the intended new Threads are assigned. Return `undefined` for unrelated runs, keep each Thread's assignment stable, and do not imply that existing Threads will be backfilled.
-
-Run focused tests, lint, and typecheck. If the app and required credentials are available, start it, complete one representative workflow, and confirm that the Thread reaches the selected Learning container. Then give me the exact remaining steps to run Learning, review the evidence-backed Insights, approve a proposed Skill, and download the published Skill with the CopilotKit CLI. Report the files changed, commands run, verification result, and any dashboard action I still need to take. If blocked, explain the missing input instead of inventing setup.
+If it requires a CopilotKit CLI session check, you have permission to run it. Never reveal credentials or send optional diagnostic feedback reports.
 ```
+
   </Step>
 
   <Step>
     ### Connect CopilotKit Intelligence
 
     Complete the [Intelligence quickstart](/mastra/intelligence/quickstart), then send a message and confirm that it appears in [Rich Threads](/mastra/threads). Open your project in [CopilotKit Intelligence](https://dashboard.operations.copilotkit.ai/) and confirm that Learning is available.
+
   </Step>
 
   <Step>
@@ -61,6 +60,7 @@ Run focused tests, lint, and typecheck. If the app and required credentials are 
     In your Intelligence project, open **Learning** and choose **Create Learning container**. Give the container a stable ID, a descriptive name, and optional guidance about what good work looks like.
 
     Keep each container focused on one kind of work, such as expense review, support quality, or customer onboarding. Stable IDs contain 1–64 lowercase letters, numbers, or single hyphens; for example, `expense-review`.
+
   </Step>
 
   <Step>
@@ -92,20 +92,34 @@ Run focused tests, lint, and typecheck. If the app and required credentials are 
     <Callout type="warn" title="Keep a Thread's assignment stable">
       Assign a Thread before its first agent run and return the same container ID for every later run. Existing evidence is not backfilled, and a Thread cannot move between containers.
     </Callout>
+
   </Step>
 
   <Step>
     ### Collect examples
 
     Use the application normally and complete several related workflows. Corrections, tool calls, and application interactions all help Learning understand what a good result looks like.
+
   </Step>
 
   <Step>
     ### Run Learning and review
 
     Open the container's **Runs** tab and select **Run Learning**. Review the resulting Insights and their source Threads, then approve or reject each proposed Skill. Approved revisions appear under **Skills**.
+
   </Step>
 </Steps>
+
+<Callout type="info" title="See this in Inspector">
+  Open Inspector on localhost. Go to **Learning**.
+  Review published Skills, their supporting Insights, and the Thread evidence
+  behind each pattern. Inspector also shows when new Threads are ready for a
+  Learning run; start runs and review Skill candidates in the Intelligence web
+  app.
+
+  More detail: [Inspector](/mastra/inspector).
+</Callout>
+
 
 ## Use published Skills
 
@@ -120,13 +134,13 @@ The output contains a directory and `SKILL.md` for each published Skill. Configu
 
 ## Troubleshooting
 
-| Problem | What to check |
-| --- | --- |
-| A Thread never appears in the container | Confirm the callback returned an existing stable ID before the Thread's first run and that the run reached a terminal state. |
-| The Runtime reports a container conflict | The selector returned a different ID for an already-bound Thread. Restore the original mapping or start a new Thread. |
-| A run has no new evidence | Runs created before assignment, still in progress, or already included in an earlier Learning run are not new input. |
-| A run succeeds without a Skill candidate | Inspect the Insights. The evidence may be useful without supporting a reusable procedural Skill. |
-| An approved Skill does not affect the agent | Download the latest bundle and confirm that your agent environment loads the generated Skill directory. |
+| Problem                                     | What to check                                                                                                                |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| A Thread never appears in the container     | Confirm the callback returned an existing stable ID before the Thread's first run and that the run reached a terminal state. |
+| The Runtime reports a container conflict    | The selector returned a different ID for an already-bound Thread. Restore the original mapping or start a new Thread.        |
+| A run has no new evidence                   | Runs created before assignment, still in progress, or already included in an earlier Learning run are not new input.         |
+| A run succeeds without a Skill candidate    | Inspect the Insights. The evidence may be useful without supporting a reusable procedural Skill.                             |
+| An approved Skill does not affect the agent | Download the latest bundle and confirm that your agent environment loads the generated Skill directory.                      |
 
 ## Related guides
 
