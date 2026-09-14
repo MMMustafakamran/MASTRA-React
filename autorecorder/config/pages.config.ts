@@ -127,7 +127,7 @@ const DEMO_PAGES: PageDefinition[] = [
     // The starter's own suggestion chip for its generative-UI path, so this is
     // a prompt the shipped agent is built to answer rather than one invented
     // for the recording. `src/mastra/agents/index.ts` registers `weatherTool`
-    // (`src/mastra/tools/index.ts`, a real open-meteo lookup) on a gpt-5.6-luna
+    // (`src/mastra/tools/index.ts`, a real open-meteo lookup) on a gpt-5.4-mini
     // agent, and `src/components/weather.tsx` renders the result — so the
     // answer is a rendered card, not just streamed text.
     prompt: 'The install just finished. What is the weather like in San Francisco?',
