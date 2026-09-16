@@ -290,16 +290,8 @@ npm run capture -- --install-npm  # and pnpm, yarn, bun
 npm run cli:videos                # films everything the reports say to film
 ```
 
-### On a runner: `.github/workflows/cli-recorder.yml`
-
-The guard above still stands for an ordinary CI job. The CLI workflow lifts it
-deliberately, one reason at a time: it restores the CLI's saved session from
-the `COPILOTKIT_CLI_SESSION` secret (so no browser opens), runs the driver
-under node-pty (so there is a terminal), is weekly and opt-in (so the account
-is spent knowingly), and restores the session in its own named step (so a
-scaffold that still stops at the sign-in prompt reads as "session rejected",
-not "CLI broken"). The sign-up flows stay manual: they need a browser nobody has
-signed into. The workflow header says how to create and refresh the secret.
+The sign-up flows stay manual either way: they need a browser nobody has
+signed into.
 
 ### The videos
 
